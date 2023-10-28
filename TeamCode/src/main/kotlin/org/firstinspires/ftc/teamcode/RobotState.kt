@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode
 
 import arrow.optics.optics
 import com.outoftheboxrobotics.suspendftc.Looper
+import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 
@@ -9,7 +10,8 @@ import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 data class RobotState(
     val looper: RobotLooper,
     val chub: ControlHubHardware,
-    val ehub: ExHubHardware
+    val ehub: ExHubHardware,
+    val commandHandler: CommandHandler
 ) { companion object }
 
 @optics

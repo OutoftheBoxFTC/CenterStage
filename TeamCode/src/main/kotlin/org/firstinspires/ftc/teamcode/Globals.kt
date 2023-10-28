@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.qualcomm.robotcore.hardware.HardwareMap
+import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 
@@ -12,7 +13,8 @@ object Globals {
     fun defaultRobotState(hwMap: HardwareMap) = RobotState(
         looper = RobotLooper(),
         chub = ControlHubHardware(hwMap),
-        ehub = ExHubHardware(hwMap)
+        ehub = ExHubHardware(hwMap),
+        commandHandler = CommandHandler()
     )
 
     fun initializeRobotState(state: RobotState) {
