@@ -7,8 +7,7 @@ import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 
 object Globals {
-    lateinit var robotState: RobotState
-        private set
+    private lateinit var robotState: RobotState
 
     fun defaultRobotState(hwMap: HardwareMap) = RobotState(
         looper = RobotLooper(),
@@ -16,7 +15,25 @@ object Globals {
         ehub = ExHubHardware(hwMap)
     )
 
+    fun initializeRobotState(state: RobotState) {
+        robotState = state
+    }
+
+    fun stop() {
+        robotState.looper.mainLooper.cancel()
+        robotState.looper.driveLooper?.cancel()
+    }
+
+    val chub get() = robotState.chub
+    val ehub get() = robotState.ehub
+
     operator fun <T> get(lens: Lens<RobotState, T>) = lens.get(robotState)
     operator fun <T> get(lens: Optional<RobotState, T>) = lens.getOrNull(robotState)
-    operator fun <T> set(lens: Lens<RobotState, T>, value: T) = lens.set(robotState, value)
+    operator fun <T> set(lens: Lens<RobotState, T>, value: T) {
+        robotState = lens.set(robotState, value)
+    }
+
+    operator fun <T> set(lens: Optional<RobotState, T>, value: T) {
+        robotState = lens.set(robotState, value)
+    }
 }
