@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode
 
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.withIndex
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -16,3 +19,5 @@ interface ReadWriteProperty<V> : ReadWriteProperty<Any?, V> {
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) { this.value = value }
 }
+
+suspend fun <T> StateFlow<T>.next() = withIndex().first { it.index > 0 }.value

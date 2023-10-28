@@ -5,7 +5,9 @@ import arrow.optics.Optional
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
+import org.firstinspires.ftc.teamcode.hardware.DefaultImuHandler
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
+import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
 
 object Globals {
     private lateinit var robotState: RobotState
@@ -14,6 +16,7 @@ object Globals {
         looper = RobotLooper(),
         chub = ControlHubHardware(hwMap),
         ehub = ExHubHardware(hwMap),
+        imuHandler = DefaultImuHandler(),
         commandHandler = CommandHandler()
     )
 
@@ -24,6 +27,8 @@ object Globals {
     fun stop() {
         robotState.looper.mainLooper.cancel()
         robotState.looper.driveLooper?.cancel()
+
+        (robotState.imuHandler as? ThreadedImuHandler)?.cancel()
     }
 
     val chub get() = robotState.chub
