@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes
 
+import arrow.core.Option
+import arrow.core.none
 import arrow.fx.coroutines.autoCloseable
 import arrow.fx.coroutines.resourceScope
 import arrow.optics.copy
@@ -19,8 +21,11 @@ import kotlinx.coroutines.withContext
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.Globals.defaultRobotState
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.command.CommandHandler
+import org.firstinspires.ftc.teamcode.commandHandler
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.hardware.DefaultImuHandler
+import org.firstinspires.ftc.teamcode.hardware.IMUHandler
 import org.firstinspires.ftc.teamcode.hardware.IMU_NAME
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.imuHandler
@@ -30,7 +35,7 @@ import org.firstinspires.ftc.teamcode.mainLooper
 abstract class RobotOpMode(
     private val runMultiThreaded: Boolean = false,
     private val monitorOpmodeStop: Boolean = true,
-    private val multiThreadIMU: Boolean = false
+    private val imuHandler: Option<IMUHandler> = none()
 ) : LinearOpMode() {
     abstract suspend fun runSuspendOpMode()
 
@@ -47,7 +52,7 @@ abstract class RobotOpMode(
 
         defaultRobotState(hardwareMap).copy {
             if (runMultiThreaded) { driveLooperLens set Looper() }
-            if (multiThreadIMU) { RobotState.imuHandler set ThreadedImuHandler() }
+            RobotState.imuHandler set imuHandler
         }.let { Globals.initializeRobotState(it) }
 
         (Globals[driveLooperLens] ?: Globals[mainLooperLens])
@@ -75,13 +80,23 @@ abstract class RobotOpMode(
         val imuThread = autoCloseable { newSingleThreadContext("IMU thread") }
 
         runBlocking {
-            resourceScope {
-                val imu = hardwareMap[IMU::class.java, IMU_NAME]
+            Globals[RobotState.commandHandler] = CommandHandler.new()
 
-                when (val imuHandler = Globals[RobotState.imuHandler]) {
-                    is DefaultImuHandler -> imuHandler.startHandler(Globals[mainLooperLens], imu)
-                    is ThreadedImuHandler -> Globals[mainLooperLens].scheduleCoroutine {
-                        imuHandler.runHandler(imuThread.bind(), imu)
+            resourceScope {
+                val imuHandler = Globals[RobotState.imuHandler].getOrNull()
+
+                if (imuHandler != null) {
+                    val imu = hardwareMap[IMU::class.java, IMU_NAME]
+
+                    when (imuHandler) {
+                        is DefaultImuHandler -> imuHandler.startHandler(
+                            Globals[mainLooperLens],
+                            imu
+                        )
+
+                        is ThreadedImuHandler -> Globals[mainLooperLens].scheduleCoroutine {
+                            imuHandler.runHandler(imuThread.bind(), imu)
+                        }
                     }
                 }
 

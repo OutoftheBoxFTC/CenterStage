@@ -38,7 +38,7 @@ dependencies {
     implementation 'io.arrow-kt:arrow-fx-coroutines'
     implementation 'io.arrow-kt:arrow-fx-stm'
     implementation 'io.arrow-kt:arrow-optics'
-    ksp 'io.arrow-kt:arrow-optics-ksp-plugin'
+    ksp 'io.arrow-kt:arrow-optics-ksp-plugin:1.2.0'
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation 'com.github.rk012:SuspendLooper:main-SNAPSHOT'

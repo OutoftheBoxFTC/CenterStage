@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode
 
+import arrow.core.filterIsInstance
+import arrow.core.none
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.qualcomm.robotcore.hardware.HardwareMap
-import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
-import org.firstinspires.ftc.teamcode.hardware.DefaultImuHandler
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
 
@@ -16,8 +16,8 @@ object Globals {
         looper = RobotLooper(),
         chub = ControlHubHardware(hwMap),
         ehub = ExHubHardware(hwMap),
-        imuHandler = DefaultImuHandler(),
-        commandHandler = CommandHandler()
+        imuHandler = none(),
+        commandHandler = null
     )
 
     fun initializeRobotState(state: RobotState) {
@@ -28,7 +28,7 @@ object Globals {
         robotState.looper.mainLooper.cancel()
         robotState.looper.driveLooper?.cancel()
 
-        (robotState.imuHandler as? ThreadedImuHandler)?.cancel()
+        robotState.imuHandler.filterIsInstance<ThreadedImuHandler>().getOrNull()?.cancel()
     }
 
     val chub get() = robotState.chub
