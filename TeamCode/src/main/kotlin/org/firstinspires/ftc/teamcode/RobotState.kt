@@ -7,6 +7,7 @@ import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.hardware.IMUHandler
+import org.firstinspires.ftc.teamcode.logging.Loggers
 
 @optics
 data class RobotState(
@@ -14,7 +15,8 @@ data class RobotState(
     val chub: ControlHubHardware,
     val ehub: ExHubHardware,
     val imuHandler: Option<IMUHandler>,
-    val commandHandler: CommandHandler?
+    val commandHandler: CommandHandler?,
+    val loggers: Loggers
 ) { companion object }
 
 @optics

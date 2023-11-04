@@ -5,21 +5,24 @@ import arrow.core.none
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.qualcomm.robotcore.hardware.HardwareMap
+import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
+import org.firstinspires.ftc.teamcode.logging.Loggers
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 
 object Globals {
     private lateinit var robotState: RobotState
     private lateinit var currentOpMode: RobotOpMode
 
-    fun defaultRobotState(hwMap: HardwareMap) = RobotState(
+    fun defaultRobotState(hwMap: HardwareMap, telemetry: Telemetry) = RobotState(
         looper = RobotLooper(),
         chub = ControlHubHardware(hwMap),
         ehub = ExHubHardware(hwMap),
         imuHandler = none(),
-        commandHandler = null
+        commandHandler = null,
+        loggers = Loggers(telemetry)
     )
 
     fun initializeRobotState(state: RobotState, opMode: RobotOpMode) {
@@ -39,6 +42,8 @@ object Globals {
 
     val gp1 get() = currentOpMode.gamepad1
     val gp2 get() = currentOpMode.gamepad2
+
+    val log get() = robotState.loggers
 
     operator fun <T> get(lens: Lens<RobotState, T>) = lens.get(robotState)
     operator fun <T> get(lens: Optional<RobotState, T>) = lens.getOrNull(robotState)

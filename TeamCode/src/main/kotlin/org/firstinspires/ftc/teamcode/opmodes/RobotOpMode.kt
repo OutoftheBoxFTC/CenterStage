@@ -50,7 +50,7 @@ abstract class RobotOpMode(
         val mainLooperLens = RobotState.looper.mainLooper
         val driveLooperLens = RobotState.looper.driveLooper
 
-        defaultRobotState(hardwareMap).copy {
+        defaultRobotState(hardwareMap, telemetry).copy {
             if (runMultiThreaded) { driveLooperLens set Looper() }
             RobotState.imuHandler set imuHandler
         }.let { Globals.initializeRobotState(it, this) }

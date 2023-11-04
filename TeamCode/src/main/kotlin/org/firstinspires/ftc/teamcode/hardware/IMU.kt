@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
+import org.firstinspires.ftc.teamcode.Globals
 import kotlin.coroutines.CoroutineContext
 
 sealed class IMUHandler {
@@ -32,6 +33,11 @@ class ThreadedImuHandler : IMUHandler() {
         job = launch(context) {
             while (isActive) {
                 rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
+
+                Globals.log.imu["raw_angle"] = rawAngle.value
+                Globals.log.imu["corrected_angle"] = angle
+
+                Globals.log.imu.collect()
             }
         }
     }
@@ -45,6 +51,11 @@ class DefaultImuHandler : IMUHandler() {
         looper.scheduleCoroutine {
             loopYieldWhile({ isActive }) {
                 rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
+
+                Globals.log.imu["raw_angle"] = rawAngle.value
+                Globals.log.imu["corrected_angle"] = angle
+
+                Globals.log.imu.collect()
             }
         }
     }
