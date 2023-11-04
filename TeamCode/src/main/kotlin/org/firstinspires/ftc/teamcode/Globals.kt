@@ -8,9 +8,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
+import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 
 object Globals {
     private lateinit var robotState: RobotState
+    private lateinit var currentOpMode: RobotOpMode
 
     fun defaultRobotState(hwMap: HardwareMap) = RobotState(
         looper = RobotLooper(),
@@ -20,8 +22,9 @@ object Globals {
         commandHandler = null
     )
 
-    fun initializeRobotState(state: RobotState) {
+    fun initializeRobotState(state: RobotState, opMode: RobotOpMode) {
         robotState = state
+        currentOpMode = opMode
     }
 
     fun stop() {
@@ -33,6 +36,9 @@ object Globals {
 
     val chub get() = robotState.chub
     val ehub get() = robotState.ehub
+
+    val gp1 get() = currentOpMode.gamepad1
+    val gp2 get() = currentOpMode.gamepad2
 
     operator fun <T> get(lens: Lens<RobotState, T>) = lens.get(robotState)
     operator fun <T> get(lens: Optional<RobotState, T>) = lens.getOrNull(robotState)

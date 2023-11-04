@@ -66,6 +66,9 @@ class CommandHandler private constructor(
         runningCommand.job.join()
     }
 
+    suspend fun runNewCommand(required: Nel<Subsystem>, action: suspend () -> Unit) =
+        runCommand(Command(required, action))
+
     companion object {
         suspend fun new() = CommandHandler(TMap.new(), TMap.new(), TMap.new())
     }

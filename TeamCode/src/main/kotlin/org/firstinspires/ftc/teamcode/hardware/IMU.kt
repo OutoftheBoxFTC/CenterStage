@@ -12,32 +12,39 @@ import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import kotlin.coroutines.CoroutineContext
 
-sealed interface IMUHandler {
-    val angle: StateFlow<Double>
+sealed class IMUHandler {
+    abstract val rawAngle: StateFlow<Double>
+    private val angleOffset = MutableStateFlow(0.0)
+
+    val angle get() = rawAngle.value - angleOffset.value
+
+    fun resetAngle(newAngle: Double = 0.0) {
+        angleOffset.value = rawAngle.value - newAngle
+    }
 }
 
-class ThreadedImuHandler : IMUHandler {
-    override val angle = MutableStateFlow(0.0)
+class ThreadedImuHandler : IMUHandler() {
+    override val rawAngle = MutableStateFlow(0.0)
 
     private lateinit var job: Job
 
     suspend fun runHandler(context: CoroutineContext, imu: IMU) = coroutineScope {
         job = launch(context) {
             while (isActive) {
-                angle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
+                rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
             }
         }
     }
 
     fun cancel() = job.cancel()
 }
-class DefaultImuHandler : IMUHandler {
-    override val angle = MutableStateFlow(0.0)
+class DefaultImuHandler : IMUHandler() {
+    override val rawAngle = MutableStateFlow(0.0)
 
     fun startHandler(looper: Looper, imu: IMU) {
         looper.scheduleCoroutine {
             loopYieldWhile({ isActive }) {
-                angle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
+                rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
             }
         }
     }

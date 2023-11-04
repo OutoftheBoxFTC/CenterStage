@@ -53,7 +53,7 @@ abstract class RobotOpMode(
         defaultRobotState(hardwareMap).copy {
             if (runMultiThreaded) { driveLooperLens set Looper() }
             RobotState.imuHandler set imuHandler
-        }.let { Globals.initializeRobotState(it) }
+        }.let { Globals.initializeRobotState(it, this) }
 
         (Globals[driveLooperLens] ?: Globals[mainLooperLens])
             .scheduleCoroutine {
@@ -71,7 +71,9 @@ abstract class RobotOpMode(
         Globals[mainLooperLens].scheduleCoroutine {
             val job = launch { runSuspendOpMode() }
 
-            suspendUntil { job.isCompleted || (monitorOpmodeStop && !opModeIsActive()) }
+            suspendUntil {
+                job.isCompleted || (monitorOpmodeStop && !opModeIsActive() && !opModeInInit())
+            }
 
             Globals.stop()
         }
