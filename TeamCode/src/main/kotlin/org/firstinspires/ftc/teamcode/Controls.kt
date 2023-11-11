@@ -7,6 +7,8 @@ object Controls {
     val driveStrafeY by driverInput { -left_stick_x.toDouble() }
     val driveTurn by driverInput { -right_stick_x.toDouble() }
 
+    val imuResetAngle by driverInput { right_bumper }
+
     private fun <T> driverInput(block: Gamepad.() -> T) = object : ReadOnlyProperty<T> {
         override val value get() = Globals.gp1.block()
     }

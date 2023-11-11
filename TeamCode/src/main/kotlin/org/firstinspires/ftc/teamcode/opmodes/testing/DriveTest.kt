@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import arrow.core.nonEmptyListOf
+import arrow.core.some
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -14,18 +15,35 @@ import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.commandHandler
+import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
+import org.firstinspires.ftc.teamcode.imuHandler
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.set
 import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
+import kotlin.math.cos
+import kotlin.math.sin
 
 @TeleOp
-class DriveTest : RobotOpMode(runMultiThreaded = true) {
+class DriveTest : RobotOpMode(
+    runMultiThreaded = true,
+    imuHandler = ThreadedImuHandler().some()
+) {
     private inner class Fsm(val handler: CommandHandler) {
+        val imu = G[RobotState.imuHandler].getOrNull()!!
+
         val joystickDrive: FS = FS {
             launch {
                 handler.runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
                     loopYieldWhile({ true }) {
-                        setDrivePowers(C.driveStrafeX, C.driveStrafeY, C.driveTurn)
+                        if (C.imuResetAngle) imu.resetAngle()
+
+                        val heading = imu.angle
+
+                        setDrivePowers(
+                            C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading),
+                            C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading),
+                            C.driveTurn
+                        )
                         telemetry["Current State"] = "Joystick Drive"
                     }
                 }
