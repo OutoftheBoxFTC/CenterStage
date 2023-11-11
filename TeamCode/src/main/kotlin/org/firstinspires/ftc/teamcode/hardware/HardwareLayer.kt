@@ -8,8 +8,10 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.ReadWriteProperty
+import org.firstinspires.ftc.teamcode.logging.Sublog
+import kotlin.math.roundToInt
 
-abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) {
+abstract class HardwareLayer(protected val hwMap: HardwareMap, private val hubName: String) {
     private val callbacks = mutableListOf<() -> Unit>()
 
     private val hub = hwMap[LynxModule::class.java, hubName]
@@ -76,17 +78,19 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) 
 
     private var started = false
     private val timer = ElapsedTime()
-    private val sublog = Globals.log.hardware.sublog(hubName)
+    private lateinit var sublog: Sublog
 
     fun syncHardware() {
         hub.clearBulkCache()
         callbacks.forEach { it.invoke() }
 
-        if (started) sublog["looptime (ms)"] = timer.milliseconds()
+        if (started) sublog["loop time (hz)"] = (1 / timer.seconds()).roundToInt()
         else {
+            sublog = Globals.log.hardware.sublog(hubName)
             started = true
-            timer.reset()
         }
+
+        timer.reset()
 
         sublog.collect()
     }

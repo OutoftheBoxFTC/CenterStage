@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.robotcore.external.Telemetry
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -55,3 +56,5 @@ fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty
 
     return ReadOnlyProperty { _, _ -> !current && last}
 }
+
+operator fun Telemetry.set(caption: String, value: Any) { addData(caption, value) }

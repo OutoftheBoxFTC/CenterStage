@@ -12,9 +12,11 @@ class Loggers(telemetry: Telemetry) {
 
     val rootLog = Sublog { entries ->
         val filtered = if (queryString == "*") entries else {
-            val allowedKeys = queryString.split(';')
+            val allowedKeys = queryString.split(';').filter { it.isNotBlank() }
 
-            entries.filterKeys { key -> allowedKeys.any { it.startsWith(key) } }
+            entries.filterKeys { key ->
+                allowedKeys.any { key.startsWith(it) }
+            }
         }
 
         filtered.forEach { (k, v) ->

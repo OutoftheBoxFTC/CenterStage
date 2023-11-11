@@ -69,6 +69,7 @@ abstract class RobotOpMode(
 
         Globals[mainLooperLens].scheduleCoroutine {
             loopYieldWhile({ isActive }) {
+                Globals.log.hardware.collect()
                 Globals.log.rootLog.collect()
                 Globals.ehub.syncHardware()
             }
