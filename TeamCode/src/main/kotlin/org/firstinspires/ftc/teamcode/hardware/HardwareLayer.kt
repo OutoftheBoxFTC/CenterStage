@@ -1,13 +1,22 @@
 package org.firstinspires.ftc.teamcode.hardware
 
+import com.qualcomm.hardware.lynx.LynxModule
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareDevice
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.qualcomm.robotcore.util.ElapsedTime
+import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.ReadWriteProperty
 
-abstract class HardwareLayer(protected val hwMap: HardwareMap) {
+abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) {
     private val callbacks = mutableListOf<() -> Unit>()
+
+    private val hub = hwMap[LynxModule::class.java, hubName]
+
+    init {
+        hub.bulkCachingMode = LynxModule.BulkCachingMode.MANUAL
+    }
 
     protected fun <T> inputField(default: T, getInput: () -> T) = object : ReadOnlyProperty<T> {
         override var value = default
@@ -65,8 +74,21 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap) {
         }
     }
 
+    private var started = false
+    private val timer = ElapsedTime()
+    private val sublog = Globals.log.hardware.sublog(hubName)
+
     fun syncHardware() {
+        hub.clearBulkCache()
         callbacks.forEach { it.invoke() }
+
+        if (started) sublog["looptime (ms)"] = timer.milliseconds()
+        else {
+            started = true
+            timer.reset()
+        }
+
+        sublog.collect()
     }
 }
 

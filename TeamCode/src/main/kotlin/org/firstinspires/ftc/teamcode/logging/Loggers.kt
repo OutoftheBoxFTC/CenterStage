@@ -26,5 +26,6 @@ class Loggers(telemetry: Telemetry) {
 
     val imu = rootLog.sublog("imu")
     val drive = rootLog.sublog("drive")
+    val hardware = rootLog.sublog("hardware")
     val vision = rootLog.sublog("vision")
 }

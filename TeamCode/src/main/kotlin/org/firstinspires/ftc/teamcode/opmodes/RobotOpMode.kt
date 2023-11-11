@@ -5,6 +5,8 @@ import arrow.core.none
 import arrow.fx.coroutines.autoCloseable
 import arrow.fx.coroutines.resourceScope
 import arrow.optics.copy
+import com.acmerobotics.dashboard.FtcDashboard
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
@@ -47,6 +49,9 @@ abstract class RobotOpMode(
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun runOpMode() {
+        telemetry = MultipleTelemetry(telemetry, FtcDashboard.getInstance().telemetry)
+        telemetry.msTransmissionInterval = 15
+
         val mainLooperLens = RobotState.looper.mainLooper
         val driveLooperLens = RobotState.looper.driveLooper
 
@@ -64,6 +69,7 @@ abstract class RobotOpMode(
 
         Globals[mainLooperLens].scheduleCoroutine {
             loopYieldWhile({ isActive }) {
+                Globals.log.rootLog.collect()
                 Globals.ehub.syncHardware()
             }
         }

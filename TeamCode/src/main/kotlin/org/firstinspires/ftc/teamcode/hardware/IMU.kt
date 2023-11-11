@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.hardware
 
+import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.qualcomm.robotcore.hardware.IMU
@@ -17,7 +18,7 @@ sealed class IMUHandler {
     abstract val rawAngle: StateFlow<Double>
     private val angleOffset = MutableStateFlow(0.0)
 
-    val angle get() = rawAngle.value - angleOffset.value
+    val angle get() = Angle.normDelta(rawAngle.value - angleOffset.value)
 
     fun resetAngle(newAngle: Double = 0.0) {
         angleOffset.value = rawAngle.value - newAngle

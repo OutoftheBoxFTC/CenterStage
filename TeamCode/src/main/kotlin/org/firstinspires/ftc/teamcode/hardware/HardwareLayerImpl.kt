@@ -4,10 +4,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 
 const val IMU_NAME = "imu"
 
-class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap) {
+class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub") {
 
 }
 
-class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap) {
+class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub") {
 
 }
