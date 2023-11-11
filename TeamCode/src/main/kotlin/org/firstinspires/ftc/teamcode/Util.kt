@@ -7,12 +7,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.statemachine.FunctionalState
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 typealias G = Globals
 typealias C = Controls
+typealias FS = FunctionalState
 
 interface ReadOnlyProperty<out V> : ReadOnlyProperty<Any?, V> {
     val value: V
