@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.hardware
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareDevice
 import com.qualcomm.robotcore.hardware.HardwareMap
-import com.qualcomm.robotcore.hardware.Servo
 import org.firstinspires.ftc.teamcode.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.ReadWriteProperty
 
@@ -47,16 +46,24 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap) {
         return outputField(default) { device.setOutput(it) }
     }
 
-    protected fun motor(name: String, config: DcMotorEx.() -> Unit) =
-        outputDevice(name, config, 0.0) { power = it }
-
-    protected fun servo(name: String, config: Servo.() -> Unit) =
-        outputDevice(name, config, 0.0) { position = it }
-
     protected fun encoder(name: String, reversed: Boolean = false) =
         inputDevice<DcMotorEx, _>(name, config = {}, 0) {
             currentPosition.let { if (reversed) -it else it }
         }
+
+    protected fun motor(name: String): KMotor {
+        val motor = hwMap[DcMotorEx::class.java, name]
+        return KMotor().also {
+            callbacks.add { it.applyChanges(motor) }
+        }
+    }
+
+    protected fun servo(name: String): KServo {
+        val servo = hwMap.servo[name]
+        return KServo().also {
+            callbacks.add { it.applyChanges(servo) }
+        }
+    }
 
     fun syncHardware() {
         callbacks.forEach { it.invoke() }
