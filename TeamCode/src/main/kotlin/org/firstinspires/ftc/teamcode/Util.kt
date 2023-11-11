@@ -10,6 +10,9 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+typealias G = Globals
+typealias C = Controls
+
 interface ReadOnlyProperty<out V> : ReadOnlyProperty<Any?, V> {
     val value: V
 
