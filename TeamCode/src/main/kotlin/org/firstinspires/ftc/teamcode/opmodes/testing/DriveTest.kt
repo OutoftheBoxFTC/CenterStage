@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.commandHandler
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.imuHandler
+import org.firstinspires.ftc.teamcode.launchCommand
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.set
 import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
@@ -32,20 +33,18 @@ class DriveTest : RobotOpMode(
         val imu = G[RobotState.imuHandler].getOrNull()!!
 
         val joystickDrive: FS = FS {
-            launch {
-                handler.runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
-                    loopYieldWhile({ true }) {
-                        if (C.imuResetAngle) imu.resetAngle()
+            handler.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+                loopYieldWhile({ true }) {
+                    if (C.imuResetAngle) imu.resetAngle()
 
-                        val heading = imu.angle
+                    val heading = imu.angle
 
-                        setDrivePowers(
-                            C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading),
-                            C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading),
-                            C.driveTurn
-                        )
-                        telemetry["Current State"] = "Joystick Drive"
-                    }
+                    setDrivePowers(
+                        C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading),
+                        C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading),
+                        C.driveTurn
+                    )
+                    telemetry["Current State"] = "Joystick Drive"
                 }
             }
 
@@ -54,18 +53,16 @@ class DriveTest : RobotOpMode(
         }
 
         val buttonPower: FS = FS {
-            launch {
-                handler.runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
-                    loopYieldWhile({ true }) {
-                        with(G.chub) {
-                            tl.power = if (G.gp1.left_trigger > 0.9) 1.0 else 0.0
-                            tr.power = if (G.gp1.right_trigger > 0.9) 1.0 else 0.0
-                            bl.power = if (G.gp1.left_bumper) 1.0 else 0.0
-                            br.power = if (G.gp1.right_bumper) 1.0 else 0.0
-                        }
-
-                        telemetry["Current State"] = "Button Power"
+            handler.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+                loopYieldWhile({ true }) {
+                    with(G.chub) {
+                        tl.power = if (G.gp1.left_trigger > 0.9) 1.0 else 0.0
+                        tr.power = if (G.gp1.right_trigger > 0.9) 1.0 else 0.0
+                        bl.power = if (G.gp1.left_bumper) 1.0 else 0.0
+                        br.power = if (G.gp1.right_bumper) 1.0 else 0.0
                     }
+
+                    telemetry["Current State"] = "Button Power"
                 }
             }
 

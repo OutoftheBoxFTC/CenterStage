@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode
 
+import arrow.core.Nel
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -7,6 +8,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.command.CommandHandler
+import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.statemachine.FunctionalState
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
@@ -57,6 +60,11 @@ fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty
     }
 
     return ReadOnlyProperty { _, _ -> !current && last}
+}
+
+context(CoroutineScope)
+fun CommandHandler.launchCommand(required: Nel<Subsystem>, action: suspend () -> Unit) = launch {
+    runNewCommand(required, action)
 }
 
 operator fun Telemetry.set(caption: String, value: Any) { addData(caption, value) }
