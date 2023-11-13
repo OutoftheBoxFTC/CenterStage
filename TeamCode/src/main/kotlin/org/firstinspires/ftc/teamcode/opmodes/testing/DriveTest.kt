@@ -12,9 +12,7 @@ import org.firstinspires.ftc.teamcode.FS
 import org.firstinspires.ftc.teamcode.G
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
-import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.commandHandler
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.imuHandler
 import org.firstinspires.ftc.teamcode.launchCommand
@@ -29,11 +27,11 @@ class DriveTest : RobotOpMode(
     runMultiThreaded = true,
     imuHandler = ThreadedImuHandler().some()
 ) {
-    private inner class Fsm(val handler: CommandHandler) {
+    private inner class Fsm {
         val imu = G[RobotState.imuHandler].getOrNull()!!
 
         val joystickDrive: FS = FS {
-            handler.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+            G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
                 loopYieldWhile({ true }) {
                     if (C.imuResetAngle) imu.resetAngle()
 
@@ -53,7 +51,7 @@ class DriveTest : RobotOpMode(
         }
 
         val buttonPower: FS = FS {
-            handler.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+            G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
                 loopYieldWhile({ true }) {
                     with(G.chub) {
                         tl.power = if (G.gp1.left_trigger > 0.9) 1.0 else 0.0
@@ -76,7 +74,7 @@ class DriveTest : RobotOpMode(
 
         coroutineScope {
             launch {
-                runStateMachine(Fsm(G[RobotState.commandHandler]!!).buttonPower)
+                runStateMachine(Fsm().buttonPower)
             }
 
             loopYieldWhile({ true }) {

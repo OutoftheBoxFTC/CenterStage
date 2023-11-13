@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.Globals
@@ -23,7 +22,6 @@ import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Command
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.commandHandler
 import org.firstinspires.ftc.teamcode.imuHandler
 import org.firstinspires.ftc.teamcode.next
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
@@ -64,7 +62,7 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
         val monitor = CompletableDeferred<Unit>()
 
         taskQueue.trySend {
-            Globals[RobotState.commandHandler]!!
+            Globals.cmd
                     .runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN), action)
             monitor.complete(Unit)
         }
@@ -85,7 +83,7 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
 
     override fun launchFixpoint(target: Pose2d) {
         taskQueue.trySend {
-            Globals[RobotState.commandHandler]!!
+            Globals.cmd
                 .runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
                     driveState.value = DriveState.Fixpoint(target)
 
@@ -100,7 +98,7 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
 
     override fun stopCurrentTask() {
         taskQueue.trySend {
-            Globals[RobotState.commandHandler]!!.runCommand(stopDrivetrainCommand)
+            Globals.cmd.runCommand(stopDrivetrainCommand)
         }
     }
 

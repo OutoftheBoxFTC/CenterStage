@@ -15,7 +15,7 @@ data class RobotState(
     val chub: ControlHubHardware,
     val ehub: ExHubHardware,
     val imuHandler: Option<IMUHandler>,
-    val commandHandler: CommandHandler?,
+    val commandHandler: CommandHandler,
     val loggers: Loggers
 ) { companion object }
 

@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class Command(val required: Nel<Subsystem>, val action: suspend () -> Unit)
 
@@ -70,6 +71,9 @@ class CommandHandler private constructor(
         runCommand(Command(required, action))
 
     companion object {
-        suspend fun new() = CommandHandler(TMap.new(), TMap.new(), TMap.new())
+        fun new() = runBlocking {
+            // Does not actually suspend
+            CommandHandler(TMap.new(), TMap.new(), TMap.new())
+        }
     }
 }

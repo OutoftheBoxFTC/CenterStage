@@ -6,6 +6,7 @@ import arrow.optics.Lens
 import arrow.optics.Optional
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
@@ -21,7 +22,7 @@ object Globals {
         chub = ControlHubHardware(hwMap),
         ehub = ExHubHardware(hwMap),
         imuHandler = none(),
-        commandHandler = null,
+        commandHandler = CommandHandler.new(),
         loggers = Loggers(telemetry)
     )
 
@@ -42,6 +43,8 @@ object Globals {
 
     val gp1 get() = currentOpMode.gamepad1
     val gp2 get() = currentOpMode.gamepad2
+
+    val cmd get() = robotState.commandHandler
 
     val log get() = robotState.loggers
 

@@ -23,8 +23,6 @@ import kotlinx.coroutines.withContext
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.Globals.defaultRobotState
 import org.firstinspires.ftc.teamcode.RobotState
-import org.firstinspires.ftc.teamcode.command.CommandHandler
-import org.firstinspires.ftc.teamcode.commandHandler
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.hardware.DefaultImuHandler
 import org.firstinspires.ftc.teamcode.hardware.IMUHandler
@@ -89,8 +87,6 @@ abstract class RobotOpMode(
         val imuThread = autoCloseable { newSingleThreadContext("IMU thread") }
 
         runBlocking {
-            Globals[RobotState.commandHandler] = CommandHandler.new()
-
             resourceScope {
                 val imuHandler = Globals[RobotState.imuHandler].getOrNull()
 
