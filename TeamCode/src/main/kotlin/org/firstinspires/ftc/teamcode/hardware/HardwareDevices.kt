@@ -23,8 +23,10 @@ class KMotor {
     var direction = DcMotorSimple.Direction.FORWARD
     var zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
 
+    var enableWrites = fun() = true
+
     fun applyChanges(motor: DcMotorEx) {
-        if (abs(lastPower - power) > powerTolerance) {
+        if (enableWrites() && abs(lastPower - power) > powerTolerance) {
             motor.power = power
             lastPower = power
         }

@@ -29,6 +29,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.hardware.DriveHardwareNames;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceRunner;
@@ -92,10 +93,10 @@ public class SampleMecanumDrive extends MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        leftFront = hardwareMap.get(DcMotorEx.class, "2");
-        leftRear = hardwareMap.get(DcMotorEx.class, "3");
-        rightRear = hardwareMap.get(DcMotorEx.class, "0");
-        rightFront = hardwareMap.get(DcMotorEx.class, "1");
+        leftFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tl);
+        leftRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.bl);
+        rightRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.br);
+        rightFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tr);
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 

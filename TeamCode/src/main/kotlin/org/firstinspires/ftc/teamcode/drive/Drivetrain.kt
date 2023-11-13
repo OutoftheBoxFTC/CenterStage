@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive
 
 import arrow.core.nonEmptyListOf
+import arrow.fx.coroutines.resourceScope
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
@@ -11,15 +12,10 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
-import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Command
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.imuHandler
@@ -71,14 +67,27 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
     }
 
     override suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
-        driveState.value = DriveState.Following(traj)
-        rrDrive.followTrajectorySequenceAsync(traj)
+        resourceScope {
+            driveState.value = DriveState.Following(traj)
 
-        loopYieldWhile({ rrDrive.isBusy }) {
-            rrDrive.updateFollower()
+            install(
+                acquire = {
+                    Globals.chub.enableDriveMotors = false
+                    rrDrive
+                },
+                release = { _, _ ->
+                    rrDrive.breakFollowing()
+                    rrDrive.setMotorPowers(0.0, 0.0, 0.0, 0.0)
+                    Globals.chub.enableDriveMotors = true
+                }
+            )
+
+            rrDrive.followTrajectorySequenceAsync(traj)
+
+            loopYieldWhile({ rrDrive.isBusy }) {
+                rrDrive.updateFollower()
+            }
         }
-
-        setDrivePowers(0.0, 0.0, 0.0)
     }
 
     override fun launchFixpoint(target: Pose2d) {
@@ -146,16 +155,6 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
 
     override suspend fun runHandler(): Unit = coroutineScope {
         launch { runLocalizer() }
-
-        launch {
-            driveState
-                .map { it !is DriveState.Following }
-                .distinctUntilChanged()
-                .filter { it }
-                .collectLatest {
-                    rrDrive.breakFollowing()
-                }
-        }
 
         while (isActive) {
             val action = taskQueue.receive()
