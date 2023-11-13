@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import com.acmerobotics.roadrunner.util.Angle
-import com.outoftheboxrobotics.suspendftc.Looper
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.qualcomm.robotcore.hardware.IMU
 import kotlinx.coroutines.Job
@@ -48,16 +47,14 @@ class ThreadedImuHandler : IMUHandler() {
 class DefaultImuHandler : IMUHandler() {
     override val rawAngle = MutableStateFlow(0.0)
 
-    fun startHandler(looper: Looper, imu: IMU) {
-        looper.scheduleCoroutine {
-            loopYieldWhile({ isActive }) {
-                rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
+    suspend fun runHandler(imu: IMU) = coroutineScope {
+        loopYieldWhile({ isActive }) {
+            rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
 
-                Globals.log.imu["raw_angle"] = rawAngle.value
-                Globals.log.imu["corrected_angle"] = angle
+            Globals.log.imu["raw_angle"] = rawAngle.value
+            Globals.log.imu["corrected_angle"] = angle
 
-                Globals.log.imu.collect()
-            }
+            Globals.log.imu.collect()
         }
     }
 }

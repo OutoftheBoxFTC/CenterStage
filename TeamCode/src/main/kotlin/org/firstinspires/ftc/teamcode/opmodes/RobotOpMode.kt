@@ -97,14 +97,10 @@ abstract class RobotOpMode(
                 if (imuHandler != null) {
                     val imu = hardwareMap[IMU::class.java, IMU_NAME]
 
-                    when (imuHandler) {
-                        is DefaultImuHandler -> imuHandler.startHandler(
-                            Globals[mainLooperLens],
-                            imu
-                        )
-
-                        is ThreadedImuHandler -> Globals[mainLooperLens].scheduleCoroutine {
-                            imuHandler.runHandler(imuThread.bind(), imu)
+                    Globals[mainLooperLens].scheduleCoroutine {
+                        when (imuHandler) {
+                            is DefaultImuHandler -> imuHandler.runHandler(imu)
+                            is ThreadedImuHandler -> imuHandler.runHandler(imuThread.bind(), imu)
                         }
                     }
                 }
