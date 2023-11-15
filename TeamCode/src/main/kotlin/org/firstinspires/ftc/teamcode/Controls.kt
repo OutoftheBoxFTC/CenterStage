@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode
 
 import com.qualcomm.robotcore.hardware.Gamepad
+import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 
 object Controls {
     val driveStrafeX by driverInput { -left_stick_y.toDouble() }

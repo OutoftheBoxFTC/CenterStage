@@ -52,6 +52,7 @@ import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.enc
 import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kA;
 import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kStatic;
 import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kV;
+import static org.firstinspires.ftc.teamcode.util.HardwareKt.cloneMotor;
 
 import arrow.core.Either;
 import arrow.core.EitherKt;
@@ -110,10 +111,10 @@ public class SampleMecanumDrive extends MecanumDrive {
                 module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
             }
 
-            leftFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tl);
-            leftRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.bl);
-            rightRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.br);
-            rightFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tr);
+            leftFront = cloneMotor(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tl));
+            leftRear = cloneMotor(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.bl));
+            rightRear = cloneMotor(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.br));
+            rightFront = cloneMotor(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tr));
 
             return Unit.INSTANCE;
         }).onRight(hardwareLayer -> {

@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.command.Command
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.imuHandler
-import org.firstinspires.ftc.teamcode.next
+import org.firstinspires.ftc.teamcode.util.next
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
 

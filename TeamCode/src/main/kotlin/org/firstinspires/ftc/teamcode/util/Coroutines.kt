@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode
+package org.firstinspires.ftc.teamcode.util
 
 import arrow.core.Nel
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
@@ -7,34 +7,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
-import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.statemachine.FunctionalState
 import kotlin.properties.ReadOnlyProperty
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
-
-typealias G = Globals
-typealias C = Controls
-typealias FS = FunctionalState
-
-interface ReadOnlyProperty<out V> : ReadOnlyProperty<Any?, V> {
-    val value: V
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>) = value
-}
-
-interface ReadWriteProperty<V> : ReadWriteProperty<Any?, V> {
-    var value: V
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>) = value
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) { this.value = value }
-}
 
 suspend fun <T> StateFlow<T>.next() = withIndex().first { it.index > 0 }.value
 
-fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty<Any?, Boolean> {
+fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): kotlin.properties.ReadOnlyProperty<Any?, Boolean> {
     var last = observed()
     var current = observed()
 
@@ -48,7 +27,7 @@ fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty<
     return ReadOnlyProperty { _, _ -> current && !last}
 }
 
-fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty<Any?, Boolean> {
+fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): kotlin.properties.ReadOnlyProperty<Any?, Boolean> {
     var last = observed()
     var current = observed()
 
@@ -66,5 +45,3 @@ context(CoroutineScope)
 fun CommandHandler.launchCommand(required: Nel<Subsystem>, action: suspend () -> Unit) = launch {
     runNewCommand(required, action)
 }
-
-operator fun Telemetry.set(caption: String, value: Any) { addData(caption, value) }

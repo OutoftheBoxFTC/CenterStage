@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.Globals
-import org.firstinspires.ftc.teamcode.ReadOnlyProperty
-import org.firstinspires.ftc.teamcode.ReadWriteProperty
+import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
+import org.firstinspires.ftc.teamcode.util.ReadWriteProperty
 import org.firstinspires.ftc.teamcode.hardware.devices.KDevice
 import org.firstinspires.ftc.teamcode.hardware.devices.KMotor
 import org.firstinspires.ftc.teamcode.hardware.devices.KServo

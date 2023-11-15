@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.actions.hardware
 
-import org.firstinspires.ftc.teamcode.G
+import org.firstinspires.ftc.teamcode.util.G
 
 fun setDrivePowers(x: Double, y: Double, r: Double) = G.chub.run {
     tr.power = +x +y +r
