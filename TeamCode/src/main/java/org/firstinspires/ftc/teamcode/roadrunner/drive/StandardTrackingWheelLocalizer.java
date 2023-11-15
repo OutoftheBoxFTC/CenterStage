@@ -8,11 +8,15 @@ import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware;
 import org.firstinspires.ftc.teamcode.hardware.DriveHardwareNames;
 import org.firstinspires.ftc.teamcode.roadrunner.util.Encoder;
 
 import java.util.Arrays;
 import java.util.List;
+
+import arrow.core.Either;
+import kotlin.Unit;
 
 /*
  * Sample tracking wheel localizer implementation assuming the standard configuration:
@@ -43,7 +47,7 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
 
     private List<Integer> lastEncPositions, lastEncVels;
 
-    public StandardTrackingWheelLocalizer(HardwareMap hardwareMap, List<Integer> lastTrackingEncPositions, List<Integer> lastTrackingEncVels) {
+    public StandardTrackingWheelLocalizer(Either<HardwareMap, ControlHubHardware> hardwareSrc, List<Integer> lastTrackingEncPositions, List<Integer> lastTrackingEncVels) {
         super(Arrays.asList(
                 new Pose2d(0, LATERAL_DISTANCE / 2, 0), // left
                 new Pose2d(0, -LATERAL_DISTANCE / 2, 0), // right
@@ -53,9 +57,19 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
         lastEncPositions = lastTrackingEncPositions;
         lastEncVels = lastTrackingEncVels;
 
-        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.odoLeft));
-        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.odoRight));
-        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.odoAux));
+        hardwareSrc.onLeft(hardwareMap -> {
+            leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.odoLeft));
+            rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.odoRight));
+            frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, DriveHardwareNames.odoAux));
+
+            return Unit.INSTANCE;
+        }).onRight(hardwareLayer -> {
+            leftEncoder = new Encoder(hardwareLayer.getOdoLeft());
+            rightEncoder = new Encoder(hardwareLayer.getOdoRight());
+            frontEncoder = new Encoder(hardwareLayer.getOdoAux());
+
+            return Unit.INSTANCE;
+        });
 
         // xTODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
         leftEncoder.setDirection(Encoder.Direction.REVERSE);

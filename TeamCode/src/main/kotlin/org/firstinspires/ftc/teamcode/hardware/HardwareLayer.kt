@@ -2,17 +2,21 @@ package org.firstinspires.ftc.teamcode.hardware
 
 import com.qualcomm.hardware.lynx.LynxModule
 import com.qualcomm.robotcore.hardware.DcMotorEx
-import com.qualcomm.robotcore.hardware.HardwareDevice
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.util.ElapsedTime
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.ReadWriteProperty
-import org.firstinspires.ftc.teamcode.logging.Sublog
+import org.firstinspires.ftc.teamcode.hardware.devices.KDevice
+import org.firstinspires.ftc.teamcode.hardware.devices.KMotor
+import org.firstinspires.ftc.teamcode.hardware.devices.KServo
 import kotlin.math.roundToInt
 
 abstract class HardwareLayer(protected val hwMap: HardwareMap, private val hubName: String) {
     private val callbacks = mutableListOf<() -> Unit>()
+    private val currentReadCallbacks = mutableListOf<() -> Unit>()
 
     private val hub = hwMap[LynxModule::class.java, hubName]
 
@@ -37,62 +41,39 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap, private val hubNa
         }
     }
 
-    protected inline fun <reified T : HardwareDevice, V> inputDevice(
-        name: String,
-        config: T.() -> Unit,
-        default: V,
-        crossinline getInput: T.() -> V
-    ): ReadOnlyProperty<V> {
-        val device = hwMap.get(T::class.java, name).also(config)
-        return inputField(default) { device.getInput() }
+    protected fun <T : KDevice> T.registerDevice() = apply {
+        callbacks.add(this::writeData)
+        currentReadCallbacks.add(this::readCurrent)
     }
 
-    protected inline fun <reified T : HardwareDevice, V> outputDevice(
-        name: String,
-        config: T.() -> Unit,
-        default: V,
-        crossinline setOutput: T.(V) -> Unit
-    ): ReadWriteProperty<V> {
-        val device = hwMap.get(T::class.java, name).also(config)
-        return outputField(default) { device.setOutput(it) }
-    }
+    protected fun motor(name: String, config: DcMotorEx.() -> Unit = {}) = KMotor(
+        hwMap[DcMotorEx::class.java, name].apply(config)
+    ).registerDevice()
 
-    protected fun encoder(name: String, reversed: Boolean = false) =
-        inputDevice<DcMotorEx, _>(name, config = {}, 0) {
-            currentPosition.let { if (reversed) -it else it }
-        }
-
-    protected fun motor(name: String): KMotor {
-        val motor = hwMap[DcMotorEx::class.java, name]
-        return KMotor().also {
-            callbacks.add { it.applyChanges(motor) }
-        }
-    }
-
-    protected fun servo(name: String): KServo {
-        val servo = hwMap.servo[name]
-        return KServo().also {
-            callbacks.add { it.applyChanges(servo) }
-        }
-    }
+    protected fun servo(name: String, config: Servo.() -> Unit = {}) = KServo(
+        hwMap[Servo::class.java, name].apply(config)
+    ).registerDevice()
 
     private var started = false
     private val timer = ElapsedTime()
-    private lateinit var sublog: Sublog
+    private val mainLog by lazy { Globals.log.hardware.sublog(hubName) }
+    private val currentLog by lazy { mainLog.sublog("current") }
 
     fun syncHardware() {
         hub.clearBulkCache()
         callbacks.forEach { it.invoke() }
 
-        if (started) sublog["loop time (hz)"] = (1 / timer.seconds()).roundToInt()
-        else {
-            sublog = Globals.log.hardware.sublog(hubName)
-            started = true
-        }
+        mainLog["loop time (hz)"] = (1 / timer.seconds()).roundToInt()
 
         timer.reset()
 
-        sublog.collect()
+        mainLog.collect()
+    }
+
+    fun readCurrents() {
+        currentReadCallbacks.forEach { it.invoke() }
+
+        if (started) currentLog["hub current (A)"] = hub.getCurrent(CurrentUnit.AMPS)
     }
 }
 

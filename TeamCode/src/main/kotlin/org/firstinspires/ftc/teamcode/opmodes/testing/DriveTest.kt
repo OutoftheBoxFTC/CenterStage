@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.G
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
+import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.imuHandler
 import org.firstinspires.ftc.teamcode.launchCommand
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode

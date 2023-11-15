@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
-import org.firstinspires.ftc.teamcode.hardware.ThreadedImuHandler
+import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.logging.Loggers
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.qualcomm.robotcore.hardware.VoltageSensor
 
 const val IMU_NAME = "imu"
 
@@ -18,14 +19,16 @@ object DriveHardwareNames {
 class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub") {
     var enableDriveMotors = true
 
-    val tr = motor(DriveHardwareNames.tr).apply { enableWrites = ::enableDriveMotors }
-    val tl = motor(DriveHardwareNames.tl).apply { enableWrites = ::enableDriveMotors }
-    val br = motor(DriveHardwareNames.br).apply { enableWrites = ::enableDriveMotors }
-    val bl = motor(DriveHardwareNames.bl).apply { enableWrites = ::enableDriveMotors }
+    val voltageSensor: VoltageSensor = hwMap.voltageSensor.first()
 
-    val odoRight by encoder(DriveHardwareNames.odoRight)
-    val odoAux by encoder(DriveHardwareNames.odoAux)
-    val odoLeft by encoder(DriveHardwareNames.odoLeft)
+    val tr = motor(DriveHardwareNames.tr)
+    val tl = motor(DriveHardwareNames.tl)
+    val br = motor(DriveHardwareNames.br)
+    val bl = motor(DriveHardwareNames.bl)
+
+    val odoRight = motor(DriveHardwareNames.odoRight)
+    val odoAux = motor(DriveHardwareNames.odoAux)
+    val odoLeft = motor(DriveHardwareNames.odoLeft)
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {

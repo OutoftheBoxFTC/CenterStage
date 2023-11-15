@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.roadrunner.drive;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
@@ -29,6 +30,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware;
 import org.firstinspires.ftc.teamcode.hardware.DriveHardwareNames;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder;
@@ -50,6 +52,10 @@ import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.enc
 import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kA;
 import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kStatic;
 import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kV;
+
+import arrow.core.Either;
+import arrow.core.EitherKt;
+import kotlin.Unit;
 
 /*
  * Simple mecanum drive hardware implementation for REV hardware.
@@ -79,24 +85,47 @@ public class SampleMecanumDrive extends MecanumDrive {
     private List<Integer> lastEncPositions = new ArrayList<>();
     private List<Integer> lastEncVels = new ArrayList<>();
 
-    public SampleMecanumDrive(HardwareMap hardwareMap) {
+    /** @noinspection unchecked*/
+    public SampleMecanumDrive(HardwareMap hwMap) {
+        this(EitherKt.left(hwMap));
+    }
+
+    /** @noinspection unchecked*/
+    public SampleMecanumDrive(ControlHubHardware hwLayer) {
+        this(EitherKt.right(hwLayer));
+    }
+
+    private SampleMecanumDrive(Either<HardwareMap, ControlHubHardware> hardwareSrc) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
 
         follower = new HolonomicPIDVAFollower(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
                 new Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5);
 
-        LynxModuleUtil.ensureMinimumFirmwareVersion(hardwareMap);
+        hardwareSrc.onLeft(hardwareMap -> {
+            LynxModuleUtil.ensureMinimumFirmwareVersion(hardwareMap);
 
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+            batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
+            for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+                module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+            }
 
-        leftFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tl);
-        leftRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.bl);
-        rightRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.br);
-        rightFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tr);
+            leftFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tl);
+            leftRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.bl);
+            rightRear = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.br);
+            rightFront = hardwareMap.get(DcMotorEx.class, DriveHardwareNames.tr);
+
+            return Unit.INSTANCE;
+        }).onRight(hardwareLayer -> {
+            batteryVoltageSensor = hardwareLayer.getVoltageSensor();
+
+            leftFront = hardwareLayer.getTl();
+            leftRear = hardwareLayer.getBl();
+            rightRear = hardwareLayer.getBr();
+            rightFront = hardwareLayer.getTr();
+
+            return Unit.INSTANCE;
+        });
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -124,7 +153,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         List<Integer> lastTrackingEncVels = new ArrayList<>();
 
         // xTODO: if desired, use setLocalizer() to change the localization method
-        setLocalizer(new StandardTrackingWheelLocalizer(hardwareMap, lastTrackingEncPositions, lastTrackingEncVels));
+        setLocalizer(new StandardTrackingWheelLocalizer(hardwareSrc, lastTrackingEncPositions, lastTrackingEncVels));
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(
                 follower, HEADING_PID, batteryVoltageSensor,

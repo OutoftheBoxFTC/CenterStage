@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.hardware
+package org.firstinspires.ftc.teamcode.hardware.devices
 
 import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
