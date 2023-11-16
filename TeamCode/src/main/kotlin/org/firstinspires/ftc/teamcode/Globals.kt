@@ -7,24 +7,31 @@ import arrow.optics.Optional
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.command.CommandHandler
+import org.firstinspires.ftc.teamcode.drive.RoadrunnerDrivetrain
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.logging.Loggers
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 
 object Globals {
     private lateinit var robotState: RobotState
     private lateinit var currentOpMode: RobotOpMode
 
-    fun defaultRobotState(hwMap: HardwareMap, telemetry: Telemetry) = RobotState(
-        looper = RobotLooper(),
-        chub = ControlHubHardware(hwMap),
-        ehub = ExHubHardware(hwMap),
-        imuHandler = none(),
-        commandHandler = CommandHandler.new(),
-        loggers = Loggers(telemetry)
-    )
+    fun defaultRobotState(hwMap: HardwareMap, telemetry: Telemetry): RobotState {
+        val chubLayer = ControlHubHardware(hwMap)
+
+        return RobotState(
+            looper = RobotLooper(),
+            chub = chubLayer,
+            ehub = ExHubHardware(hwMap),
+            drivetrainHandler = RoadrunnerDrivetrain(SampleMecanumDrive(chubLayer)),
+            imuHandler = none(),
+            commandHandler = CommandHandler.new(),
+            loggers = Loggers(telemetry)
+        )
+    }
 
     fun initializeRobotState(state: RobotState, opMode: RobotOpMode) {
         robotState = state
@@ -45,6 +52,8 @@ object Globals {
     val gp2 get() = currentOpMode.gamepad2
 
     val cmd get() = robotState.commandHandler
+
+    val drive get() = robotState.drivetrainHandler
 
     val log get() = robotState.loggers
 
