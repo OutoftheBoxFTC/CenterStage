@@ -17,12 +17,16 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
+import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Command
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.imuHandler
 import org.firstinspires.ftc.teamcode.util.next
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
+import org.firstinspires.ftc.teamcode.util.G
 
 interface DrivetrainHandler {
     val currentPose: StateFlow<Pose2d>
@@ -44,6 +48,9 @@ sealed interface DriveState {
 }
 
 class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : DrivetrainHandler {
+    private val translationalPid = PidCoefs(0.5, 0.0, 0.02)
+    private val headingPid = PidCoefs(3.2, 0.0, 0.2)
+
     private var newPose: Pose2d? = null
 
     override val currentPose = MutableStateFlow(Pose2d())
@@ -91,7 +98,13 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
                 .runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
                     driveState.value = DriveState.Fixpoint(target)
 
-                    TODO("Add Fixpoint PID implementation")
+                    runPosePidController(
+                        translationalCoefs = translationalPid,
+                        headingCoefs = headingPid,
+                        input = { G.drive.currentPose.value },
+                        target = { target },
+                        output = { setDrivePowers(it.x, it.y, it.heading) }
+                    )
                 }
         }
     }

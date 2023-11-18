@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import arrow.core.some
 import com.acmerobotics.roadrunner.geometry.Pose2d
-import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
@@ -25,6 +24,7 @@ class RoadrunnerIntegrationTest : RobotOpMode(
         suspendUntilStart()
 
         G.drive.followTrajectory(traj)
+        G.drive.launchFixpoint(traj.end())
 
         suspendUntil { false }
     }
