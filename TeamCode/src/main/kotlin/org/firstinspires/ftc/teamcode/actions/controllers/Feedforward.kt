@@ -9,10 +9,10 @@ import kotlinx.coroutines.launch
 import kotlin.math.sign
 
 data class FeedforwardCoefs(
-    val kG: Double,
-    val kS: Double,
-    val kV: Double,
-    val kA: Double
+    var kG: Double,
+    var kS: Double,
+    var kV: Double,
+    var kA: Double
 ) {
     fun computeGain(state: MotionState) =
         kG + kS*sign(state.v) + kV*state.v + kA*state.a
