@@ -32,5 +32,8 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {
-
+    val m4 = motor("4")
+    val m5 = motor("5")
+    val m6 = motor("6")
+    val m7 = motor("7")
 }
