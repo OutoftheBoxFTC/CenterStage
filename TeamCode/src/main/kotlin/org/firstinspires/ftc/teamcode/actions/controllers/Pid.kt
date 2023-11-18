@@ -10,9 +10,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.min
 
 data class PidCoefs(
-    val kP: Double,
-    val kI: Double,
-    val kD: Double
+    var kP: Double,
+    var kI: Double,
+    var kD: Double
 ) {
     fun computeGain(error: Double, integral: Double, deriv: Double) =
         kP*error + kI*integral + kD*deriv
