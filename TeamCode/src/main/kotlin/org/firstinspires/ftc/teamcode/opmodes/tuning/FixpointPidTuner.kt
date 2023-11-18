@@ -60,49 +60,45 @@ class FixpointPidTuner : RobotOpMode(
         }
     }
 
-    private inner class Fsm {
-        private val fixpointState: FS = FS {
-            G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
-                runPosePidController(
-                    translationalCoefs = translationalCoefs,
-                    headingCoefs = headingCoefs,
-                    input = { G.drive.currentPose.value },
-                    target = { Pose2d(target_x, target_y, target_heading) },
-                    output = { setDrivePowers(it.x, it.y, it.heading) }
+    private val fixpointState: FS = FS {
+        G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
+            runPosePidController(
+                translationalCoefs = translationalCoefs,
+                headingCoefs = headingCoefs,
+                input = { G.drive.currentPose.value },
+                target = { Pose2d(target_x, target_y, target_heading) },
+                output = { setDrivePowers(it.x, it.y, it.heading) }
+            )
+        }
+
+        loopYieldWhile({ !gamepad1.y }) {
+            telemetry["Current State"] = "PID Fixpoint"
+        }
+
+        freeControlState
+    }
+
+    private val freeControlState: FS = FS {
+        G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
+            loopYieldWhile({ true }) {
+                setDrivePowers(
+                    C.driveStrafeX,
+                    C.driveStrafeY * SampleMecanumDrive.LATERAL_MULTIPLIER,
+                    C.driveTurn
                 )
+                telemetry["Current State"] = "Joystick Drive"
             }
-
-            loopYieldWhile({ !gamepad1.y }) {
-                telemetry["Current State"] = "PID Fixpoint"
-            }
-
-            freeControlState
         }
 
-        private val freeControlState: FS = FS {
-            G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
-                loopYieldWhile({ true }) {
-                    setDrivePowers(
-                        C.driveStrafeX,
-                        C.driveStrafeY * SampleMecanumDrive.LATERAL_MULTIPLIER,
-                        C.driveTurn
-                    )
-                    telemetry["Current State"] = "Joystick Drive"
-                }
-            }
-
-            suspendUntil { gamepad1.x }
-            fixpointState
-        }
-
-        suspend fun runFsm() = runStateMachine(freeControlState)
+        suspendUntil { gamepad1.x }
+        fixpointState
     }
 
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()
 
         coroutineScope {
-            launch { Fsm().runFsm() }
+            launch { runStateMachine(freeControlState) }
 
             loopYieldWhile({ true }) {
                 updateCoefs()

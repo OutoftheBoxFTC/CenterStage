@@ -7,66 +7,52 @@ import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.firstinspires.ftc.teamcode.util.C
-import org.firstinspires.ftc.teamcode.util.FS
-import org.firstinspires.ftc.teamcode.util.G
-import org.firstinspires.ftc.teamcode.RobotState
-import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
+import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
-import org.firstinspires.ftc.teamcode.imuHandler
-import org.firstinspires.ftc.teamcode.util.launchCommand
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
-import org.firstinspires.ftc.teamcode.util.set
 import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
-import kotlin.math.cos
-import kotlin.math.sin
+import org.firstinspires.ftc.teamcode.util.FS
+import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.launchCommand
+import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 class DriveTest : RobotOpMode(
     runMultiThreaded = true,
     imuHandler = ThreadedImuHandler().some()
 ) {
-    private inner class Fsm {
-        val imu = G[RobotState.imuHandler].getOrNull()!!
-
-        val joystickDrive: FS = FS {
-            G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+    private val joystickDrive: FS = FS {
+        G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+            launch {
                 loopYieldWhile({ true }) {
-                    if (C.imuResetAngle) imu.resetAngle()
-
-                    val heading = imu.angle
-
-                    setDrivePowers(
-                        C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading),
-                        C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading),
-                        C.driveTurn
-                    )
                     telemetry["Current State"] = "Joystick Drive"
                 }
             }
 
-            suspendUntil { G.gp1.a }
-            buttonPower
+            runFieldCentricDrive()
         }
 
-        val buttonPower: FS = FS {
-            G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
-                loopYieldWhile({ true }) {
-                    with(G.chub) {
-                        tl.power = if (G.gp1.left_trigger > 0.9) 1.0 else 0.0
-                        tr.power = if (G.gp1.right_trigger > 0.9) 1.0 else 0.0
-                        bl.power = if (G.gp1.left_bumper) 1.0 else 0.0
-                        br.power = if (G.gp1.right_bumper) 1.0 else 0.0
-                    }
+        suspendUntil { G.gp1.a }
+        buttonPower
+    }
 
-                    telemetry["Current State"] = "Button Power"
+    private val buttonPower: FS = FS {
+        G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+            loopYieldWhile({ true }) {
+                with(G.chub) {
+                    tl.power = if (G.gp1.left_trigger > 0.9) 1.0 else 0.0
+                    tr.power = if (G.gp1.right_trigger > 0.9) 1.0 else 0.0
+                    bl.power = if (G.gp1.left_bumper) 1.0 else 0.0
+                    br.power = if (G.gp1.right_bumper) 1.0 else 0.0
                 }
-            }
 
-            suspendUntil { G.gp1.left_stick_button }
-            joystickDrive
+                telemetry["Current State"] = "Button Power"
+            }
         }
+
+        suspendUntil { G.gp1.left_stick_button }
+        joystickDrive
     }
 
     override suspend fun runSuspendOpMode() {
@@ -74,7 +60,7 @@ class DriveTest : RobotOpMode(
 
         coroutineScope {
             launch {
-                runStateMachine(Fsm().buttonPower)
+                runStateMachine(buttonPower)
             }
 
             loopYieldWhile({ true }) {
