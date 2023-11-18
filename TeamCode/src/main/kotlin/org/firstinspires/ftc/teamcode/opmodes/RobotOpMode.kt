@@ -107,6 +107,8 @@ abstract class RobotOpMode(
                         )
                     )
 
+                    imu.resetYaw()
+
                     Globals[mainLooperLens].scheduleCoroutine {
                         when (imuHandler) {
                             is DefaultImuHandler -> imuHandler.runHandler(imu)

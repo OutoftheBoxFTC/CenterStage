@@ -18,8 +18,6 @@ object DriveHardwareNames {
 }
 
 class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub") {
-    var enableDriveMotors = true
-
     val voltageSensor: VoltageSensor = hwMap.voltageSensor.first()
 
     val tr = motor(DriveHardwareNames.tr)

@@ -30,6 +30,8 @@ class ThreadedImuHandler : IMUHandler() {
     private lateinit var job: Job
 
     suspend fun runHandler(context: CoroutineContext, imu: IMU) = coroutineScope {
+        resetAngle(rawAngle.value)
+
         job = launch(context) {
             while (isActive) {
                 rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
@@ -48,6 +50,8 @@ class DefaultImuHandler : IMUHandler() {
     override val rawAngle = MutableStateFlow(0.0)
 
     suspend fun runHandler(imu: IMU) = coroutineScope {
+        resetAngle(rawAngle.value)
+
         loopYieldWhile({ isActive }) {
             rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
 

@@ -5,6 +5,7 @@ import arrow.fx.coroutines.resourceScope
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
+import com.outoftheboxrobotics.suspendftc.suspendUntil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -71,22 +72,16 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
             driveState.value = DriveState.Following(traj)
 
             install(
-                acquire = {
-                    Globals.chub.enableDriveMotors = false
-                    rrDrive
-                },
+                acquire = { rrDrive },
                 release = { _, _ ->
                     rrDrive.breakFollowing()
                     rrDrive.setMotorPowers(0.0, 0.0, 0.0, 0.0)
-                    Globals.chub.enableDriveMotors = true
                 }
             )
 
             rrDrive.followTrajectorySequenceAsync(traj)
 
-            loopYieldWhile({ rrDrive.isBusy }) {
-                rrDrive.updateFollower()
-            }
+            suspendUntil { !rrDrive.isBusy }
         }
     }
 
@@ -115,6 +110,10 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
     private suspend fun runLocalizer() = coroutineScope {
         fun imuAngleAsync() = Globals[RobotState.imuHandler].map {
             async {
+                var n = 0
+
+                loopYieldWhile({ n < 100 }) { n++ }
+
                 it.rawAngle.next()
                 it.angle
             }
@@ -132,7 +131,7 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
                 nextImuAngle = imuAngleAsync()
             }
 
-            rrDrive.updatePoseEstimate()
+            rrDrive.update()
             currentPose.value = rrDrive.poseEstimate
 
             nextImuAngle?.let {
