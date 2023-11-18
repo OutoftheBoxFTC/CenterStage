@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.actions.controllers
 
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
+import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
@@ -74,12 +75,29 @@ suspend inline fun runPosePidController(
         output = { y = it }
     ) }
 
-    launch { runPidController(
-        coefs = headingCoefs,
-        input = { input().heading },
-        target = { target().heading },
-        output = { r = it }
-    ) }
+    launch {
+        val timer = ElapsedTime()
+        var lastError = target().heading - input().heading
+        var errorAcc = 0.0
+
+        r = headingCoefs.kP * lastError
+
+        yieldLooper()
+        loopYieldWhile({ true }) {
+            val dt = timer.seconds()
+            timer.reset()
+
+            val error = Angle.normDelta(target().heading - input().heading)
+            val ddt = (error - lastError) / dt
+
+            lastError = error
+            errorAcc += error * dt
+            errorAcc = min(errorAcc, Double.MAX_VALUE)
+
+            headingCoefs.computeGain(error, errorAcc, ddt)
+            r = headingCoefs.computeGain(error, errorAcc, ddt)
+        }
+    }
 
     loopYieldWhile({ true }) {
         output(

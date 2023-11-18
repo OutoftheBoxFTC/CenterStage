@@ -34,13 +34,13 @@ class FixpointPidTuner : RobotOpMode(
         @JvmField var target_y = 0.0
         @JvmField var target_heading = 0.0
 
-        @JvmField var heading_kP = 0.0
+        @JvmField var heading_kP = 3.2
         @JvmField var heading_kI = 0.0
-        @JvmField var heading_kD = 0.0
+        @JvmField var heading_kD = 1.0
 
-        @JvmField var translational_kP = 0.0
+        @JvmField var translational_kP = 1.5
         @JvmField var translational_kI = 0.0
-        @JvmField var translational_kD = 0.0
+        @JvmField var translational_kD = 0.2
     }
 
     private val translationalCoefs = PidCoefs(0.0, 0.0, 0.0)

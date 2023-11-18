@@ -120,10 +120,10 @@ public class SampleMecanumDrive extends MecanumDrive {
         }).onRight(hardwareLayer -> {
             batteryVoltageSensor = hardwareLayer.getVoltageSensor();
 
-            leftFront = hardwareLayer.getTl();
-            leftRear = hardwareLayer.getBl();
-            rightRear = hardwareLayer.getBr();
-            rightFront = hardwareLayer.getTr();
+            leftFront = cloneMotor(hardwareLayer.getTl());
+            leftRear = cloneMotor(hardwareLayer.getBl());
+            rightRear = cloneMotor(hardwareLayer.getBr());
+            rightFront = cloneMotor(hardwareLayer.getTr());
 
             return Unit.INSTANCE;
         });

@@ -10,6 +10,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.hardware.IMU
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -60,6 +61,10 @@ abstract class RobotOpMode(
 
         (Globals[driveLooperLens] ?: Globals[mainLooperLens])
             .scheduleCoroutine {
+                launch {
+                    Globals.drive.runHandler()
+                }
+
                 loopYieldWhile({ isActive }) {
                     Globals.chub.syncHardware()
                 }
@@ -92,6 +97,15 @@ abstract class RobotOpMode(
 
                 if (imuHandler != null) {
                     val imu = hardwareMap[IMU::class.java, IMU_NAME]
+
+                    imu.initialize(
+                        IMU.Parameters(
+                            RevHubOrientationOnRobot(
+                                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT
+                            )
+                        )
+                    )
 
                     Globals[mainLooperLens].scheduleCoroutine {
                         when (imuHandler) {
