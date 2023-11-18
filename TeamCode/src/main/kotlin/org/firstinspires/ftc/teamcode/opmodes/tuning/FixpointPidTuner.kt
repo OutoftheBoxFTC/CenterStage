@@ -11,11 +11,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.hardware.setAdjustedDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
@@ -81,9 +81,9 @@ class FixpointPidTuner : RobotOpMode(
     private val freeControlState: FS = FS {
         G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
             loopYieldWhile({ true }) {
-                setDrivePowers(
+                setAdjustedDrivePowers(
                     C.driveStrafeX,
-                    C.driveStrafeY * SampleMecanumDrive.LATERAL_MULTIPLIER,
+                    C.driveStrafeY,
                     C.driveTurn
                 )
                 telemetry["Current State"] = "Joystick Drive"

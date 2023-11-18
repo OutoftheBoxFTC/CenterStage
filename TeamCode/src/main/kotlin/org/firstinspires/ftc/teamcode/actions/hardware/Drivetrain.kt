@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.imuHandler
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.cos
@@ -13,6 +14,16 @@ fun setDrivePowers(x: Double, y: Double, r: Double) = G.chub.run {
     tl.power = -x +y +r
     bl.power = -x -y +r
     br.power = +x -y +r
+}
+
+fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
+    val multiplier = 12.0 / G.chub.voltageSensor.voltage
+
+    setDrivePowers(
+        multiplier * x,
+        multiplier * y * SampleMecanumDrive.LATERAL_MULTIPLIER,
+        multiplier * r
+    )
 }
 
 suspend fun runFieldCentricDrive() {
