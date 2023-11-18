@@ -23,8 +23,7 @@ class RoadrunnerIntegrationTest : RobotOpMode(
 
         suspendUntilStart()
 
-        G.drive.followTrajectory(traj)
-        G.drive.launchFixpoint(traj.end())
+        G.drive.followTrajectoryFixpoint(traj)
 
         suspendUntil { false }
     }

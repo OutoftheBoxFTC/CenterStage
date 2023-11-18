@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
@@ -35,6 +36,7 @@ interface DrivetrainHandler {
     fun resetPose(newPose: Pose2d = Pose2d())
 
     suspend fun followTrajectory(traj: TrajectorySequence)
+    suspend fun followTrajectoryFixpoint(traj: TrajectorySequence, stopDist: Double = 5.0)
     fun launchFixpoint(target: Pose2d)
     fun stopCurrentTask()
 
@@ -66,12 +68,16 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
         val monitor = CompletableDeferred<Unit>()
 
         taskQueue.trySend {
-            Globals.cmd
+            try {
+                Globals.cmd
                     .runNewCommand(nonEmptyListOf(Subsystem.DRIVETRAIN), action)
-            monitor.complete(Unit)
+            } finally {
+                monitor.complete(Unit)
+            }
         }
 
         monitor.await()
+
     }
 
     override suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
@@ -89,8 +95,16 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
             rrDrive.followTrajectorySequenceAsync(traj)
 
             suspendUntil { !rrDrive.isBusy }
+            driveState.value = DriveState.Idle
         }
     }
+
+    override suspend fun followTrajectoryFixpoint(traj: TrajectorySequence, stopDist: Double) =
+        supervisorScope {
+            launch { followTrajectory(traj) }
+            suspendUntil { currentPose.value.vec().distTo(traj.end().vec()) <= stopDist }
+            launchFixpoint(traj.end())
+        }
 
     override fun launchFixpoint(target: Pose2d) {
         taskQueue.trySend {
@@ -120,7 +134,7 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private suspend fun runLocalizer() = coroutineScope {
+    private suspend fun runRRDrive() = coroutineScope {
         fun imuAngleAsync() = Globals[RobotState.imuHandler].map {
             async {
                 var n = 0
@@ -166,7 +180,7 @@ class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : Drivetrain
 
 
     override suspend fun runHandler(): Unit = coroutineScope {
-        launch { runLocalizer() }
+        launch { runRRDrive() }
 
         while (isActive) {
             val action = taskQueue.receive()
