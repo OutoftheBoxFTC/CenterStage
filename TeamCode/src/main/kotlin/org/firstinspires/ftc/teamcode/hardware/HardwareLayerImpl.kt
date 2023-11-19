@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.hardware
 
+import arrow.core.nonEmptyListOf
 import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.VoltageSensor
+import org.firstinspires.ftc.teamcode.hardware.devices.MotorGroup
 
 const val IMU_NAME = "imu"
 
@@ -31,13 +33,15 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {
-    val leftExtension = motor("4")
-    val rightExtension = motor("5") { direction = DcMotorSimple.Direction.REVERSE }
+    val extension = MotorGroup(
+        nonEmptyListOf(
+            // Left
+            motor("4"),
 
-    fun setExtensionPower(power: Double) {
-        leftExtension.power = power
-        rightExtension.power = power
-    }
+            // Right
+            motor("5") { direction = DcMotorSimple.Direction.REVERSE }
+        )
+    )
 
     val m6 = motor("6")
     val m7 = motor("7")

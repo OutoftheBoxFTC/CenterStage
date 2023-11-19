@@ -29,13 +29,11 @@ class ExtensionTest : RobotOpMode(
             }
 
             loopYieldWhile({ true }) {
-                G.ehub.setExtensionPower(-gamepad1.left_stick_y.toDouble())
+                G.ehub.extension.power = -gamepad1.left_stick_y.toDouble()
 
                 telemetry["encoder pos"] = G.ehub.m7.currentPosition
                 telemetry["encoder vel"] = G.ehub.m7.velocity
-                telemetry["current"] = G.ehub.run {
-                    leftExtension.getCurrent(CurrentUnit.AMPS) + rightExtension.getCurrent(CurrentUnit.AMPS)
-                }
+                telemetry["current"] = G.ehub.extension.getCurrent(CurrentUnit.AMPS)
             }
         }
     }

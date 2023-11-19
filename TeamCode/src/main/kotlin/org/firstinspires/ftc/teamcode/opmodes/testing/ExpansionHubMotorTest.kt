@@ -16,8 +16,7 @@ class ExpansionHubMotorTest : RobotOpMode(
         suspendUntilStart()
 
         loopYieldWhile({ true }) {
-            G.ehub.leftExtension.power = if (G.gp1.dpad_down) -1.0 else if (G.gp1.a) 1.0 else 0.0
-            G.ehub.rightExtension.power = if (G.gp1.dpad_right) -1.0 else if (G.gp1.b) 1.0 else 0.0
+            G.ehub.extension.power = if (G.gp1.dpad_down) -1.0 else if (G.gp1.a) 1.0 else 0.00
             G.ehub.m6.power = if (G.gp1.dpad_left) -1.0 else if (G.gp1.x) 1.0 else 0.0
             G.ehub.m7.power = if (G.gp1.dpad_up) -1.0 else if (G.gp1.y) 1.0 else 0.0
         }
