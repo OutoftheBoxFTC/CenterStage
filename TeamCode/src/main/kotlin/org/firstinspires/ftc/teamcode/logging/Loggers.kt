@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode.logging
 
+import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.config.Config
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.getOrElse
 import org.firstinspires.ftc.robotcore.external.Telemetry
 
 @Config
@@ -9,6 +13,10 @@ class Loggers(telemetry: Telemetry) {
         @JvmField
         var queryString = ""
     }
+
+    val packetChannel = Channel<TelemetryPacket>(capacity = Channel.UNLIMITED)
+
+    private var lastPacket: TelemetryPacket? = null
 
     val rootLog = Sublog { entries ->
         val filtered = if (queryString == "*") entries else {
@@ -21,6 +29,12 @@ class Loggers(telemetry: Telemetry) {
 
         filtered.forEach { (k, v) ->
             telemetry.addData(k, v)
+        }
+
+        lastPacket = packetChannel.tryReceive().getOrElse { lastPacket }
+
+        lastPacket?.let {
+            FtcDashboard.getInstance().sendTelemetryPacket(it)
         }
 
         telemetry.update()

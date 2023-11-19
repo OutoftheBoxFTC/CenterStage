@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence;
 
+import static org.firstinspires.ftc.teamcode.util.CoroutinesKt.trySendJava;
+
 import androidx.annotation.Nullable;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -30,6 +32,11 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import arrow.core.Either;
+import arrow.core.EitherKt;
+import kotlin.Unit;
+import kotlinx.coroutines.channels.SendChannel;
+
 @Config
 public class TrajectorySequenceRunner {
     public static String COLOR_INACTIVE_TRAJECTORY = "#4caf507a";
@@ -57,16 +64,18 @@ public class TrajectorySequenceRunner {
 
     List<TrajectoryMarker> remainingMarkers = new ArrayList<>();
 
-    private final FtcDashboard dashboard;
+    private final Either<FtcDashboard, SendChannel<TelemetryPacket>> packetDest;
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private VoltageSensor voltageSensor;
 
     private List<Integer> lastDriveEncPositions, lastDriveEncVels, lastTrackingEncPositions, lastTrackingEncVels;
 
+    /** @noinspection unchecked*/
     public TrajectorySequenceRunner(
             TrajectoryFollower follower, PIDCoefficients headingPIDCoefficients, VoltageSensor voltageSensor,
-            List<Integer> lastDriveEncPositions, List<Integer> lastDriveEncVels, List<Integer> lastTrackingEncPositions, List<Integer> lastTrackingEncVels
+            List<Integer> lastDriveEncPositions, List<Integer> lastDriveEncVels, List<Integer> lastTrackingEncPositions, List<Integer> lastTrackingEncVels,
+            @Nullable SendChannel<TelemetryPacket> packetChannel
     ) {
         this.follower = follower;
 
@@ -82,8 +91,14 @@ public class TrajectorySequenceRunner {
 
         clock = NanoClock.system();
 
-        dashboard = FtcDashboard.getInstance();
-        dashboard.setTelemetryTransmissionInterval(25);
+        if (packetChannel == null) {
+            FtcDashboard dashboard = FtcDashboard.getInstance();
+            dashboard.setTelemetryTransmissionInterval(25);
+
+            packetDest = EitherKt.left(dashboard);
+        } else {
+            packetDest = EitherKt.right(packetChannel);
+        }
     }
 
     public void followTrajectorySequenceAsync(TrajectorySequence trajectorySequence) {
@@ -227,7 +242,15 @@ public class TrajectorySequenceRunner {
 
         draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
 
-        dashboard.sendTelemetryPacket(packet);
+
+        packetDest.onLeft(dashboard -> {
+            dashboard.sendTelemetryPacket(packet);
+            return Unit.INSTANCE;
+        }).onRight(channel -> {
+            trySendJava(channel, packet);
+            return Unit.INSTANCE;
+        });
+
 
         return driveSignal;
     }

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.util
 import arrow.core.Nel
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.withIndex
@@ -13,7 +14,7 @@ import kotlin.properties.ReadOnlyProperty
 
 suspend fun <T> StateFlow<T>.next() = withIndex().first { it.index > 0 }.value
 
-fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): kotlin.properties.ReadOnlyProperty<Any?, Boolean> {
+fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty<Any?, Boolean> {
     var last = observed()
     var current = observed()
 
@@ -27,7 +28,7 @@ fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): kotlin.properties
     return ReadOnlyProperty { _, _ -> current && !last}
 }
 
-fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): kotlin.properties.ReadOnlyProperty<Any?, Boolean> {
+fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty<Any?, Boolean> {
     var last = observed()
     var current = observed()
 
@@ -40,6 +41,8 @@ fun CoroutineScope.fallingEdgeMonitor(observed: () -> Boolean): kotlin.propertie
 
     return ReadOnlyProperty { _, _ -> !current && last}
 }
+
+fun <T> SendChannel<T>.trySendJava(item: T) = trySend(item)
 
 context(CoroutineScope)
 fun CommandHandler.launchCommand(required: Nel<Subsystem>, action: suspend () -> Unit) = launch {
