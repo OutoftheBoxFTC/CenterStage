@@ -12,17 +12,12 @@ import org.firstinspires.ftc.teamcode.logging.Loggers
 
 @optics
 data class RobotState(
-    val looper: RobotLooper,
+    val mainLooper: Looper,
+    val driveLooper: Looper = mainLooper,
     val chub: ControlHubHardware,
     val ehub: ExHubHardware,
     val drivetrainHandler: DrivetrainHandler,
     val imuHandler: Option<IMUHandler>,
     val commandHandler: CommandHandler,
     val loggers: Loggers
-) { companion object }
-
-@optics
-data class RobotLooper(
-    val mainLooper: Looper = Looper(),
-    val driveLooper: Looper? = null
 ) { companion object }

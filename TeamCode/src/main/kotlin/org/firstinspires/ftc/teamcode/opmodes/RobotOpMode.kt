@@ -31,7 +31,6 @@ import org.firstinspires.ftc.teamcode.hardware.devices.IMUHandler
 import org.firstinspires.ftc.teamcode.hardware.IMU_NAME
 import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.imuHandler
-import org.firstinspires.ftc.teamcode.looper
 import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.subsystems.RoadrunnerDrivetrain
 
@@ -53,8 +52,8 @@ abstract class RobotOpMode(
         telemetry = MultipleTelemetry(telemetry, FtcDashboard.getInstance().telemetry)
         telemetry.msTransmissionInterval = 15
 
-        val mainLooperLens = RobotState.looper.mainLooper
-        val driveLooperLens = RobotState.looper.driveLooper
+        val mainLooperLens = RobotState.mainLooper
+        val driveLooperLens = RobotState.driveLooper
 
         defaultRobotState(hardwareMap, telemetry).copy {
             if (runMultiThreaded) { driveLooperLens set Looper() }
@@ -63,16 +62,15 @@ abstract class RobotOpMode(
 
         (Globals[RobotState.drivetrainHandler] as? RoadrunnerDrivetrain)?.initialize()
 
-        (Globals[driveLooperLens] ?: Globals[mainLooperLens])
-            .scheduleCoroutine {
-                launch {
-                    Globals.drive.runHandler()
-                }
-
-                loopYieldWhile({ isActive }) {
-                    Globals.chub.syncHardware()
-                }
+        Globals[driveLooperLens].scheduleCoroutine {
+            launch {
+                Globals.drive.runHandler()
             }
+
+            loopYieldWhile({ isActive }) {
+                Globals.chub.syncHardware()
+            }
+        }
 
         Globals[mainLooperLens].scheduleCoroutine {
             loopYieldWhile({ isActive }) {
@@ -121,7 +119,7 @@ abstract class RobotOpMode(
                     }
                 }
 
-                Globals[driveLooperLens]?.let {
+                Globals[driveLooperLens].let {
                     launch(driveThread.bind()) {
                         it.run()
                     }
