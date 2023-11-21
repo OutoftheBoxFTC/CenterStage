@@ -49,10 +49,10 @@ class ThreadedImuHandler : IMUHandler() {
 class DefaultImuHandler : IMUHandler() {
     override val rawAngle = MutableStateFlow(0.0)
 
-    suspend fun runHandler(imu: IMU) = coroutineScope {
+    suspend fun runHandler(imu: IMU): Nothing = coroutineScope {
         resetAngle(rawAngle.value)
 
-        loopYieldWhile({ isActive }) {
+        loopYieldWhile({ true }) {
             rawAngle.value = imu.robotYawPitchRollAngles.getYaw(AngleUnit.RADIANS)
 
             Globals.log.imu["raw_angle"] = rawAngle.value
@@ -60,5 +60,7 @@ class DefaultImuHandler : IMUHandler() {
 
             Globals.log.imu.collect()
         }
+
+        error("Return from DefaultImuHandler.runHandler()")
     }
 }

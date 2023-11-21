@@ -25,7 +25,7 @@ suspend inline fun runPidController(
     target: () -> Double,
     output: (Double) -> Unit,
     integralLimit: Double = Double.MAX_VALUE
-) {
+): Nothing {
     val timer = ElapsedTime()
 
     var lastError = target() - input()
@@ -48,6 +48,8 @@ suspend inline fun runPidController(
 
         output(coefs.computeGain(error, errorAcc, ddt))
     }
+
+    error("Return from runPidController")
 }
 
 suspend inline fun runPosePidController(
@@ -56,7 +58,7 @@ suspend inline fun runPosePidController(
     crossinline input: () -> Pose2d,
     crossinline target: () -> Pose2d,
     crossinline output: (Pose2d) -> Unit
-) = coroutineScope {
+): Nothing = coroutineScope {
     var x = 0.0
     var y = 0.0
     var r = 0.0
@@ -107,4 +109,6 @@ suspend inline fun runPosePidController(
             )
         )
     }
+
+    error("Return from runPosePidController")
 }

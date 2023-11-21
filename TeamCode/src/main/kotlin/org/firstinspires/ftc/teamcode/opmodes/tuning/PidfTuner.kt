@@ -70,7 +70,7 @@ abstract class PidfTuner(
         }
     }
 
-    private suspend fun runPid(target: Double) = runPidController(
+    private suspend fun runPid(target: Double): Nothing = runPidController(
         coefs = pidCoefs,
         input = ::readInput,
         target = { target },
@@ -96,6 +96,7 @@ abstract class PidfTuner(
         ).merge()
     }
 
+    @Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
     private val profileState: FS = FS {
         val profiler = object : MotionProfileController(
             feedforwardCoefs,

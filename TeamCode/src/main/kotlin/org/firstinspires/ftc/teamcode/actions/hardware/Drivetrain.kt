@@ -26,7 +26,7 @@ fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
     )
 }
 
-suspend fun runFieldCentricDrive() {
+suspend fun runFieldCentricDrive(): Nothing {
     val imu = G[RobotState.imuHandler].getOrNull()!!
 
     loopYieldWhile({ true }) {
@@ -40,4 +40,6 @@ suspend fun runFieldCentricDrive() {
             C.driveTurn
         )
     }
+
+    error("Return from runFieldCentricDrive")
 }
