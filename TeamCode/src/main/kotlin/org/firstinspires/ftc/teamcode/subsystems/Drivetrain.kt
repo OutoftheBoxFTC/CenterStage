@@ -17,17 +17,16 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.firstinspires.ftc.teamcode.Globals
-import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Command
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.imuHandler
-import org.firstinspires.ftc.teamcode.util.next
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
 import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.mapState
+import org.firstinspires.ftc.teamcode.util.next
 
 interface DrivetrainHandler {
     val currentPose: StateFlow<Pose2d>
@@ -141,16 +140,13 @@ class RoadrunnerDrivetrain(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun runRRDrive() = coroutineScope {
-        fun imuAngleAsync() = Globals[RobotState.imuHandler].map {
-            async {
-                var n = 0
+        fun imuAngleAsync() = async {
+            var n = 0
 
-                loopYieldWhile({ n < 100 }) { n++ }
+            loopYieldWhile({ n < 100 }) { n++ }
 
-                it.rawAngle.next()
-                it.angle
-            }
-        }.getOrNull()
+            Globals.robotState.mapState { it.imuState.angle }.next()
+        }
 
         var nextImuAngle = imuAngleAsync()
         var lastCorrectedPose = currentPose.value
@@ -167,7 +163,7 @@ class RoadrunnerDrivetrain(
             rrDrive.update()
             currentPose.value = rrDrive.poseEstimate
 
-            nextImuAngle?.let {
+            nextImuAngle.let {
                 if (it.isCompleted) {
                     val imuAngle = it.getCompleted()
 

@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode
 
-import arrow.core.filterIsInstance
-import arrow.core.none
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.outoftheboxrobotics.suspendftc.Looper
@@ -9,14 +7,14 @@ import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.command.CommandHandler
-import org.firstinspires.ftc.teamcode.subsystems.RoadrunnerDrivetrain
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
-import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.logging.Loggers
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
+import org.firstinspires.ftc.teamcode.subsystems.RoadrunnerDrivetrain
 
 object Globals {
     lateinit var robotState: MutableStateFlow<RobotState>
@@ -33,8 +31,10 @@ object Globals {
             driveLooper = mainLooper,
             chub = chubLayer,
             ehub = ExHubHardware(hwMap),
+
+            imuState = ImuState(0.0, 0.0),
+
             drivetrainHandler = RoadrunnerDrivetrain { SampleMecanumDrive(chubLayer) },
-            imuHandler = none(),
             commandHandler = CommandHandler.new(),
             loggers = Loggers(telemetry)
         )
@@ -51,7 +51,7 @@ object Globals {
         state.mainLooper.cancel()
         state.driveLooper.takeUnless { it == state.mainLooper }?.cancel()
 
-        state.imuHandler.filterIsInstance<ThreadedImuHandler>().getOrNull()?.cancel()
+        state.imuState.threadedImuJob?.cancel()
     }
 
     val chub get() = robotState.value.chub

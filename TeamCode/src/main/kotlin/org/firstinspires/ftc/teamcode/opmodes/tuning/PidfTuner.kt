@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opmodes.tuning
 
 import arrow.core.merge
 import arrow.core.nel
-import arrow.core.some
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.profile.MotionState
@@ -15,7 +14,6 @@ import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
 import org.firstinspires.ftc.teamcode.subsystems.misc.MotionProfileController
@@ -27,10 +25,7 @@ import org.firstinspires.ftc.teamcode.util.set
 @Config
 abstract class PidfTuner(
     subsystem: Subsystem
-) : RobotOpMode(
-    runMultiThreaded = true,
-    imuHandler = ThreadedImuHandler().some()
-) {
+) : RobotOpMode() {
     companion object {
         @JvmField var kP = 0.0
         @JvmField var kI = 0.0

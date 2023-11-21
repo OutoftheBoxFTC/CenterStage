@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import arrow.core.nel
 import arrow.core.nonEmptyListOf
-import arrow.core.some
 import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
@@ -12,7 +11,6 @@ import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
@@ -22,10 +20,7 @@ import org.firstinspires.ftc.teamcode.util.launchCommand
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
-class DriveTest : RobotOpMode(
-    runMultiThreaded = true,
-    imuHandler = ThreadedImuHandler().some()
-) {
+class DriveTest : RobotOpMode() {
     private val joystickDrive: FS by lazy { FS {
         G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
             launch {

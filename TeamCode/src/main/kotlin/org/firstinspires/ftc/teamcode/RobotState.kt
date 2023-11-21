@@ -1,14 +1,13 @@
 package org.firstinspires.ftc.teamcode
 
-import arrow.core.Option
 import arrow.optics.optics
 import com.outoftheboxrobotics.suspendftc.Looper
+import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.command.CommandHandler
-import org.firstinspires.ftc.teamcode.subsystems.DrivetrainHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
-import org.firstinspires.ftc.teamcode.hardware.devices.IMUHandler
 import org.firstinspires.ftc.teamcode.logging.Loggers
+import org.firstinspires.ftc.teamcode.subsystems.DrivetrainHandler
 
 @optics
 data class RobotState(
@@ -16,8 +15,10 @@ data class RobotState(
     val driveLooper: Looper = mainLooper,
     val chub: ControlHubHardware,
     val ehub: ExHubHardware,
-    val drivetrainHandler: DrivetrainHandler,
-    val imuHandler: Option<IMUHandler>,
     val commandHandler: CommandHandler,
-    val loggers: Loggers
+    val loggers: Loggers,
+
+    val imuState: ImuState,
+
+    val drivetrainHandler: DrivetrainHandler
 ) { companion object }

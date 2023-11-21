@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import org.firstinspires.ftc.teamcode.RobotState
-import org.firstinspires.ftc.teamcode.imuHandler
+import org.firstinspires.ftc.teamcode.imuState
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
@@ -27,12 +27,10 @@ fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
 }
 
 suspend fun runFieldCentricDrive(): Nothing {
-    val imu = G[RobotState.imuHandler].getOrNull()!!
-
     loopYieldWhile({ true }) {
-        if (C.imuResetAngle) imu.resetAngle()
+        if (C.imuResetAngle) resetImuAngle()
 
-        val heading = imu.angle
+        val heading = G[RobotState.imuState].angle
 
         setDrivePowers(
             C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading),
