@@ -64,9 +64,9 @@ class DriveTest : RobotOpMode(
             }
 
             loopYieldWhile({ true }) {
-                telemetry["odo right"] = G.chub.odoRight
-                telemetry["odo aux"] = G.chub.odoAux
-                telemetry["odo left"] = G.chub.odoLeft
+                telemetry["odo right"] = G.chub.odoRight.currentPosition
+                telemetry["odo aux"] = G.chub.odoAux.currentPosition
+                telemetry["odo left"] = G.chub.odoLeft.currentPosition
             }
         }
     }

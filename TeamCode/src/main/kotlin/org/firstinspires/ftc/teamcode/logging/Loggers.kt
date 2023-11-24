@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.getOrElse
+import kotlinx.coroutines.channels.onSuccess
 import org.firstinspires.ftc.robotcore.external.Telemetry
 
 @Config
@@ -14,9 +14,7 @@ class Loggers(telemetry: Telemetry) {
         var queryString = ""
     }
 
-    val packetChannel = Channel<TelemetryPacket>(capacity = Channel.UNLIMITED)
-
-    private var lastPacket: TelemetryPacket? = null
+    val packetChannel = Channel<TelemetryPacket>(capacity = Channel.CONFLATED)
 
     val rootLog = Sublog { entries ->
         val filtered = if (queryString == "*") entries else {
@@ -27,17 +25,15 @@ class Loggers(telemetry: Telemetry) {
             }
         }
 
-        filtered.forEach { (k, v) ->
-            telemetry.addData(k, v)
-        }
-
-        lastPacket = packetChannel.tryReceive().getOrElse { lastPacket }
-
-        lastPacket?.let {
+        packetChannel.tryReceive().onSuccess {
             FtcDashboard.getInstance().sendTelemetryPacket(it)
-        }
 
-        telemetry.update()
+            filtered.forEach { (k, v) ->
+                telemetry.addData(k, v)
+            }
+
+            telemetry.update()
+        }
     }
 
     val imu = rootLog.sublog("imu")

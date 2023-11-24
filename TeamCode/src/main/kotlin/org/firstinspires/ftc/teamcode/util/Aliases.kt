@@ -1,3 +1,5 @@
+@file:Suppress("unused") // Android Studio is being goofy
+
 package org.firstinspires.ftc.teamcode.util
 
 import org.firstinspires.ftc.teamcode.Controls

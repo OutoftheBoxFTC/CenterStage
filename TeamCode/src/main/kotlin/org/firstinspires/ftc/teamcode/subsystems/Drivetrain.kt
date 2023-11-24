@@ -49,7 +49,13 @@ sealed interface DriveState {
     data class Following(val trajectory: TrajectorySequence) : DriveState
 }
 
-class RoadrunnerDrivetrain(private val rrDrive: SampleMecanumDrive) : DrivetrainHandler {
+class RoadrunnerDrivetrain(
+    private val getRRDrive: () -> SampleMecanumDrive
+) : DrivetrainHandler {
+    private lateinit var rrDrive: SampleMecanumDrive
+
+    fun initialize() { rrDrive = getRRDrive() }
+
     private val translationalPid = PidCoefs(0.5, 0.0, 0.02)
     private val headingPid = PidCoefs(3.2, 0.0, 0.2)
 

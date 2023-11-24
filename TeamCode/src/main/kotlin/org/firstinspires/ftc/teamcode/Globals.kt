@@ -26,7 +26,7 @@ object Globals {
             looper = RobotLooper(),
             chub = chubLayer,
             ehub = ExHubHardware(hwMap),
-            drivetrainHandler = RoadrunnerDrivetrain(SampleMecanumDrive(chubLayer)),
+            drivetrainHandler = RoadrunnerDrivetrain { SampleMecanumDrive(chubLayer) },
             imuHandler = none(),
             commandHandler = CommandHandler.new(),
             loggers = Loggers(telemetry)

@@ -25,6 +25,7 @@ import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.Globals.defaultRobotState
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.driveLooper
+import org.firstinspires.ftc.teamcode.drivetrainHandler
 import org.firstinspires.ftc.teamcode.hardware.devices.DefaultImuHandler
 import org.firstinspires.ftc.teamcode.hardware.devices.IMUHandler
 import org.firstinspires.ftc.teamcode.hardware.IMU_NAME
@@ -32,6 +33,7 @@ import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.imuHandler
 import org.firstinspires.ftc.teamcode.looper
 import org.firstinspires.ftc.teamcode.mainLooper
+import org.firstinspires.ftc.teamcode.subsystems.RoadrunnerDrivetrain
 
 abstract class RobotOpMode(
     private val runMultiThreaded: Boolean = false,
@@ -58,6 +60,8 @@ abstract class RobotOpMode(
             if (runMultiThreaded) { driveLooperLens set Looper() }
             RobotState.imuHandler set imuHandler
         }.let { Globals.initializeRobotState(it, this) }
+
+        (Globals[RobotState.drivetrainHandler] as? RoadrunnerDrivetrain)?.initialize()
 
         (Globals[driveLooperLens] ?: Globals[mainLooperLens])
             .scheduleCoroutine {
