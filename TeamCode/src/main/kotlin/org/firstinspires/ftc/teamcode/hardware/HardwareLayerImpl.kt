@@ -43,6 +43,9 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
         )
     )
 
-    val m6 = motor("6")
-    val m7 = motor("7")
+    val intakeRoller = motor("7")
+
+    val intakeTilt = servo("s6")
+
+    val outtakeLift = motor("6")
 }

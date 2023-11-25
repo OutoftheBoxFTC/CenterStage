@@ -23,7 +23,7 @@ class ExtensionTest : RobotOpMode(
         coroutineScope {
             launch {
                 loopYieldWhile({ true }) {
-                    suspendFor(50)
+                    suspendFor(250)
                     G.ehub.readCurrents()
                 }
             }
@@ -31,8 +31,8 @@ class ExtensionTest : RobotOpMode(
             loopYieldWhile({ true }) {
                 G.ehub.extension.power = -gamepad1.left_stick_y.toDouble()
 
-                telemetry["encoder pos"] = G.ehub.m7.currentPosition
-                telemetry["encoder vel"] = G.ehub.m7.velocity
+                telemetry["encoder pos"] = G.ehub.extension.currentPosition
+                telemetry["encoder vel"] = G.ehub.extension.velocity
                 telemetry["current"] = G.ehub.extension.getCurrent(CurrentUnit.AMPS)
             }
         }
