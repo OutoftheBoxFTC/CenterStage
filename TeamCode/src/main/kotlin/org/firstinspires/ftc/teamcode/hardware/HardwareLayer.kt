@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import com.qualcomm.hardware.lynx.LynxModule
+import com.qualcomm.robotcore.hardware.CRServo
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.Globals
+import org.firstinspires.ftc.teamcode.hardware.devices.KCRServo
 import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.util.ReadWriteProperty
 import org.firstinspires.ftc.teamcode.hardware.devices.KDevice
@@ -52,6 +54,10 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap, private val hubNa
 
     protected fun servo(name: String, config: Servo.() -> Unit = {}) = KServo(
         hwMap[Servo::class.java, name].apply(config)
+    ).registerDevice()
+
+    protected fun crServo(name: String, config: CRServo.() -> Unit = {}) = KCRServo(
+        hwMap[CRServo::class.java, name].apply(config)
     ).registerDevice()
 
     private var started = false

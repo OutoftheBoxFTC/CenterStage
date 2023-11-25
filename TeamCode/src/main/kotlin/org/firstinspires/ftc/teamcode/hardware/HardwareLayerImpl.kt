@@ -30,6 +30,8 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     val odoRight = motor(DriveHardwareNames.odoRight)
     val odoAux = motor(DriveHardwareNames.odoAux)
     val odoLeft = motor(DriveHardwareNames.odoLeft)
+
+    val intakeWheel = crServo("s0")
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {
