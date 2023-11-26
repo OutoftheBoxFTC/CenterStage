@@ -3,9 +3,9 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryFixpoint
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
-import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.PI
 
 @Autonomous
@@ -18,7 +18,7 @@ class RoadrunnerIntegrationTest : RobotOpMode() {
 
         suspendUntilStart()
 
-        G.drive.followTrajectoryFixpoint(traj)
+        followTrajectoryFixpoint(traj)
 
         suspendUntil { false }
     }

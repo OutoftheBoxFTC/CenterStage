@@ -12,6 +12,11 @@ import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.command.Subsystem
 import kotlin.properties.ReadOnlyProperty
 
+suspend inline fun mainLoop(block: () -> Unit): Nothing {
+    loopYieldWhile({ true }, block)
+    error("Return from mainLoop()")
+}
+
 suspend fun <T> StateFlow<T>.next() = withIndex().first { it.index > 0 }.value
 
 fun CoroutineScope.risingEdgeMonitor(observed: () -> Boolean): ReadOnlyProperty<Any?, Boolean> {

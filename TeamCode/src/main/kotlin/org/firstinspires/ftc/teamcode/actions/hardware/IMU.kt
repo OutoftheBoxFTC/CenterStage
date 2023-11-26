@@ -29,11 +29,6 @@ data class ImuState(
     companion object
 }
 
-fun resetImuAngle(newAngle: Double = 0.0) = Globals.robotState.modify {
-    RobotState.imuState.angleBias set it.imuState.rawAngle - newAngle
-}
-suspend fun nextImuAngle() = Globals.robotState.mapState { it.imuState.angle }.next()
-
 suspend fun runDefaultImuHandler(imu: IMU): Nothing = coroutineScope {
     imu.resetYaw()
 
@@ -67,3 +62,10 @@ suspend fun runThreadedImuHandler(context: CoroutineContext, imu: IMU) = corouti
         }
     }
 }
+
+fun currentImuAngle() = Globals[RobotState.imuState].angle
+
+fun resetImuAngle(newAngle: Double = 0.0) = Globals.robotState.modify {
+    RobotState.imuState.angleBias set it.imuState.rawAngle - newAngle
+}
+suspend fun nextImuAngle() = Globals.robotState.mapState { it.imuState.angle }.next()

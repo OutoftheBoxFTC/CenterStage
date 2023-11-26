@@ -2,19 +2,20 @@ package org.firstinspires.ftc.teamcode
 
 import arrow.optics.Lens
 import arrow.optics.Optional
+import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
+import org.firstinspires.ftc.teamcode.actions.hardware.DriveState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.logging.Loggers
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
-import org.firstinspires.ftc.teamcode.subsystems.RoadrunnerDrivetrain
 
 object Globals {
     lateinit var robotState: MutableStateFlow<RobotState>
@@ -31,12 +32,11 @@ object Globals {
             driveLooper = mainLooper,
             chub = chubLayer,
             ehub = ExHubHardware(hwMap),
+            commandHandler = CommandHandler.new(),
+            loggers = Loggers(telemetry),
 
             imuState = ImuState(0.0, 0.0),
-
-            drivetrainHandler = RoadrunnerDrivetrain { SampleMecanumDrive(chubLayer) },
-            commandHandler = CommandHandler.new(),
-            loggers = Loggers(telemetry)
+            driveState = DriveState(Pose2d(), DriveControlState.Idle)
         )
     }
 
@@ -61,8 +61,6 @@ object Globals {
     val gp2: Gamepad get() = currentOpMode.gamepad2
 
     val cmd get() = robotState.value.commandHandler
-
-    val drive get() = robotState.value.drivetrainHandler
 
     val log get() = robotState.value.loggers
 

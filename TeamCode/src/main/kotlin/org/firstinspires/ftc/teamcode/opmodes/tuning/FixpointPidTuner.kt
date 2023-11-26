@@ -10,6 +10,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.setAdjustedDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.command.Subsystem
@@ -60,7 +61,7 @@ class FixpointPidTuner : RobotOpMode() {
             runPosePidController(
                 translationalCoefs = translationalCoefs,
                 headingCoefs = headingCoefs,
-                input = { G.drive.currentPose.value },
+                input = ::currentDrivePose,
                 target = { Pose2d(target_x, target_y, target_heading) },
                 output = { setDrivePowers(it.x, it.y, it.heading) }
             )
@@ -98,7 +99,7 @@ class FixpointPidTuner : RobotOpMode() {
             loopYieldWhile({ true }) {
                 updateCoefs()
 
-                val pos = G.drive.currentPose.value
+                val pos = currentDrivePose()
 
                 telemetry["x"] = pos.x
                 telemetry["y"] = pos.y
