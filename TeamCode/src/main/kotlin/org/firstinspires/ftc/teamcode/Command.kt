@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.command
+package org.firstinspires.ftc.teamcode
 
 import arrow.core.Nel
 import arrow.fx.stm.TMap
@@ -11,14 +11,22 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+enum class Subsystem {
+    DRIVETRAIN,
+    EXTENSION,
+    INTAKE,
+    LIFT,
+    OUTTAKE
+}
+
 class Command(val required: Nel<Subsystem>, val action: suspend () -> Unit)
 
 private class RunningCommand(val job: Job, val command: Command)
 
 class CommandHandler private constructor(
-        private val starting: TMap<Subsystem, RunningCommand>,
-        private val active: TMap<Subsystem, RunningCommand>,
-        private val cancelling: TMap<Subsystem, RunningCommand>
+    private val starting: TMap<Subsystem, RunningCommand>,
+    private val active: TMap<Subsystem, RunningCommand>,
+    private val cancelling: TMap<Subsystem, RunningCommand>
 ) {
     suspend fun runCommand(command: Command) = coroutineScope {
         val required = command.required

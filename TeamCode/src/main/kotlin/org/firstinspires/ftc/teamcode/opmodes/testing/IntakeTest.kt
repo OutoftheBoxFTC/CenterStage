@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
-import arrow.core.some
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.util.ElapsedTime
-import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.set
@@ -12,7 +10,7 @@ import org.firstinspires.ftc.teamcode.util.set
 @TeleOp
 class IntakeTest : RobotOpMode(
     runMultiThreaded = true,
-    imuHandler = ThreadedImuHandler().some()
+    imuRunMode = ImuRunMode.THREADED
 ) {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()

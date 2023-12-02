@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.tuning
 
 import arrow.core.nel
-import arrow.core.some
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
@@ -11,12 +10,12 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.setAdjustedDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
-import org.firstinspires.ftc.teamcode.command.Subsystem
-import org.firstinspires.ftc.teamcode.hardware.devices.ThreadedImuHandler
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
-import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
+import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
@@ -25,10 +24,7 @@ import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 @Config
-class FixpointPidTuner : RobotOpMode(
-    runMultiThreaded = true,
-    imuHandler = ThreadedImuHandler().some()
-) {
+class FixpointPidTuner : RobotOpMode() {
     companion object {
         @JvmField var target_x = 0.0
         @JvmField var target_y = 0.0
@@ -65,7 +61,7 @@ class FixpointPidTuner : RobotOpMode(
             runPosePidController(
                 translationalCoefs = translationalCoefs,
                 headingCoefs = headingCoefs,
-                input = { G.drive.currentPose.value },
+                input = ::currentDrivePose,
                 target = { Pose2d(target_x, target_y, target_heading) },
                 output = { setDrivePowers(it.x, it.y, it.heading) }
             )
@@ -103,7 +99,7 @@ class FixpointPidTuner : RobotOpMode(
             loopYieldWhile({ true }) {
                 updateCoefs()
 
-                val pos = G.drive.currentPose.value
+                val pos = currentDrivePose()
 
                 telemetry["x"] = pos.x
                 telemetry["y"] = pos.y
