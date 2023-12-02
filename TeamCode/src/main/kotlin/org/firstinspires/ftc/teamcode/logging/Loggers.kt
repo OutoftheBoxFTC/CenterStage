@@ -2,10 +2,11 @@ package org.firstinspires.ftc.teamcode.logging
 
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.config.Config
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.onSuccess
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.Globals
+import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
+import org.firstinspires.ftc.teamcode.driveState
 
 @Config
 class Loggers(telemetry: Telemetry) {
@@ -13,8 +14,6 @@ class Loggers(telemetry: Telemetry) {
         @JvmField
         var queryString = ""
     }
-
-    val packetChannel = Channel<TelemetryPacket>(capacity = Channel.CONFLATED)
 
     val rootLog = Sublog { entries ->
         val filtered = if (queryString == "*") entries else {
@@ -25,15 +24,21 @@ class Loggers(telemetry: Telemetry) {
             }
         }
 
-        packetChannel.tryReceive().onSuccess {
-            FtcDashboard.getInstance().sendTelemetryPacket(it)
+        val driveState = Globals[RobotState.driveState]
 
-            filtered.forEach { (k, v) ->
-                telemetry.addData(k, v)
-            }
+        driveState.rrDrive?.let {
+            val packet = it.getDriveTelemetryPacket(
+                (driveState.driveControlState as? DriveControlState.Fixpoint)?.target
+            )
 
-            telemetry.update()
+            FtcDashboard.getInstance().sendTelemetryPacket(packet)
         }
+
+        filtered.forEach { (k, v) ->
+            telemetry.addData(k, v)
+        }
+
+        telemetry.update()
     }
 
     val imu = rootLog.sublog("imu")

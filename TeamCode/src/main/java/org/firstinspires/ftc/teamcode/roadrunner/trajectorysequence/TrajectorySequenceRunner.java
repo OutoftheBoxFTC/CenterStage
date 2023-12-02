@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence;
 
 import static org.firstinspires.ftc.teamcode.util.CoroutinesKt.trySendJava;
 
+import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -62,9 +63,15 @@ public class TrajectorySequenceRunner {
 
     private Pose2d lastPoseError = new Pose2d();
 
+    private Pose2d lastTargetPose = null;
+
     List<TrajectoryMarker> remainingMarkers = new ArrayList<>();
 
-    private final Either<FtcDashboard, SendChannel<TelemetryPacket>> packetDest;
+    private boolean logTelemetryOnUpdate;
+
+    private final Object poseHistoryLock = new Object();
+
+    @GuardedBy("poseHistoryLock")
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private VoltageSensor voltageSensor;
@@ -75,7 +82,7 @@ public class TrajectorySequenceRunner {
     public TrajectorySequenceRunner(
             TrajectoryFollower follower, PIDCoefficients headingPIDCoefficients, VoltageSensor voltageSensor,
             List<Integer> lastDriveEncPositions, List<Integer> lastDriveEncVels, List<Integer> lastTrackingEncPositions, List<Integer> lastTrackingEncVels,
-            @Nullable SendChannel<TelemetryPacket> packetChannel
+            boolean logTelemetryOnUpdate
     ) {
         this.follower = follower;
 
@@ -91,14 +98,16 @@ public class TrajectorySequenceRunner {
 
         clock = NanoClock.system();
 
-        if (packetChannel == null) {
+        if (logTelemetryOnUpdate) {
             FtcDashboard dashboard = FtcDashboard.getInstance();
             dashboard.setTelemetryTransmissionInterval(25);
-
-            packetDest = EitherKt.left(dashboard);
-        } else {
-            packetDest = EitherKt.right(packetChannel);
         }
+
+        this.logTelemetryOnUpdate = logTelemetryOnUpdate;
+    }
+
+    public @Nullable Pose2d getLastTargetPose() {
+        return lastTargetPose;
     }
 
     public void followTrajectorySequenceAsync(TrajectorySequence trajectorySequence) {
@@ -112,9 +121,6 @@ public class TrajectorySequenceRunner {
     DriveSignal update(Pose2d poseEstimate, Pose2d poseVelocity) {
         Pose2d targetPose = null;
         DriveSignal driveSignal = null;
-
-        TelemetryPacket packet = new TelemetryPacket();
-        Canvas fieldOverlay = packet.fieldOverlay();
 
         SequenceSegment currentSegment = null;
 
@@ -210,10 +216,12 @@ public class TrajectorySequenceRunner {
             }
         }
 
-        poseHistory.add(poseEstimate);
+        synchronized (poseHistoryLock) {
+            poseHistory.add(poseEstimate);
 
-        if (POSE_HISTORY_LIMIT > -1 && poseHistory.size() > POSE_HISTORY_LIMIT) {
-            poseHistory.removeFirst();
+            if (POSE_HISTORY_LIMIT > -1 && poseHistory.size() > POSE_HISTORY_LIMIT) {
+                poseHistory.removeFirst();
+            }
         }
 
         final double NOMINAL_VOLTAGE = 12.0;
@@ -232,6 +240,20 @@ public class TrajectorySequenceRunner {
             );
         }
 
+        lastTargetPose = targetPose;
+
+        if (logTelemetryOnUpdate) {
+            TelemetryPacket packet = getDriveTelemetryPacket(poseEstimate, targetPose);
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        }
+
+        return driveSignal;
+    }
+
+    public TelemetryPacket getDriveTelemetryPacket(Pose2d poseEstimate, Pose2d targetPose) {
+        TelemetryPacket packet = new TelemetryPacket();
+        Canvas fieldOverlay = packet.fieldOverlay();
+
         packet.put("x", poseEstimate.getX());
         packet.put("y", poseEstimate.getY());
         packet.put("heading (deg)", Math.toDegrees(poseEstimate.getHeading()));
@@ -240,19 +262,15 @@ public class TrajectorySequenceRunner {
         packet.put("yError", getLastPoseError().getY());
         packet.put("headingError (deg)", Math.toDegrees(getLastPoseError().getHeading()));
 
+        SequenceSegment currentSegment = null;
+
+        if (currentTrajectorySequence != null) {
+            currentSegment = currentTrajectorySequence.get(currentSegmentIndex);
+        }
+
         draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
 
-
-        packetDest.onLeft(dashboard -> {
-            dashboard.sendTelemetryPacket(packet);
-            return Unit.INSTANCE;
-        }).onRight(channel -> {
-            trySendJava(channel, packet);
-            return Unit.INSTANCE;
-        });
-
-
-        return driveSignal;
+        return packet;
     }
 
     private void draw(
@@ -313,7 +331,10 @@ public class TrajectorySequenceRunner {
         }
 
         fieldOverlay.setStroke("#3F51B5");
-        DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
+
+        synchronized (poseHistoryLock) {
+            DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
+        }
 
         fieldOverlay.setStroke("#3F51B5");
         DashboardUtil.drawRobot(fieldOverlay, poseEstimate);

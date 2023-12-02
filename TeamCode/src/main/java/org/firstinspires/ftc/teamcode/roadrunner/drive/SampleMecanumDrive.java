@@ -14,8 +14,10 @@ import static org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants.kV;
 import static org.firstinspires.ftc.teamcode.util.HardwareKt.cloneMotor;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
 import com.acmerobotics.roadrunner.drive.MecanumDrive;
@@ -156,7 +158,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         trajectorySequenceRunner = new TrajectorySequenceRunner(
                 follower, HEADING_PID, batteryVoltageSensor,
                 lastEncPositions, lastEncVels, lastTrackingEncPositions, lastTrackingEncVels,
-                hardwareSrc.map(__ -> Globals.INSTANCE.getLog().getPacketChannel()).getOrNull()
+                hardwareSrc.isLeft()
         );
     }
 
@@ -227,6 +229,16 @@ public class SampleMecanumDrive extends MecanumDrive {
     public void update() {
         updatePoseEstimate();
         updateFollower();
+    }
+
+    public TelemetryPacket getDriveTelemetryPacket(@Nullable Pose2d targetPose) {
+        Pose2d target = targetPose;
+
+        if (target == null) {
+            target = trajectorySequenceRunner.getLastTargetPose();
+        }
+
+        return trajectorySequenceRunner.getDriveTelemetryPacket(getPoseEstimate(), target);
     }
 
     public void breakFollowing() {
