@@ -10,9 +10,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
-import org.firstinspires.ftc.teamcode.command.Subsystem
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
-import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
+import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G

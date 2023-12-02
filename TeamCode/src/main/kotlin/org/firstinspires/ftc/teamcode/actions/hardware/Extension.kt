@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runMotionProfile
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
-import org.firstinspires.ftc.teamcode.command.Subsystem
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.extensionState
 import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.util.G

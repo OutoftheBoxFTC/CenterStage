@@ -16,9 +16,9 @@ import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runMotionProfile
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
-import org.firstinspires.ftc.teamcode.command.Subsystem
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
-import org.firstinspires.ftc.teamcode.statemachine.runStateMachine
+import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.launchCommand

@@ -1,8 +1,18 @@
+@file:Suppress("unused")
+
 package org.firstinspires.ftc.teamcode.util
 
+import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.Controls
+import org.firstinspires.ftc.teamcode.FunctionalState
+import org.firstinspires.ftc.teamcode.Globals
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+
+typealias G = Globals
+typealias C = Controls
+typealias FS = FunctionalState
 
 interface ReadOnlyProperty<out V> : ReadOnlyProperty<Any?, V> {
     val value: V
@@ -16,3 +26,5 @@ interface ReadWriteProperty<V> : ReadWriteProperty<Any?, V> {
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) { this.value = value }
 }
+
+operator fun Telemetry.set(caption: String, value: Any) { addData(caption, value) }

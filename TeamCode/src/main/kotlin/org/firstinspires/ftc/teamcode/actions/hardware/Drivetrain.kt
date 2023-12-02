@@ -17,8 +17,8 @@ import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
-import org.firstinspires.ftc.teamcode.command.Command
-import org.firstinspires.ftc.teamcode.command.Subsystem
+import org.firstinspires.ftc.teamcode.Command
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive

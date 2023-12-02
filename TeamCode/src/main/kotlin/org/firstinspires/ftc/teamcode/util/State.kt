@@ -7,9 +7,11 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.withIndex
 
 fun <U, V> StateFlow<U>.mapState(transform: (U) -> V) = object : StateFlow<V> {
     private val flow = this@mapState.map(transform)
@@ -25,3 +27,5 @@ fun <U, V> StateFlow<U>.mapState(transform: (U) -> V) = object : StateFlow<V> {
 }
 
 fun <T> MutableStateFlow<T>.modify(block: Copy<T>.(T) -> Unit) = update { it.copy { block(it) } }
+
+suspend fun <T> StateFlow<T>.next() = withIndex().first { it.index > 0 }.value
