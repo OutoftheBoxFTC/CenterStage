@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.VoltageSensor
 import org.firstinspires.ftc.teamcode.hardware.devices.MotorGroup
+import org.firstinspires.ftc.teamcode.hardware.devices.ServoGroup
 
 const val IMU_NAME = "imu"
 
@@ -32,6 +33,19 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     val odoLeft = motor(DriveHardwareNames.odoLeft)
 
     val intakeWheel = crServo("s0")
+
+    // Temporary hardware mappings
+    val arm = ServoGroup(
+        nonEmptyListOf(
+            // Right
+            servo("s1"),
+
+            // Left
+            servo("s2")
+        )
+    )
+
+    val twist = servo("s4")
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {
