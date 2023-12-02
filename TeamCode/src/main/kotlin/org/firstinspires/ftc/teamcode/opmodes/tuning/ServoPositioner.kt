@@ -9,8 +9,11 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.setBlackClawPos
+import org.firstinspires.ftc.teamcode.actions.hardware.setRedClawPos
 import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setTwistPosition
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
@@ -29,6 +32,9 @@ class ServoPositioner : RobotOpMode() {
     private var armPos = 0.0
     private var twistPos = 0.0
     private var tiltPos = 0.0
+
+    private var redPos = 0.0
+    private var blackPos = 0.0
 
     private var currentSystem = "Arm"
     private var currentPos = armPos
@@ -59,7 +65,7 @@ class ServoPositioner : RobotOpMode() {
             }
         }
 
-        nextToggledState(tiltAdjust, twistAdjust).also { job.cancelAndJoin() }
+        nextToggledState(blackAdjust, twistAdjust).also { job.cancelAndJoin() }
     }
 
     private val twistAdjust: FS = FS {
@@ -85,13 +91,42 @@ class ServoPositioner : RobotOpMode() {
             }
         }
 
-        nextToggledState(twistAdjust, armAdjust).also { job.cancelAndJoin() }
+        nextToggledState(twistAdjust, redAdjust).also { job.cancelAndJoin() }
+    }
+
+    private val redAdjust: FS = FS {
+        currentSystem = "Red Claw"
+        currentPos = redPos
+
+        val job = launch {
+            mainLoop {
+                redPos = currentPos
+            }
+        }
+
+        nextToggledState(tiltAdjust, blackAdjust).also { job.cancelAndJoin() }
+    }
+
+    private val blackAdjust: FS = FS {
+        currentSystem = "Black Claw"
+        currentPos = blackPos
+
+        val job = launch {
+            mainLoop {
+                blackPos = currentPos
+            }
+        }
+
+        nextToggledState(redAdjust, armAdjust).also { job.cancelAndJoin() }
     }
 
     override suspend fun runSuspendOpMode() = coroutineScope {
         armPos = 0.5
         twistPos = 0.5
         tiltPos = IntakeTiltPosition.HIGH.pos
+
+        redPos = ClawPosition.RED_OPEN.pos
+        blackPos = ClawPosition.BLACK_OPEN.pos
 
         suspendUntilStart()
 
@@ -106,9 +141,14 @@ class ServoPositioner : RobotOpMode() {
             setTwistPosition(twistPos)
             setTiltPosition(tiltPos)
 
+            setRedClawPos(redPos)
+            setBlackClawPos(blackPos)
+
             telemetry["Arm"] = armPos
             telemetry["Twist"] = twistPos
             telemetry["Tilt"] = tiltPos
+            telemetry["Red Claw"] = redPos
+            telemetry["Black Claw"] = blackPos
 
             telemetry["Current Servo"] = currentSystem
 

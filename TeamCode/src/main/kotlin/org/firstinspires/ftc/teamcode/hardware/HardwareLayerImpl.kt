@@ -46,6 +46,9 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     )
 
     val twist = servo("s4")
+
+    val blackClaw = servo("s3")
+    val redClaw = servo("s5")
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {

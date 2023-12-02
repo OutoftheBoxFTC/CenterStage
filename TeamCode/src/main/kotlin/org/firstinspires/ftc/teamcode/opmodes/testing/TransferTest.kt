@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
+import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setTwistPosition
@@ -18,6 +20,7 @@ class TransferTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()
 
+        openClaws()
         setTwistPosition(TwistPosition.STRAIGHT)
 
         while (true) {
@@ -38,12 +41,19 @@ class TransferTest : RobotOpMode() {
             setArmPosition(ArmPosition.TRANSFER)
             suspendFor(200)
             setTiltPosition(IntakeTiltPosition.HIGH)
-            suspendFor(600)
+            suspendFor(400)
+            closeClaws()
+            suspendFor(300)
             setTiltPosition(IntakeTiltPosition.LOW)
-            suspendFor(600)
+            suspendFor(400)
             setArmPosition(ArmPosition.OUTTAKE)
 
             suspendUntil { gamepad1.y }
+
+            setArmPosition(ArmPosition.FLOOR)
+            suspendFor(400)
+            openClaws()
+            suspendFor(1000)
         }
     }
 }
