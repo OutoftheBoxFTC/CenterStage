@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.command
 
 enum class Subsystem {
-    DRIVETRAIN
+    DRIVETRAIN,
+    EXTENSION,
+    INTAKE,
+    LIFT,
+    OUTTAKE
 }

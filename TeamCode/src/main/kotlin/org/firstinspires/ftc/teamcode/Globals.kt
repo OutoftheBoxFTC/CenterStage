@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.acmerobotics.roadrunner.geometry.Pose2d
+import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveState
+import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.command.CommandHandler
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
@@ -36,7 +38,8 @@ object Globals {
             loggers = Loggers(telemetry),
 
             imuState = ImuState(0.0, 0.0),
-            driveState = DriveState(Pose2d(), DriveControlState.Idle)
+            driveState = DriveState(Pose2d(), DriveControlState.Idle),
+            extensionState = ExtensionState(MotionState(0.0, 0.0))
         )
     }
 
