@@ -42,27 +42,38 @@ private fun TreeLog.rootLog(state: RobotState) {
         "Drive State" set state.driveState.driveControlState
     }
 
+    "looptime" {
+        "Chub loop frequency (Hz)" set state.chub.lastLoopFrequency
+        "Ehub loop frequency (Hz)" set state.ehub.lastLoopFrequency
+    }
+
     "current" {
         val chub = state.chub
         val ehub = state.ehub
 
+        "Total Current" set chub.hubCurrent + ehub.hubCurrent
+
         "chub" {
-            val currents = listOf(
+            "Chub current" set chub.hubCurrent
+
+            val driveCurrents = listOf(
                 chub.tl.getCurrent(CurrentUnit.AMPS),
                 chub.tr.getCurrent(CurrentUnit.AMPS),
                 chub.bl.getCurrent(CurrentUnit.AMPS),
                 chub.br.getCurrent(CurrentUnit.AMPS)
             )
 
-            "Drive tl current" set currents[0]
-            "Drive tr current" set currents[1]
-            "Drive bl current" set currents[2]
-            "Drive br current" set currents[3]
+            "Drive tl current" set driveCurrents[0]
+            "Drive tr current" set driveCurrents[1]
+            "Drive bl current" set driveCurrents[2]
+            "Drive br current" set driveCurrents[3]
 
-            "Drive total current" set currents.sum()
+            "Drive total current" set driveCurrents.sum()
         }
 
         "ehub" {
+            "Ehub current" set ehub.hubCurrent
+
             "Extension current" set ehub.extension.getCurrent(CurrentUnit.AMPS)
             "Intake roller current" set ehub.intakeRoller.getCurrent(CurrentUnit.AMPS)
             "Lift current" set ehub.outtakeLift.getCurrent(CurrentUnit.AMPS)

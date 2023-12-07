@@ -6,14 +6,19 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.util.ElapsedTime
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.hardware.devices.KCRServo
 import org.firstinspires.ftc.teamcode.hardware.devices.KDevice
 import org.firstinspires.ftc.teamcode.hardware.devices.KMotor
 import org.firstinspires.ftc.teamcode.hardware.devices.KServo
 import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.util.ReadWriteProperty
+import kotlin.math.roundToInt
 
 abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) {
+    @Volatile var lastLoopFrequency = 0
+    @Volatile var hubCurrent = 0.0
+
     private val callbacks = mutableListOf<() -> Unit>()
     private val currentReadCallbacks = mutableListOf<() -> Unit>()
 
@@ -64,10 +69,12 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) 
         hub.clearBulkCache()
         callbacks.forEach { it.invoke() }
 
+        lastLoopFrequency = (1.0 / timer.seconds()).roundToInt()
         timer.reset()
     }
 
     fun readCurrents() {
+        hubCurrent = hub.getCurrent(CurrentUnit.AMPS)
         currentReadCallbacks.forEach { it.invoke() }
     }
 }
