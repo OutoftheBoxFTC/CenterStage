@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.setDrivetrainIdle
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 import kotlin.io.path.createParentDirectories
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -69,6 +70,10 @@ class FastloadOpmode : RobotOpMode(
         launch {
             loopYieldWhile({ opModeInInit() }) {
                 telemetry["Pose Storage Status"] = if (loadedStoredPose) "LOADED" else "DEFAULT"
+                if (gamepad1.a) {
+                    resetDrivePose()
+                    loadedStoredPose = false
+                }
             }
         }
 
@@ -83,13 +88,17 @@ class FastloadOpmode : RobotOpMode(
                 }
             }
 
-            if (wasActive) {
-                val pose = currentDrivePose()
+            withContext(Dispatchers.IO) {
+                if (wasActive) {
+                    val pose = currentDrivePose()
 
-                withContext(Dispatchers.IO) {
-                    poseStoragePath().writeText(Json.encodeToString(
-                        StoredPose(Clock.System.now(), pose.x, pose.y, pose.heading)
-                    ))
+                    poseStoragePath().writeText(
+                        Json.encodeToString(
+                            StoredPose(Clock.System.now(), pose.x, pose.y, pose.heading)
+                        )
+                    )
+                } else {
+                    poseStoragePath().deleteIfExists()
                 }
             }
 
