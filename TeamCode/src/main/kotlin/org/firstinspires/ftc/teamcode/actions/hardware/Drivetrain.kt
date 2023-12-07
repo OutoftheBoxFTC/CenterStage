@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
+import com.outoftheboxrobotics.suspendftc.yieldLooper
+import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -26,6 +28,8 @@ import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySe
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -52,16 +56,31 @@ object DriveConfig {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coroutineScope {
+    val poseLens = RobotState.driveState.currentPose
+
     fun imuAngleAsync() = async {
         var n = 0
 
         loopYieldWhile({ n < 100 }) { n++ }
+
+        var lastPose = G[poseLens]
+        val timer = ElapsedTime()
+
+        yieldLooper()
+
+        suspendUntil {
+            val dt = timer.seconds()
+            timer.reset()
+
+            val poseVel = (-lastPose + G[poseLens].also { lastPose = it }) / dt
+
+            poseVel.vec().norm() <= 5.0 && abs(poseVel.heading) <= PI / 2
+        }
+
         nextImuAngle()
     }
 
     G[RobotState.driveState.rrDrive] = rrDrive
-
-    val poseLens = RobotState.driveState.currentPose
 
     var nextImuAngle = imuAngleAsync()
     var lastCorrectedPose = G[poseLens]
