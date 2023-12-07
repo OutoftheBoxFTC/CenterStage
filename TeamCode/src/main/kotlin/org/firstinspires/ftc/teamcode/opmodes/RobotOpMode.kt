@@ -43,6 +43,8 @@ abstract class RobotOpMode(
 
     abstract suspend fun runSuspendOpMode()
 
+    protected var manualStop = false
+
     protected suspend fun suspendUntilStart() {
         withContext(Dispatchers.IO) {
             waitForStart()
@@ -51,6 +53,8 @@ abstract class RobotOpMode(
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun runOpMode() {
+        manualStop = false
+
         telemetry = MultipleTelemetry(telemetry, FtcDashboard.getInstance().telemetry)
         telemetry.msTransmissionInterval = 15
 
@@ -85,7 +89,7 @@ abstract class RobotOpMode(
             val job = launch { runSuspendOpMode() }
 
             suspendUntil {
-                job.isCompleted || (monitorOpmodeStop && !opModeIsActive() && !opModeInInit())
+                manualStop || job.isCompleted || (monitorOpmodeStop && !opModeIsActive() && !opModeInInit())
             }
 
             Globals.stop()
