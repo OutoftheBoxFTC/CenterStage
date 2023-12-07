@@ -6,17 +6,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.util.ElapsedTime
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
-import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.hardware.devices.KCRServo
-import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
-import org.firstinspires.ftc.teamcode.util.ReadWriteProperty
 import org.firstinspires.ftc.teamcode.hardware.devices.KDevice
 import org.firstinspires.ftc.teamcode.hardware.devices.KMotor
 import org.firstinspires.ftc.teamcode.hardware.devices.KServo
-import kotlin.math.roundToInt
+import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
+import org.firstinspires.ftc.teamcode.util.ReadWriteProperty
 
-abstract class HardwareLayer(protected val hwMap: HardwareMap, private val hubName: String) {
+abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) {
     private val callbacks = mutableListOf<() -> Unit>()
     private val currentReadCallbacks = mutableListOf<() -> Unit>()
 
@@ -62,24 +59,16 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap, private val hubNa
 
     private var started = false
     private val timer = ElapsedTime()
-    private val mainLog by lazy { Globals.log.hardware.sublog(hubName) }
-    private val currentLog by lazy { mainLog.sublog("current") }
 
     fun syncHardware() {
         hub.clearBulkCache()
         callbacks.forEach { it.invoke() }
 
-        mainLog["loop time (hz)"] = (1 / timer.seconds()).roundToInt()
-
         timer.reset()
-
-        mainLog.collect()
     }
 
     fun readCurrents() {
         currentReadCallbacks.forEach { it.invoke() }
-
-        if (started) currentLog["hub current (A)"] = hub.getCurrent(CurrentUnit.AMPS)
     }
 }
 

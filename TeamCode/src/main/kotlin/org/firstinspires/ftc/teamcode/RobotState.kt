@@ -7,7 +7,6 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
-import org.firstinspires.ftc.teamcode.logging.Loggers
 
 @optics
 data class RobotState(
@@ -16,7 +15,6 @@ data class RobotState(
     val chub: ControlHubHardware,
     val ehub: ExHubHardware,
     val commandHandler: CommandHandler,
-    val loggers: Loggers,
 
     val imuState: ImuState,
     val driveState: DriveState,

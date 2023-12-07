@@ -39,7 +39,10 @@ data class DriveState(
 sealed interface DriveControlState {
     data object Idle : DriveControlState
     data class Fixpoint(val target: Pose2d) : DriveControlState
-    data class Following(val trajectory: TrajectorySequence) : DriveControlState
+    data class Following(val trajectory: TrajectorySequence) : DriveControlState {
+        override fun toString() =
+            "Following(trajectory=${trajectory.start()} -> ${trajectory.end()})"
+    }
 }
 
 object DriveConfig {
