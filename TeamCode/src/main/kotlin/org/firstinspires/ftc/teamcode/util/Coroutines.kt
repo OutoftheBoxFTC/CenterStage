@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.util
 
 import arrow.core.Nel
+import arrow.fx.coroutines.Race3
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
@@ -19,3 +20,5 @@ context(CoroutineScope)
 fun CommandHandler.launchCommand(required: Nel<Subsystem>, action: suspend () -> Unit) = launch {
     runNewCommand(required, action)
 }
+
+fun <T> Race3<T, T, T>.merge() = fold({ it }, { it }, { it })
