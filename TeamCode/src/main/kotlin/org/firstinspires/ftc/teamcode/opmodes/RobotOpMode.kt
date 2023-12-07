@@ -5,8 +5,10 @@ import arrow.fx.coroutines.resourceScope
 import arrow.optics.copy
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry
+import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
+import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
@@ -22,10 +24,20 @@ import kotlinx.coroutines.withContext
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.Globals.defaultRobotState
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
+import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
+import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
+import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
+import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.runDefaultImuHandler
 import org.firstinspires.ftc.teamcode.actions.hardware.runRoadrunnerDrivetrain
 import org.firstinspires.ftc.teamcode.actions.hardware.runThreadedImuHandler
+import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.setTwistPosition
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.hardware.IMU_NAME
@@ -36,7 +48,9 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 abstract class RobotOpMode(
     private val runMultiThreaded: Boolean = true,
     private val monitorOpmodeStop: Boolean = true,
-    private val imuRunMode: ImuRunMode = ImuRunMode.THREADED
+    private val imuRunMode: ImuRunMode = ImuRunMode.THREADED,
+    private val initializeServos: Boolean = false,
+    private val resetPoseOnStart: Boolean = true
 ) : LinearOpMode() {
     enum class ImuRunMode {
         NONE,
@@ -52,6 +66,23 @@ abstract class RobotOpMode(
         withContext(Dispatchers.IO) {
             waitForStart()
         }
+
+        if (resetPoseOnStart) resetDrivePose(Pose2d())
+    }
+
+    private suspend fun initializeServos() {
+        openClaws()
+        setTwistPosition(TwistPosition.STRAIGHT)
+        setArmPosition(ArmPosition.NEUTRAL)
+        setTiltPosition(IntakeTiltPosition.LOW)
+        suspendFor(500)
+        profileArm(ArmPosition.TRANSFER)
+        suspendFor(200)
+        setTiltPosition(IntakeTiltPosition.HIGH)
+        suspendFor(400)
+        closeClaws()
+        suspendFor(300)
+        setTiltPosition(IntakeTiltPosition.LOW)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
@@ -100,7 +131,10 @@ abstract class RobotOpMode(
         }
 
         Globals[mainLooperLens].scheduleCoroutine {
-            val job = launch { runSuspendOpMode() }
+            val job = launch {
+                if (initializeServos) initializeServos()
+                runSuspendOpMode()
+            }
 
             suspendUntil {
                 manualStop || job.isCompleted || (monitorOpmodeStop && !opModeIsActive() && !opModeInInit())

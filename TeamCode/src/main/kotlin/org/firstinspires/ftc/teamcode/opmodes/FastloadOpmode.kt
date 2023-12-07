@@ -33,7 +33,8 @@ import kotlin.io.path.writeText
 
 @TeleOp
 class FastloadOpmode : RobotOpMode(
-    monitorOpmodeStop = false
+    monitorOpmodeStop = false,
+    resetPoseOnStart = false
 ) {
     private val startingPose = Pose2d()
 
