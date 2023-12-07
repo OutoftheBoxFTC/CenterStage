@@ -4,6 +4,7 @@ import arrow.core.nel
 import arrow.fx.coroutines.resourceScope
 import arrow.optics.optics
 import com.acmerobotics.roadrunner.geometry.Pose2d
+import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
@@ -15,21 +16,23 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import org.firstinspires.ftc.teamcode.Command
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
-import org.firstinspires.ftc.teamcode.Command
-import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.cross
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -43,15 +46,20 @@ data class DriveState(
 sealed interface DriveControlState {
     data object Idle : DriveControlState
     data class Fixpoint(val target: Pose2d) : DriveControlState
-    data class Following(val trajectory: TrajectorySequence) : DriveControlState {
+    data class Trajectory(val trajectory: TrajectorySequence) : DriveControlState {
         override fun toString() =
             "Following(trajectory=${trajectory.start()} -> ${trajectory.end()})"
     }
+    data class LinePath(
+        val start: Vector2d, val end: Vector2d,
+        val heading: Double
+    ) : DriveControlState
 }
 
 object DriveConfig {
     val translationalPid = PidCoefs(0.5, 0.0, 0.02)
     val headingPid = PidCoefs(3.2, 0.0, 0.2)
+    const val lineFollowerLookaheadDist = 12.0
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -143,7 +151,7 @@ private suspend fun runDriveCommand(action: suspend () -> Unit) =
 
 suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
     resourceScope {
-        G[RobotState.driveState.driveControlState] = DriveControlState.Following(traj)
+        G[RobotState.driveState.driveControlState] = DriveControlState.Trajectory(traj)
 
         val rrDrive = install(
             acquire = {
@@ -162,12 +170,50 @@ suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
     }
 }
 
+suspend fun followLinePath(
+    start: Vector2d,
+    end: Vector2d,
+    heading: Double,
+    maxPower: () -> Double = { 1.0 },
+    stopDist: Double = 5.0
+) = runDriveCommand {
+    G[RobotState.driveState.driveControlState] = DriveControlState.LinePath(start, end, heading)
+
+    suspendUntil {
+        val pose = currentDrivePose()
+        val multiplier = maxPower().coerceIn(0.0..1.0)
+
+        val lineVec = end - start
+        val startToPose = pose.vec() - start
+
+        val dist = startToPose cross (lineVec / lineVec.norm())
+
+        val driveHeading = lineVec.angle() + atan(dist / DriveConfig.lineFollowerLookaheadDist)
+        val headingError = Angle.normDelta(heading - pose.heading)
+
+        val poseVel = Pose2d(
+            Vector2d.polar(multiplier, driveHeading),
+            headingError * DriveConfig.headingPid.kP
+        )
+
+        setDrivePowers(poseVel)
+
+        end - pose.vec() dot lineVec / lineVec.norm() <= stopDist
+    }
+
+    setDrivePowers(0.0, 0.0, 0.0)
+    G[RobotState.driveState.driveControlState] = DriveControlState.Idle
+}
+
 suspend fun followTrajectoryFixpoint(traj: TrajectorySequence, stopDist: Double = 0.5) =
     supervisorScope {
         launch { followTrajectory(traj) }
         suspendUntil { currentDrivePose().vec() distTo traj.end().vec() <= stopDist }
         launchFixpoint(traj.end())
     }
+
+suspend fun lineTo(target: Pose2d, maxPower: () -> Double = { 1.0 }, stopDist: Double = 5.0) =
+    followLinePath(currentDrivePose().vec(), target.vec(), target.heading, maxPower, stopDist)
 
 private val stopDrivetrainCommand = Command(Subsystem.DRIVETRAIN.nel()) {
     G[RobotState.driveState.driveControlState] = DriveControlState.Idle
@@ -184,6 +230,8 @@ fun setDrivePowers(x: Double, y: Double, r: Double) = G.chub.run {
     bl.power = -x -y +r
     br.power = +x -y +r
 }
+
+fun setDrivePowers(poseVel: Pose2d) = setDrivePowers(poseVel.x, poseVel.y, poseVel.heading)
 
 fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
     val multiplier = 12.0 / G.chub.voltageSensor.voltage
