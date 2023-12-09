@@ -32,6 +32,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
+import org.firstinspires.ftc.teamcode.actions.hardware.resetExtensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.runDefaultImuHandler
 import org.firstinspires.ftc.teamcode.actions.hardware.runRoadrunnerDrivetrain
 import org.firstinspires.ftc.teamcode.actions.hardware.runThreadedImuHandler
@@ -50,6 +51,7 @@ abstract class RobotOpMode(
     private val monitorOpmodeStop: Boolean = true,
     private val imuRunMode: ImuRunMode = ImuRunMode.THREADED,
     private val initializeServos: Boolean = false,
+    private val resetEncoders: Boolean = false,
     private val resetPoseOnStart: Boolean = true
 ) : LinearOpMode() {
     enum class ImuRunMode {
@@ -83,6 +85,10 @@ abstract class RobotOpMode(
         closeClaws()
         suspendFor(300)
         setTiltPosition(IntakeTiltPosition.LOW)
+    }
+
+    private fun resetEncoders() {
+        resetExtensionLength()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
@@ -132,6 +138,7 @@ abstract class RobotOpMode(
 
         Globals[mainLooperLens].scheduleCoroutine {
             val job = launch {
+                if (resetEncoders) resetEncoders()
                 if (initializeServos) initializeServos()
                 runSuspendOpMode()
             }

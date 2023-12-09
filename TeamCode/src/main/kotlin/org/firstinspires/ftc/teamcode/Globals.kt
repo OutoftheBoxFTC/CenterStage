@@ -36,7 +36,7 @@ object Globals {
 
             imuState = ImuState(0.0, 0.0),
             driveState = DriveState(Pose2d(), DriveControlState.Idle),
-            extensionState = ExtensionState(MotionState(0.0, 0.0)),
+            extensionState = ExtensionState(0),
             visionState = VisionState()
         )
     }
