@@ -9,6 +9,7 @@ import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.util.ElapsedTime
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -28,7 +29,7 @@ import org.firstinspires.ftc.teamcode.util.set
 @Config
 abstract class PidfTuner(
     private val subsystem: Subsystem
-) : RobotOpMode() {
+) : RobotOpMode(resetEncoders = true) {
     companion object {
         @JvmField var kP = 0.0
         @JvmField var kI = 0.0
@@ -68,12 +69,16 @@ abstract class PidfTuner(
         }
     }
 
-    private suspend fun runPid(target: Double): Nothing = runPidController(
-        coefs = pidCoefs,
-        input = ::readInput,
-        target = { target },
-        output = ::updateOutput
-    )
+    private suspend fun runPid(target: Double): Nothing {
+        this.target = target
+
+        runPidController(
+            coefs = pidCoefs,
+            input = ::readInput,
+            target = { target },
+            output = ::updateOutput
+        )
+    }
 
     private suspend fun profileTo(target: MotionState) {
         val timer = ElapsedTime()
@@ -120,7 +125,7 @@ abstract class PidfTuner(
 
     @Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
     private val profileState: FS = FS {
-        launch {
+        val job = launch {
             while (true) {
                 profileTo(MotionState(maxPos, 0.0))
                 withTimeoutOrNull(1000) { runPid(maxPos) }
@@ -132,6 +137,8 @@ abstract class PidfTuner(
         loopYieldWhile({ !gamepad1.y }) {
             telemetry["Current State"] = "Motion Profile"
         }
+
+        job.cancelAndJoin()
 
         freeState
     }
