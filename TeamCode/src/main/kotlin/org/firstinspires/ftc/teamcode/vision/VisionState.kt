@@ -5,5 +5,6 @@ import org.openftc.apriltag.AprilTagDetection
 
 @optics
 data class VisionState(
-    val aprilTagDetections: List<AprilTagDetection>
+    val aprilTagDetections: List<AprilTagDetection> = emptyList(),
+    val pixelStackPosition: Int? = null
 ) { companion object }
