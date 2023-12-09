@@ -12,6 +12,10 @@ object Controls {
     val slowDrive by driverInput { left_bumper }
     val imuResetAngle by driverInput { right_bumper }
 
+    // Main State
+    val hangRight by driverInput { y }
+    val hangLeft by driverInput { a }
+
     // Intake state
     val enterIntakeState by operatorInput { x }
     val exitIntakeState by operatorInput { b }
