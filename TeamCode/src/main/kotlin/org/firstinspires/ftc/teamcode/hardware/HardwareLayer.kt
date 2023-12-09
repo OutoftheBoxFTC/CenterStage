@@ -6,13 +6,16 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
 import com.qualcomm.robotcore.util.ElapsedTime
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.hardware.devices.KCRServo
 import org.firstinspires.ftc.teamcode.hardware.devices.KDevice
 import org.firstinspires.ftc.teamcode.hardware.devices.KMotor
 import org.firstinspires.ftc.teamcode.hardware.devices.KServo
+import org.firstinspires.ftc.teamcode.hardware.devices.KWebcam
 import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 import org.firstinspires.ftc.teamcode.util.ReadWriteProperty
+import org.openftc.easyopencv.OpenCvCameraFactory
 import kotlin.math.roundToInt
 
 abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) {
@@ -62,7 +65,20 @@ abstract class HardwareLayer(protected val hwMap: HardwareMap, hubName: String) 
         hwMap[CRServo::class.java, name].apply(config)
     ).registerDevice()
 
-    private var started = false
+    protected fun webcam(name: String, enablePreview: Boolean): KWebcam {
+        val webcamName = hwMap[WebcamName::class.java, name]
+
+        val camera = if (enablePreview) {
+            val monitorId = hwMap.appContext.resources.getIdentifier(
+                "cameraMonitorViewId", "id", hwMap.appContext.packageName
+            )
+
+            OpenCvCameraFactory.getInstance().createWebcam(webcamName, monitorId)
+        } else OpenCvCameraFactory.getInstance().createWebcam(webcamName)
+
+        return KWebcam(camera).registerDevice()
+    }
+
     private val timer = ElapsedTime()
 
     fun syncHardware() {

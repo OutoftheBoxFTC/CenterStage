@@ -7,6 +7,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
+import org.firstinspires.ftc.teamcode.vision.VisionState
 
 @optics
 data class RobotState(
@@ -18,5 +19,7 @@ data class RobotState(
 
     val imuState: ImuState,
     val driveState: DriveState,
-    val extensionState: ExtensionState
+    val extensionState: ExtensionState,
+
+    val visionState: VisionState
 ) { companion object }

@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
+import org.firstinspires.ftc.teamcode.vision.VisionState
 
 object Globals {
     lateinit var robotState: MutableStateFlow<RobotState>
@@ -35,7 +36,8 @@ object Globals {
 
             imuState = ImuState(0.0, 0.0),
             driveState = DriveState(Pose2d(), DriveControlState.Idle),
-            extensionState = ExtensionState(MotionState(0.0, 0.0))
+            extensionState = ExtensionState(MotionState(0.0, 0.0)),
+            visionState = VisionState()
         )
     }
 
