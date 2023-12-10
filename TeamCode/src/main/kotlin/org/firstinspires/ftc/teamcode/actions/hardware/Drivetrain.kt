@@ -59,7 +59,7 @@ sealed interface DriveControlState {
 object DriveConfig {
     val translationalPid = PidCoefs(0.5, 0.0, 0.02)
     val headingPid = PidCoefs(3.2, 0.0, 0.2)
-    const val lineFollowerLookaheadDist = 12.0
+    const val lineFollowerLookaheadDist = 6.0
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -175,7 +175,7 @@ suspend fun followLinePath(
     end: Vector2d,
     heading: Double,
     maxPower: () -> Double = { 1.0 },
-    stopDist: Double = 5.0
+    stopDist: Double = 18.0
 ) = runDriveCommand {
     G[RobotState.driveState.driveControlState] = DriveControlState.LinePath(start, end, heading)
 
@@ -186,13 +186,14 @@ suspend fun followLinePath(
         val lineVec = end - start
         val startToPose = pose.vec() - start
 
-        val dist = startToPose cross (lineVec / lineVec.norm())
+        val dist = startToPose cross lineVec / lineVec.norm()
 
         val driveHeading = lineVec.angle() + atan(dist / DriveConfig.lineFollowerLookaheadDist)
         val headingError = Angle.normDelta(heading - pose.heading)
 
+        // TODO Account for non-zero heading (?)
         val poseVel = Pose2d(
-            Vector2d.polar(multiplier, driveHeading),
+            Vector2d.polar(multiplier, driveHeading + headingError),
             headingError * DriveConfig.headingPid.kP
         )
 
@@ -212,7 +213,7 @@ suspend fun followTrajectoryFixpoint(traj: TrajectorySequence, stopDist: Double 
         launchFixpoint(traj.end())
     }
 
-suspend fun lineTo(target: Pose2d, maxPower: () -> Double = { 1.0 }, stopDist: Double = 5.0) =
+suspend fun lineTo(target: Pose2d, maxPower: () -> Double = { 1.0 }, stopDist: Double = 18.0) =
     followLinePath(currentDrivePose().vec(), target.vec(), target.heading, maxPower, stopDist)
 
 private val stopDrivetrainCommand = Command(Subsystem.DRIVETRAIN.nel()) {
