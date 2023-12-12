@@ -6,7 +6,7 @@
             <goBILDA5202SeriesMotor name="1" port="1" />
             <goBILDA5202SeriesMotor name="2" port="2" />
             <goBILDA5202SeriesMotor name="3" port="3" />
-            <Servo name="s0" port="0" />
+            <ContinuousRotationServo name="s0" port="0" />
             <Servo name="s1" port="1" />
             <Servo name="s2" port="2" />
             <Servo name="s3" port="3" />
