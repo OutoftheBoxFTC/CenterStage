@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
-import com.outoftheboxrobotics.suspendftc.suspendFor
-import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
@@ -14,6 +12,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setTwistPosition
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 
 @TeleOp
 class TransferTest : RobotOpMode() {
@@ -26,7 +25,7 @@ class TransferTest : RobotOpMode() {
         while (true) {
             setArmPosition(ArmPosition.NEUTRAL)
             setTiltPosition(IntakeTiltPosition.LOW)
-            suspendFor(500)
+            setTwistPosition(TwistPosition.STRAIGHT)
 
             loopYieldWhile({ !gamepad1.x }) {
                 G.ehub.intakeRoller.power = when {
@@ -36,24 +35,28 @@ class TransferTest : RobotOpMode() {
                 }
             }
 
-            G.ehub.intakeRoller.power = 0.0
+            G.ehub.intakeRoller.power = -0.8
 
-            setArmPosition(ArmPosition.TRANSFER)
-            suspendFor(200)
             setTiltPosition(IntakeTiltPosition.HIGH)
-            suspendFor(400)
+            pause()
+            setArmPosition(ArmPosition.TRANSFER)
+            pause()
             closeClaws()
-            suspendFor(300)
+            pause()
             setTiltPosition(IntakeTiltPosition.LOW)
-            suspendFor(400)
+            pause()
             setArmPosition(ArmPosition.OUTTAKE)
+            pause()
+            setTwistPosition(TwistPosition.HORIZONTAL)
 
-            suspendUntil { gamepad1.y }
+            pause()
 
             setArmPosition(ArmPosition.FLOOR)
-            suspendFor(400)
+            pause()
             openClaws()
-            suspendFor(1000)
+            pause()
         }
     }
+
+    private suspend fun pause() = suspendUntilRisingEdge { gamepad1.b }
 }
