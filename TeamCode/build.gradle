@@ -10,19 +10,39 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 // please think carefully as to whether such customizations are really necessary
 // before doing so.
 
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://www.matthewo.tech/maven/' }
+    }
+
+    dependencies {
+        classpath 'org.team11260:fast-load-plugin:0.1.1'
+    }
+}
+
 // Custom definitions may go here
 
 // Include common definitions from above.
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'org.team11260.fast-load-plugin'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
     packagingOptions {
         jniLibs.useLegacyPackaging true
+    }
+}
+
+repositories {
+    maven {
+        url = 'https://www.matthewo.tech/maven/'
     }
 }
 
@@ -42,8 +62,12 @@ dependencies {
     ksp 'io.arrow-kt:arrow-optics-ksp-plugin:1.2.0'
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2"
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     implementation 'com.github.rk012:SuspendLooper:main-SNAPSHOT'
+
+    implementation 'org.team11260:fast-load:0.1.1'
 }
 
 tasks.withType(KotlinCompile).configureEach {
