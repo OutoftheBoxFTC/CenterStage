@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
+import arrow.core.merge
 import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -18,16 +19,30 @@ class ArmProfileTest : RobotOpMode() {
             val pos = raceN(
                 coroutineContext,
                 {
-                    suspendUntil { gamepad1.x }
-                    ArmPosition.TRANSFER
+                    raceN(
+                        coroutineContext,
+                        {
+                            suspendUntil { gamepad1.x }
+                            ArmPosition.TRANSFER
+                        },
+                        {
+                            suspendUntil { gamepad1.y }
+                            ArmPosition.NEUTRAL
+                        }
+                    ).merge()
                 },
                 {
-                    suspendUntil { gamepad1.y }
-                    ArmPosition.NEUTRAL
-                },
-                {
-                    suspendUntil { gamepad1.b }
-                    ArmPosition.OUTTAKE
+                    raceN(
+                        coroutineContext,
+                        {
+                            suspendUntil { gamepad1.b }
+                            ArmPosition.OUTTAKE
+                        },
+                        {
+                            suspendUntil { gamepad1.a }
+                            ArmPosition.AUTON_INIT
+                        }
+                    ).merge()
                 }
             ).merge()
 

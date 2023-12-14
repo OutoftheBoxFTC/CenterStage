@@ -10,6 +10,7 @@ enum class ArmPosition(val pos: Double) {
     FLOOR(1.0),
     OUTTAKE(0.841),
     NEUTRAL(0.266),
+    AUTON_INIT(0.325),
     TRANSFER(0.127)
 }
 
@@ -33,7 +34,7 @@ enum class ClawPosition(val pos: Double, val isBlack: Boolean) {
 
 object ArmConfig {
     const val maxArmVel = 3.0
-    const val maxArmAccel = 1.0
+    const val maxArmAccel = 4.0
 }
 
 fun setArmPosition(pos: Double) { G.chub.arm.position = pos }
