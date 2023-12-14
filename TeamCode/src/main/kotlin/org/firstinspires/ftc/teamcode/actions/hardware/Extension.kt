@@ -2,18 +2,14 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 
 import arrow.core.nel
 import arrow.optics.optics
-import com.acmerobotics.roadrunner.profile.MotionProfileGenerator
-import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
 import org.firstinspires.ftc.teamcode.RobotState
-import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
-import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
-import org.firstinspires.ftc.teamcode.actions.controllers.runMotionProfile
-import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
 import org.firstinspires.ftc.teamcode.Subsystem
+import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
+import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
 import org.firstinspires.ftc.teamcode.extensionState
 import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.util.G
@@ -28,6 +24,7 @@ object ExtensionConfig {
     const val pidRange = 200
 
     val pidCoefs: PidCoefs = PidCoefs(0.04, 0.0, 0.0001)
+    const val extensionHoldPower = -0.15
 }
 
 fun extensionLength() = G.ehub.extension.currentPosition - G[RobotState.extensionState.encoderBias]
@@ -36,6 +33,9 @@ fun resetExtensionLength(newPos: Int = 0) {
 }
 
 fun setExtensionPower(power: Double) { G.ehub.extension.power = power }
+
+fun setExtensionHold() = setExtensionPower(ExtensionConfig.extensionHoldPower)
+
 suspend fun runExtensionTo(
     target: Int,
     timeout: Long = 2000,

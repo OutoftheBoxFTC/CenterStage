@@ -3,13 +3,21 @@ package org.firstinspires.ftc.teamcode.opmodes.autonomous
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryFixpoint
+import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
-import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
+import org.firstinspires.ftc.teamcode.actions.hardware.setClawPos
+import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionHold
 import org.firstinspires.ftc.teamcode.util.buildTrajectory
 import kotlin.math.PI
 
-abstract class FarStackAuto : RobotOpMode() {
+abstract class FarStackAuto : AutonOpMode() {
     private enum class RandomizationPosition {
         LEFT,
         CENTER,
@@ -20,8 +28,8 @@ abstract class FarStackAuto : RobotOpMode() {
     abstract val frontPreloadFloor: Pose2d
     abstract val leftPreloadFloor: Pose2d
 
-    override suspend fun runSuspendOpMode() {
-        val preloadTarget = RandomizationPosition.LEFT
+    override suspend fun runSuspendOpMode() = coroutineScope {
+        val preloadTarget = RandomizationPosition.RIGHT
 
         val preloadRightTrajectory = buildTrajectory(Pose2d()) {
             setReversed(true)
@@ -38,17 +46,31 @@ abstract class FarStackAuto : RobotOpMode() {
             splineTo(leftPreloadFloor.vec(), leftPreloadFloor.heading + PI)
         }
 
-        suspendUntilStart()
-        resetDrivePose(Pose2d())
-
-        when (preloadTarget) {
-            RandomizationPosition.RIGHT -> preloadRightTrajectory
-            RandomizationPosition.LEFT -> preloadLeftTrajectory
-            RandomizationPosition.CENTER -> preloadCenterTrajectory
+        launch {
+            runAutonInit()
         }.let {
-            followTrajectoryFixpoint(it)
+            suspendUntilStart()
+            it.cancelAndJoin()
         }
 
+        resetDrivePose(Pose2d())
+        setExtensionHold()
+        closeClaws()
+
+        coroutineScope {
+            launch { profileArm(ArmPosition.FLOOR) }
+
+            when (preloadTarget) {
+                RandomizationPosition.RIGHT -> preloadRightTrajectory
+                RandomizationPosition.LEFT -> preloadLeftTrajectory
+                RandomizationPosition.CENTER -> preloadCenterTrajectory
+            }.let {
+                followTrajectoryFixpoint(it)
+            }
+        }
+
+        suspendFor(1000)
+        setClawPos(ClawPosition.BLACK_OPEN)
         suspendFor(5000)
     }
 }
@@ -60,4 +82,12 @@ class BlueFarStackAuto : FarStackAuto() {
     override val leftPreloadFloor = Pose2d(-19.151, -1.784, 0.394)
 
     val preOuttakePreload = Pose2d(-8.731, -24.850, 1.566)
+    val outtake = Pose2d(-26.771, -26.772, PI / 2)
+}
+
+@Autonomous
+class RedFarStackAuto : FarStackAuto() {
+    override val rightPreloadFloor = Pose2d(-20.378, 1.137, 5.869)
+    override val frontPreloadFloor = Pose2d(-21.243, -1.822, 6.273)
+    override val leftPreloadFloor = Pose2d(-20.272, -4.788, 0.584)
 }

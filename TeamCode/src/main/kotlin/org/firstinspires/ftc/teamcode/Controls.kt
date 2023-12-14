@@ -4,6 +4,9 @@ import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 
 object Controls {
+    // Autonomous
+    val openClaw by driverInput { right_bumper }
+
     // Common
     val driveStrafeX by driverInput { -left_stick_y.toDouble() }
     val driveStrafeY by driverInput { -left_stick_x.toDouble() }
