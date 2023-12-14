@@ -2,10 +2,14 @@
 
 package org.firstinspires.ftc.teamcode.util
 
+import com.acmerobotics.roadrunner.geometry.Pose2d
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.Controls
 import org.firstinspires.ftc.teamcode.FunctionalState
 import org.firstinspires.ftc.teamcode.Globals
+import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -28,3 +32,11 @@ interface ReadWriteProperty<V> : ReadWriteProperty<Any?, V> {
 }
 
 operator fun Telemetry.set(caption: String, value: Any) { addData(caption, value) }
+
+fun buildTrajectory(
+    startPose: Pose2d,
+    block: TrajectorySequenceBuilder.() -> Unit
+): TrajectorySequence = SampleMecanumDrive
+    .trajectorySequenceBuilder(startPose)
+    .apply(block)
+    .build()

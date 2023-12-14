@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence;
 
-import static org.firstinspires.ftc.teamcode.util.CoroutinesKt.trySendJava;
-
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 
@@ -32,11 +30,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
-import arrow.core.Either;
-import arrow.core.EitherKt;
-import kotlin.Unit;
-import kotlinx.coroutines.channels.SendChannel;
 
 @Config
 public class TrajectorySequenceRunner {
@@ -264,7 +257,10 @@ public class TrajectorySequenceRunner {
 
         SequenceSegment currentSegment = null;
 
-        if (currentTrajectorySequence != null) {
+        if (
+                currentTrajectorySequence != null &&
+                currentSegmentIndex < currentTrajectorySequence.size()
+        ) {
             currentSegment = currentTrajectorySequence.get(currentSegmentIndex);
         }
 

@@ -14,7 +14,6 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.firstinspires.ftc.teamcode.Command
 import org.firstinspires.ftc.teamcode.Globals
@@ -206,10 +205,15 @@ suspend fun followLinePath(
     G[RobotState.driveState.driveControlState] = DriveControlState.Idle
 }
 
-suspend fun followTrajectoryFixpoint(traj: TrajectorySequence, stopDist: Double = 0.5) =
+suspend fun followTrajectoryFixpoint(
+    traj: TrajectorySequence,
+    stopDist: Double = 0.5
+) =
     supervisorScope {
-        launch { followTrajectory(traj) }
-        suspendUntil { currentDrivePose().vec() distTo traj.end().vec() <= stopDist }
+//        launch { followTrajectory(traj) }
+//        suspendUntil { currentDrivePose().vec() distTo traj.end().vec() <= stopDist }
+
+        followTrajectory(traj)
         launchFixpoint(traj.end())
     }
 
