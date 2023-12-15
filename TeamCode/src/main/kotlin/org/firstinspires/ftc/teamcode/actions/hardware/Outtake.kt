@@ -7,11 +7,11 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.teamcode.util.G
 
 enum class ArmPosition(val pos: Double) {
-    FLOOR(1.0),
-    OUTTAKE(0.841),
-    NEUTRAL(0.266),
-    AUTON_INIT(0.325),
-    TRANSFER(0.127)
+    FLOOR(0.976),
+    OUTTAKE(0.819),
+    AUTON_INIT(0.299),
+    NEUTRAL(0.220),
+    TRANSFER(0.09)
 }
 
 enum class TwistPosition(val pos: Double) {
