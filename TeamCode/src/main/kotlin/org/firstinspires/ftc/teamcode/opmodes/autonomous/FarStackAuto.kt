@@ -18,8 +18,11 @@ import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionHold
 import org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.buildTrajectory
+import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.setAccelConstraint
+import org.firstinspires.ftc.teamcode.vision.AprilTagDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
+import org.firstinspires.ftc.teamcode.vision.aprilTagDetections
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 import kotlin.math.PI
@@ -29,24 +32,31 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
     abstract val frontPreloadFloor: Pose2d
     abstract val leftPreloadFloor: Pose2d
 
+    abstract val preOuttakePreload: Pose2d
+
+    abstract val preOuttakeLeft: Pose2d
+    abstract val preOuttakeCenter: Pose2d
+    abstract val preOuttakeRight: Pose2d
+
     override suspend fun runSuspendOpMode() = coroutineScope {
-        val preloadRightTrajectory = buildTrajectory(Pose2d()) {
+        fun preloadFloorTrajectory(target: Pose2d) = buildTrajectory(Pose2d()) {
             setReversed(true)
             setAccelConstraint(DriveConstants.MAX_ACCEL / 2)
-            splineTo(rightPreloadFloor.vec(), rightPreloadFloor.heading + PI)
+            splineTo(target.vec(), target.heading + PI)
         }
 
-        val preloadCenterTrajectory = buildTrajectory(Pose2d()) {
-            setReversed(true)
-            setAccelConstraint(DriveConstants.MAX_ACCEL / 2)
-            splineTo(frontPreloadFloor.vec(), frontPreloadFloor.heading + PI)
+        val preloadRightTrajectory = preloadFloorTrajectory(rightPreloadFloor)
+        val preloadCenterTrajectory = preloadFloorTrajectory(frontPreloadFloor)
+        val preloadLeftTrajectory = preloadFloorTrajectory(leftPreloadFloor)
+
+        fun floorOuttakeTrajectory(start: Pose2d, dest: Pose2d) = buildTrajectory(start) {
+            splineToSplineHeading(preOuttakePreload, -PI)
+            splineToConstantHeading(dest.vec(), -PI)
         }
 
-        val preloadLeftTrajectory = buildTrajectory(Pose2d()) {
-            setReversed(true)
-            setAccelConstraint(DriveConstants.MAX_ACCEL / 2)
-            splineTo(leftPreloadFloor.vec(), leftPreloadFloor.heading + PI)
-        }
+        val rightPreloadOuttakeTraj = floorOuttakeTrajectory(rightPreloadFloor, preOuttakeRight)
+        val centerPreloadOuttakeTraj = floorOuttakeTrajectory(frontPreloadFloor, preOuttakeCenter)
+        val leftPreloadOuttakeTraj = floorOuttakeTrajectory(leftPreloadFloor, preOuttakeLeft)
 
         launch {
             runAutonInit()
@@ -55,13 +65,17 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             it.cancelAndJoin()
         }
 
+        val randomizationPos = G[RobotState.visionState.preloadPosition]
+
+        G.chub.outtakeCamera.setPipeline(AprilTagDetectionPipeline.outtakePipeline())
+
         resetDrivePose(Pose2d())
         setExtensionHold()
         closeClaws()
 
         profileArm(ArmPosition.FLOOR)
 
-        when (G[RobotState.visionState.preloadPosition]) {
+        when (randomizationPos) {
             PreloadDetectionPipeline.RandomizationPosition.RIGHT -> preloadRightTrajectory
             PreloadDetectionPipeline.RandomizationPosition.LEFT -> preloadLeftTrajectory
             PreloadDetectionPipeline.RandomizationPosition.CENTER -> preloadCenterTrajectory
@@ -69,9 +83,27 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             followTrajectoryFixpoint(it)
         }
 
-        suspendFor(1000)
+        suspendFor(400)
         setClawPos(ClawPosition.RED_OPEN)
-        suspendFor(5000)
+        suspendFor(100)
+
+        coroutineScope {
+            launch { profileArm(ArmPosition.OUTTAKE) }
+
+            when (randomizationPos) {
+                PreloadDetectionPipeline.RandomizationPosition.LEFT -> leftPreloadOuttakeTraj
+                PreloadDetectionPipeline.RandomizationPosition.CENTER -> centerPreloadOuttakeTraj
+                PreloadDetectionPipeline.RandomizationPosition.RIGHT -> rightPreloadOuttakeTraj
+            }.let {
+                followTrajectoryFixpoint(it)
+            }
+        }
+
+        mainLoop {
+            telemetry.addLine(
+                G[RobotState.visionState.aprilTagDetections].map { it.pose.x }.joinToString()
+            )
+        }
     }
 }
 
@@ -81,8 +113,11 @@ class BlueFarStackAuto : FarStackAuto(true) {
     override val frontPreloadFloor = Pose2d(-19.315, 0.427, 6.263)
     override val leftPreloadFloor = Pose2d(-19.151, -1.784, 0.394)
 
-    val preOuttakePreload = Pose2d(-8.731, -24.850, 1.566)
-    val outtake = Pose2d(-26.771, -26.772, PI / 2)
+    override val preOuttakePreload = Pose2d(-13.497, -21.995, PI /2)
+
+    override val preOuttakeLeft = Pose2d(-18.626, -23.579, PI / 2)
+    override val preOuttakeCenter = Pose2d(-25.294, -23.579, PI / 2)
+    override val preOuttakeRight = Pose2d(-31.330, -23.579, PI / 2)
 }
 
 @Autonomous
@@ -90,4 +125,12 @@ class RedFarStackAuto : FarStackAuto(false) {
     override val rightPreloadFloor = Pose2d(-20.378, 1.137, 5.869)
     override val frontPreloadFloor = Pose2d(-19.243, -1.822, 6.273)
     override val leftPreloadFloor = Pose2d(-18.272, -4.788, 0.584)
+
+    override val preOuttakePreload = Pose2d(-6.86, 21.883, -PI / 2)
+
+    override val preOuttakeLeft = Pose2d(-31.979, 24.664, -PI / 2)
+    override val preOuttakeCenter = Pose2d(-26.041, 24.664, -PI / 2)
+    override val preOuttakeRight = Pose2d(-20.400, 24.664, -PI / 2)
+
+
 }

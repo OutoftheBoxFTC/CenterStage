@@ -32,6 +32,14 @@ class AprilTagDetectionPipeline(
     private val cx: Double,
     private val cy: Double
 ) : OpenCvPipeline() {
+    companion object {
+        fun outtakePipeline() = AprilTagDetectionPipeline(
+            tagsize = 2.0,
+            fx = 822.317, fy = 822.317,
+            cx = 319.495, cy = 242.502
+        )
+    }
+
     private var nativeApriltagPtr: Long
 
     private val grey = Mat()

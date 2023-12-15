@@ -83,7 +83,7 @@ private fun TreeLog.rootLog(state: RobotState) {
 
 @Config
 object LoggingConfig {
-    @JvmField var queryString = ""
+    @JvmField var queryString = "localizer"
 }
 
 fun Telemetry.logState(state: RobotState) = object : TreeLog {
