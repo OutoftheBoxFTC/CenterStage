@@ -6,5 +6,7 @@ import org.openftc.apriltag.AprilTagDetection
 @optics
 data class VisionState(
     val aprilTagDetections: List<AprilTagDetection> = emptyList(),
-    val pixelStackPosition: Int? = null
+    val pixelStackPosition: Int? = null,
+    val preloadPosition: PreloadDetectionPipeline.RandomizationPosition =
+        PreloadDetectionPipeline.RandomizationPosition.RIGHT
 ) { companion object }

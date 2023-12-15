@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
@@ -14,23 +15,19 @@ import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.setClawPos
 import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionHold
+import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.buildTrajectory
+import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
+import org.firstinspires.ftc.teamcode.vision.preloadPosition
+import org.firstinspires.ftc.teamcode.visionState
 import kotlin.math.PI
 
 abstract class FarStackAuto : AutonOpMode() {
-    private enum class RandomizationPosition {
-        LEFT,
-        CENTER,
-        RIGHT
-    }
-
     abstract val rightPreloadFloor: Pose2d
     abstract val frontPreloadFloor: Pose2d
     abstract val leftPreloadFloor: Pose2d
 
     override suspend fun runSuspendOpMode() = coroutineScope {
-        val preloadTarget = RandomizationPosition.RIGHT
-
         val preloadRightTrajectory = buildTrajectory(Pose2d()) {
             setReversed(true)
             splineTo(rightPreloadFloor.vec(), rightPreloadFloor.heading + PI)
@@ -57,16 +54,14 @@ abstract class FarStackAuto : AutonOpMode() {
         setExtensionHold()
         closeClaws()
 
-        coroutineScope {
-            launch { profileArm(ArmPosition.FLOOR) }
+        profileArm(ArmPosition.FLOOR)
 
-            when (preloadTarget) {
-                RandomizationPosition.RIGHT -> preloadRightTrajectory
-                RandomizationPosition.LEFT -> preloadLeftTrajectory
-                RandomizationPosition.CENTER -> preloadCenterTrajectory
-            }.let {
-                followTrajectoryFixpoint(it)
-            }
+        when (G[RobotState.visionState.preloadPosition]) {
+            PreloadDetectionPipeline.RandomizationPosition.RIGHT -> preloadRightTrajectory
+            PreloadDetectionPipeline.RandomizationPosition.LEFT -> preloadLeftTrajectory
+            PreloadDetectionPipeline.RandomizationPosition.CENTER -> preloadCenterTrajectory
+        }.let {
+            followTrajectoryFixpoint(it)
         }
 
         suspendFor(1000)

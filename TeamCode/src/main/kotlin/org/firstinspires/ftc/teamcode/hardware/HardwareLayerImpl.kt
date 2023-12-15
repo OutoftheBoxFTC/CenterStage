@@ -49,6 +49,8 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
 
     val blackClaw = servo("s3")
     val redClaw = servo("s5")
+
+    val outtakeCamera = webcam("Outtake Webcam", true)
 }
 
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {
