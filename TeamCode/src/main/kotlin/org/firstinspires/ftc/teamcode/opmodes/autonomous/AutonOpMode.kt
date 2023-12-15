@@ -18,12 +18,14 @@ import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 
-abstract class AutonOpMode : RobotOpMode() {
+abstract class AutonOpMode(private var isBlue: Boolean) : RobotOpMode() {
     suspend fun runAutonInit(): Nothing {
-        G.chub.outtakeCamera.let {
-            it.startCamera(640, 480)
-            streamCamera(it)
-            it.setPipeline(PreloadDetectionPipeline())
+        G.chub.outtakeCamera.let { webcam ->
+            webcam.startCamera(640, 480)
+            streamCamera(webcam)
+            webcam.setPipeline(
+                PreloadDetectionPipeline().also { if (isBlue) it.setBlue() else it.setRed() }
+            )
         }
 
         setTwistPosition(TwistPosition.STRAIGHT)

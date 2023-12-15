@@ -7,6 +7,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.teamcode.Controls
 import org.firstinspires.ftc.teamcode.FunctionalState
 import org.firstinspires.ftc.teamcode.Globals
+import org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequenceBuilder
@@ -40,3 +41,15 @@ fun buildTrajectory(
     .trajectorySequenceBuilder(startPose)
     .apply(block)
     .build()
+
+fun TrajectorySequenceBuilder.setAccelConstraint(maxAccel: Double): TrajectorySequenceBuilder =
+    setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(maxAccel))
+
+fun TrajectorySequenceBuilder.setVelConstraint(maxVel: Double): TrajectorySequenceBuilder =
+    setVelConstraint(
+        SampleMecanumDrive.getVelocityConstraint(
+            maxVel,
+            DriveConstants.MAX_ANG_VEL,
+            DriveConstants.TRACK_WIDTH
+        )
+    )

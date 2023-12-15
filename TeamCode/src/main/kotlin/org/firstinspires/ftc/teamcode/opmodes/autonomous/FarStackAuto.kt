@@ -15,14 +15,16 @@ import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.setClawPos
 import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionHold
+import org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.buildTrajectory
+import org.firstinspires.ftc.teamcode.util.setAccelConstraint
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 import kotlin.math.PI
 
-abstract class FarStackAuto : AutonOpMode() {
+abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
     abstract val rightPreloadFloor: Pose2d
     abstract val frontPreloadFloor: Pose2d
     abstract val leftPreloadFloor: Pose2d
@@ -30,16 +32,19 @@ abstract class FarStackAuto : AutonOpMode() {
     override suspend fun runSuspendOpMode() = coroutineScope {
         val preloadRightTrajectory = buildTrajectory(Pose2d()) {
             setReversed(true)
+            setAccelConstraint(DriveConstants.MAX_ACCEL / 2)
             splineTo(rightPreloadFloor.vec(), rightPreloadFloor.heading + PI)
         }
 
         val preloadCenterTrajectory = buildTrajectory(Pose2d()) {
             setReversed(true)
+            setAccelConstraint(DriveConstants.MAX_ACCEL / 2)
             splineTo(frontPreloadFloor.vec(), frontPreloadFloor.heading + PI)
         }
 
         val preloadLeftTrajectory = buildTrajectory(Pose2d()) {
             setReversed(true)
+            setAccelConstraint(DriveConstants.MAX_ACCEL / 2)
             splineTo(leftPreloadFloor.vec(), leftPreloadFloor.heading + PI)
         }
 
@@ -65,13 +70,13 @@ abstract class FarStackAuto : AutonOpMode() {
         }
 
         suspendFor(1000)
-        setClawPos(ClawPosition.BLACK_OPEN)
+        setClawPos(ClawPosition.RED_OPEN)
         suspendFor(5000)
     }
 }
 
 @Autonomous
-class BlueFarStackAuto : FarStackAuto() {
+class BlueFarStackAuto : FarStackAuto(true) {
     override val rightPreloadFloor = Pose2d(-18.523, 5.557, 5.781)
     override val frontPreloadFloor = Pose2d(-19.315, 0.427, 6.263)
     override val leftPreloadFloor = Pose2d(-19.151, -1.784, 0.394)
@@ -81,8 +86,8 @@ class BlueFarStackAuto : FarStackAuto() {
 }
 
 @Autonomous
-class RedFarStackAuto : FarStackAuto() {
+class RedFarStackAuto : FarStackAuto(false) {
     override val rightPreloadFloor = Pose2d(-20.378, 1.137, 5.869)
-    override val frontPreloadFloor = Pose2d(-21.243, -1.822, 6.273)
-    override val leftPreloadFloor = Pose2d(-20.272, -4.788, 0.584)
+    override val frontPreloadFloor = Pose2d(-19.243, -1.822, 6.273)
+    override val leftPreloadFloor = Pose2d(-18.272, -4.788, 0.584)
 }
