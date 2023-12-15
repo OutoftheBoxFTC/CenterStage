@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.autonomous
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
@@ -19,13 +21,15 @@ import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 
 abstract class AutonOpMode(private var isBlue: Boolean) : RobotOpMode() {
-    suspend fun runAutonInit(): Nothing {
-        G.chub.outtakeCamera.let { webcam ->
-            webcam.startCamera(640, 480)
-            streamCamera(webcam)
-            webcam.setPipeline(
-                PreloadDetectionPipeline().also { if (isBlue) it.setBlue() else it.setRed() }
-            )
+    suspend fun runAutonInit(): Nothing = coroutineScope {
+        val cameraJob = launch {
+            G.chub.outtakeCamera.let { webcam ->
+                webcam.startCamera(640, 480)
+                streamCamera(webcam)
+                webcam.setPipeline(
+                    PreloadDetectionPipeline().also { if (isBlue) it.setBlue() else it.setRed() }
+                )
+            }
         }
 
         setTwistPosition(TwistPosition.STRAIGHT)
@@ -34,7 +38,13 @@ abstract class AutonOpMode(private var isBlue: Boolean) : RobotOpMode() {
 
         mainLoop {
             if (C.openClaw) openClaws() else closeClaws()
-            telemetry["Preload Position"] = G[RobotState.visionState.preloadPosition]
+
+            if (cameraJob.isCompleted) {
+                telemetry.addLine("Camera Ready")
+                telemetry["Preload Position"] = G[RobotState.visionState.preloadPosition]
+            } else {
+                telemetry.addLine("Initializing Camera")
+            }
         }
     }
 }
