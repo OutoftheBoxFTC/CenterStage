@@ -34,7 +34,7 @@ class FixpointPidTuner : RobotOpMode() {
         @JvmField var heading_kI = 0.0
         @JvmField var heading_kD = 0.2
 
-        @JvmField var translational_kP = 0.5
+        @JvmField var translational_kP = 0.3
         @JvmField var translational_kI = 0.0
         @JvmField var translational_kD = 0.02
     }
