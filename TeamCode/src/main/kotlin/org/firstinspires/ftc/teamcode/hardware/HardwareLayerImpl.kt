@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.hardware
 
 import arrow.core.nonEmptyListOf
 import com.qualcomm.robotcore.hardware.DcMotorSimple
+import com.qualcomm.robotcore.hardware.DigitalChannel
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.VoltageSensor
 import org.firstinspires.ftc.teamcode.hardware.devices.MotorGroup
@@ -49,6 +50,11 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
 
     val blackClaw = servo("s3")
     val redClaw = servo("s5")
+
+    private val extensionLimitSwitchDevice =
+        hwMap[DigitalChannel::class.java, "extensionLimitSwitch"]
+
+    val extensionLimitSwitch by inputField(true) { !extensionLimitSwitchDevice.state }
 
     val outtakeCamera = webcam("Outtake Webcam", true)
 }

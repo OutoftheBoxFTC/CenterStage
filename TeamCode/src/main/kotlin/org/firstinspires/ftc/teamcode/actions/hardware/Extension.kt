@@ -6,6 +6,7 @@ import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
+import org.firstinspires.ftc.teamcode.Command
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
@@ -56,6 +57,13 @@ suspend fun runExtensionTo(
     }
 
     if (!keepPid) pidJob.cancelAndJoin()
+}
+
+suspend fun retractExtension() {
+    setExtensionPower(-1.0)
+    suspendUntil { G.chub.extensionLimitSwitch }
+    resetExtensionLength()
+    setExtensionPower(-0.15)
 }
 
 fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine {
