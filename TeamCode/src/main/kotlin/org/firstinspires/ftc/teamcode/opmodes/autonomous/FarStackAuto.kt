@@ -82,19 +82,20 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         setExtensionHold()
         closeClaws()
 
-        profileArm(ArmPosition.FLOOR)
+        coroutineScope {
+            launch { profileArm(ArmPosition.FLOOR) }
 
-        when (randomizationPos) {
-            PreloadDetectionPipeline.RandomizationPosition.RIGHT -> preloadRightTrajectory
-            PreloadDetectionPipeline.RandomizationPosition.LEFT -> preloadLeftTrajectory
-            PreloadDetectionPipeline.RandomizationPosition.CENTER -> preloadCenterTrajectory
-        }.let {
-            followTrajectoryFixpoint(it)
+            when (randomizationPos) {
+                PreloadDetectionPipeline.RandomizationPosition.RIGHT -> preloadRightTrajectory
+                PreloadDetectionPipeline.RandomizationPosition.LEFT -> preloadLeftTrajectory
+                PreloadDetectionPipeline.RandomizationPosition.CENTER -> preloadCenterTrajectory
+            }.let {
+                followTrajectoryFixpoint(it)
+            }
         }
 
-        suspendFor(400)
+        suspendFor(200)
         setClawPos(ClawPosition.RED_OPEN)
-        suspendFor(100)
 
         coroutineScope {
             launch { profileArm(ArmPosition.NEUTRAL) }
