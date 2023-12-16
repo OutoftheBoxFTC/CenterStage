@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 
-abstract class AutonOpMode(private var isBlue: Boolean) : RobotOpMode() {
+abstract class AutonOpMode(protected val isBlue: Boolean) : RobotOpMode() {
     suspend fun runAutonInit(): Nothing = coroutineScope {
         val cameraJob = launch {
             G.chub.outtakeCamera.let { webcam ->
