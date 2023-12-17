@@ -192,13 +192,13 @@ suspend fun followLinePath(
 
         // TODO Account for non-zero heading (?)
         val poseVel = Pose2d(
-            Vector2d.polar(multiplier, driveHeading + headingError),
+            Vector2d.polar(multiplier, driveHeading + headingError - heading),
             headingError * DriveConfig.headingPid.kP
         )
 
         setDrivePowers(poseVel)
 
-        end - pose.vec() dot lineVec / lineVec.norm() <= stopDist
+        (end - pose.vec()) dot lineVec / lineVec.norm() <= stopDist
     }
 
     setDrivePowers(0.0, 0.0, 0.0)

@@ -19,20 +19,31 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
+import org.firstinspires.ftc.teamcode.actions.hardware.followLinePath
+import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectory
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryFixpoint
+import org.firstinspires.ftc.teamcode.actions.hardware.launchExtensionPid
 import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
+import org.firstinspires.ftc.teamcode.actions.hardware.resetExtensionLength
+import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
+import org.firstinspires.ftc.teamcode.actions.hardware.runExtensionTo
 import org.firstinspires.ftc.teamcode.actions.hardware.setClawPos
 import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionHold
+import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.swoop
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.buildTrajectory
+import org.firstinspires.ftc.teamcode.util.deg
 import org.firstinspires.ftc.teamcode.util.mapState
 import org.firstinspires.ftc.teamcode.vision.AprilTagDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
+import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline.RandomizationPosition
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 import kotlin.math.PI
@@ -48,7 +59,13 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
     abstract val preOuttakeCenter: Pose2d
     abstract val preOuttakeRight: Pose2d
 
-    override suspend fun runSuspendOpMode() = coroutineScope {
+    abstract val preIntakePos: Pose2d
+    abstract val intakePos: Pose2d
+
+    open val preExtensionLength = 960
+    open val fullExtensionLength = 1180
+
+    override suspend fun runSuspendOpMode(): Unit = coroutineScope {
         fun preloadFloorTrajectory(target: Pose2d) = buildTrajectory(Pose2d()) {
             setReversed(true)
             splineTo(target.vec(), target.heading + PI)
@@ -67,6 +84,15 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         val centerPreloadOuttakeTraj = floorOuttakeTrajectory(frontPreloadFloor, preOuttakeCenter)
         val leftPreloadOuttakeTraj = floorOuttakeTrajectory(leftPreloadFloor, preOuttakeLeft)
 
+        fun outtakePreIntakeTrajectory(start: Pose2d, dest: Pose2d) = buildTrajectory(start) {
+            lineToConstantHeading(dest.vec())
+        }
+
+        val rightOuttakePreIntakeTraj = outtakePreIntakeTrajectory(preOuttakeRight, preIntakePos)
+        val centerOuttakePreIntakeTraj = outtakePreIntakeTrajectory(preOuttakeCenter, preIntakePos)
+        val leftOuttakePreIntakeTraj = outtakePreIntakeTrajectory(preOuttakeLeft, preIntakePos)
+
+
         launch {
             runAutonInit()
         }.let {
@@ -79,16 +105,16 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         G.chub.outtakeCamera.setPipeline(AprilTagDetectionPipeline.outtakePipeline())
 
         resetDrivePose(Pose2d())
-        setExtensionHold()
         closeClaws()
 
         coroutineScope {
+            launch { retractExtension() }
             launch { profileArm(ArmPosition.FLOOR) }
 
             when (randomizationPos) {
-                PreloadDetectionPipeline.RandomizationPosition.RIGHT -> preloadRightTrajectory
-                PreloadDetectionPipeline.RandomizationPosition.LEFT -> preloadLeftTrajectory
-                PreloadDetectionPipeline.RandomizationPosition.CENTER -> preloadCenterTrajectory
+                RandomizationPosition.RIGHT -> preloadRightTrajectory
+                RandomizationPosition.LEFT -> preloadLeftTrajectory
+                RandomizationPosition.CENTER -> preloadCenterTrajectory
             }.let {
                 suspendFor(250)
                 followTrajectoryFixpoint(it)
@@ -102,9 +128,9 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             launch { profileArm(ArmPosition.NEUTRAL) }
 
             when (randomizationPos) {
-                PreloadDetectionPipeline.RandomizationPosition.LEFT -> leftPreloadOuttakeTraj
-                PreloadDetectionPipeline.RandomizationPosition.CENTER -> centerPreloadOuttakeTraj
-                PreloadDetectionPipeline.RandomizationPosition.RIGHT -> rightPreloadOuttakeTraj
+                RandomizationPosition.LEFT -> leftPreloadOuttakeTraj
+                RandomizationPosition.CENTER -> centerPreloadOuttakeTraj
+                RandomizationPosition.RIGHT -> rightPreloadOuttakeTraj
             }.let {
                 followTrajectoryFixpoint(it)
             }
@@ -117,10 +143,40 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         suspendFor(200)
 
         when (randomizationPos) {
-            PreloadDetectionPipeline.RandomizationPosition.LEFT -> preOuttakeLeft
-            PreloadDetectionPipeline.RandomizationPosition.CENTER -> preOuttakeCenter
-            PreloadDetectionPipeline.RandomizationPosition.RIGHT -> preOuttakeRight
+            RandomizationPosition.LEFT -> preOuttakeLeft
+            RandomizationPosition.CENTER -> preOuttakeCenter
+            RandomizationPosition.RIGHT -> preOuttakeRight
         }.let { launchFixpoint(it) }
+
+        suspendFor(200)
+
+        coroutineScope {
+            launch { profileArm(ArmPosition.NEUTRAL) }
+
+            when (randomizationPos) {
+                RandomizationPosition.LEFT -> leftOuttakePreIntakeTraj
+                RandomizationPosition.CENTER -> centerOuttakePreIntakeTraj
+                RandomizationPosition.RIGHT -> rightOuttakePreIntakeTraj
+            }.let { followTrajectoryFixpoint(it) }
+        }
+
+        launchFixpoint(preIntakePos + Pose2d(
+            0.0,
+            6.0 * if (isBlue) -1.0 else 1.0,
+            0.0
+        ))
+
+
+        // In progress cycling auto
+//        followLinePath(preIntakePos.vec(), intakePos.vec(), intakePos.heading, stopDist = 6.0)
+//        launchFixpoint(intakePos)
+//        suspendFor(500)
+//        G.chub.intakeWheel.power = 0.5
+//        runExtensionTo(preExtensionLength, keepPid = true)
+//        G.ehub.intakeRoller.power = -1.0
+//        runExtensionTo(fullExtensionLength, keepPid = false)
+//        suspendFor(100)
+//        runExtensionTo(preExtensionLength, keepPid = false)
 
         suspendFor(5000)
     }
@@ -185,6 +241,9 @@ class BlueFarStackAuto : FarStackAuto(true) {
     override val preOuttakeLeft = Pose2d(-18.626, -23.579, PI / 2)
     override val preOuttakeCenter = Pose2d(-25.294, -23.579, PI / 2)
     override val preOuttakeRight = Pose2d(-31.330, -23.579, PI / 2)
+
+    override val preIntakePos = Pose2d(-49.679, -23.174, PI / 2)
+    override val intakePos = Pose2d(-49.679, 6.210, PI / 2)
 }
 
 @Autonomous
@@ -197,5 +256,8 @@ class RedFarStackAuto : FarStackAuto(false) {
 
     override val preOuttakeLeft = Pose2d(-32.979, 24.664, -PI / 2)
     override val preOuttakeCenter = Pose2d(-26.041, 24.664, -PI / 2)
-    override val preOuttakeRight = Pose2d(-19.400, 24.664, -PI / 2)
+    override val preOuttakeRight = Pose2d(-20.400, 24.664, -PI / 2)
+
+    override val preIntakePos = Pose2d(-49.276, 24.719, -PI / 2)
+    override val intakePos = Pose2d(-49.276, -5.471, -PI / 2)
 }

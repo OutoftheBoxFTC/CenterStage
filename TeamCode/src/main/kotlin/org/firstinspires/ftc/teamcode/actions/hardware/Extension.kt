@@ -40,7 +40,7 @@ fun setExtensionHold() = setExtensionPower(ExtensionConfig.extensionHoldPower)
 suspend fun runExtensionTo(
     target: Int,
     timeout: Long = 2000,
-    tolerance: Int = 16,
+    tolerance: Int = 30,
     keepPid: Boolean = false
 ) {
     G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
