@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -24,6 +25,7 @@ import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 @Config
+@Disabled
 class FixpointPidTuner : RobotOpMode() {
     companion object {
         @JvmField var target_x = 0.0

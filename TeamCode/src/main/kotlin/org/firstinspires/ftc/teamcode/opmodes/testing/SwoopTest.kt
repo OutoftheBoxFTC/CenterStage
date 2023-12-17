@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
 
 @Autonomous
+@Disabled
 class SwoopTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() = coroutineScope {
         setTiltPosition(IntakeTiltPosition.HIGH)

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.actions.hardware.followLinePath
 import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
@@ -10,6 +11,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.lineTo
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 
 @TeleOp
+@Disabled
 class LineFollowerTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         val targetPose = Pose2d(96.0, 0.0, 0.0)

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
@@ -16,6 +17,7 @@ import org.openftc.apriltag.AprilTagDetection
 import org.openftc.easyopencv.OpenCvCameraRotation
 
 @Autonomous
+@Disabled
 class OuttakeAprilTagTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         G.chub.outtakeCamera.let {

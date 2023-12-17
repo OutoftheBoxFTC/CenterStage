@@ -5,6 +5,7 @@ import arrow.core.nonEmptyListOf
 import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import org.firstinspires.ftc.teamcode.util.launchCommand
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
+@Disabled
 class DriveTest : RobotOpMode() {
     private val joystickDrive: FS by lazy { FS {
         G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {

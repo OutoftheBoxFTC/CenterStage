@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
@@ -15,6 +16,7 @@ import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 
 @TeleOp
+@Disabled
 class TransferTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()

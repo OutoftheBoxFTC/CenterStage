@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.opmodes.tuning
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionPower
 
 @TeleOp
+@Disabled
 class ExtensionPidfTuner : PidfTuner(Subsystem.EXTENSION) {
     override fun updateOutput(output: Double) = setExtensionPower(output)
 

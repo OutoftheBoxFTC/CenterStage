@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendFor
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
+@Disabled
 class ExtensionTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()

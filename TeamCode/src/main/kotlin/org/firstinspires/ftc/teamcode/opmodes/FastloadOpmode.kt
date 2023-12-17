@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -32,6 +33,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 @TeleOp
+@Disabled
 class FastloadOpmode : RobotOpMode(
     monitorOpmodeStop = false,
     resetPoseOnStart = false
