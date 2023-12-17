@@ -4,10 +4,13 @@ import org.firstinspires.ftc.teamcode.util.G
 
 enum class IntakeTiltPosition(val pos: Double) {
     HIGH(0.144),
-    LOW(0.446),
 
-    TOP_2(0.300),
-    BOTTOM_3(LOW.pos)
+    POS_1(0.238),
+    POS_2(0.286),
+    POS_3(0.347),
+    POS_4(0.406),
+
+    LOW(0.446)
 }
 
 fun setTiltPosition(pos: Double) { G.ehub.intakeTilt.position = pos }
