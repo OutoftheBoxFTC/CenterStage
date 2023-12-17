@@ -39,16 +39,14 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     val arm = ServoGroup(
         nonEmptyListOf(
             // Right
-            servo("s1"),
+            servo("s3"),
 
             // Left
             servo("s2")
         )
     )
 
-    val twist = servo("s4")
-
-    val blackClaw = servo("s3")
+    val blackClaw = servo("s4")
     val redClaw = servo("s5")
 
     private val extensionLimitSwitchDevice =
@@ -69,6 +67,8 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
             motor("5") { direction = DcMotorSimple.Direction.REVERSE }
         )
     )
+
+    val twist = servo("s11")
 
     val intakeRoller = motor("7")
 

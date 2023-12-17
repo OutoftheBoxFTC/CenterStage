@@ -12,16 +12,27 @@ object Controls {
     val driveStrafeY by driverInput { -left_stick_x.toDouble() }
     val driveTurn by driverInput { -right_stick_x.toDouble() }
 
-    val slowDrive by driverInput { left_bumper }
+    val slowDrive by driverInput { left_bumper || lockHeading }
     val imuResetAngle by driverInput { right_bumper }
 
-    // Main State
-    val hangRight by driverInput { y }
-    val hangLeft by driverInput { a }
+    // Main state
+    val enterMainState by operatorInput { dpad_right }
+
+    val hang0 by driverInput { when {
+        dpad_up -> -1.0
+        dpad_down -> 1.0
+        else -> 0.0
+    } }
+
+    val hang1 by driverInput { when {
+        y -> -1.0
+        a -> 1.0
+        else -> 0.0
+    } }
 
     // Intake state
-    val enterIntakeState by operatorInput { x }
-    val exitIntakeState by operatorInput { b }
+    val enterIntakeState by operatorInput { dpad_left }
+    val exitIntakeNoTransfer by operatorInput { x }
 
     val intakeTiltUp by operatorInput { y }
     val intakeTiltDown by operatorInput { a }
@@ -29,12 +40,11 @@ object Controls {
     val rollerIn by operatorInput { left_bumper }
     val rollerOut by operatorInput { right_bumper }
 
-    val operatorIntakeExtension by operatorInput { -left_stick_y }
-    val operatorTurn by operatorInput { -left_stick_x }
+    val operatorIntakeExtension by operatorInput { -left_stick_y.toDouble() }
+    val operatorTurn by operatorInput { -left_stick_x.toDouble() }
 
     // Outtake state
-    val enterOuttakeState by operatorInput { dpad_down }
-    val exitOuttakeState by driverInput { x }
+    val enterOuttakeState by operatorInput { b }
 
     val lockHeading by driverInput { left_trigger > 0.9 }
 

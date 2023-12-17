@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.acmerobotics.roadrunner.geometry.Pose2d
-import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.Looper
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
@@ -12,6 +11,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveState
 import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
+import org.firstinspires.ftc.teamcode.actions.hardware.OuttakeState
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
@@ -37,6 +37,7 @@ object Globals {
             imuState = ImuState(0.0, 0.0),
             driveState = DriveState(Pose2d(), DriveControlState.Idle),
             extensionState = ExtensionState(0),
+            outtakeState = OuttakeState(),
             visionState = VisionState()
         )
     }

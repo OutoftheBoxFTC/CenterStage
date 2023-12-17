@@ -5,6 +5,7 @@ import com.outoftheboxrobotics.suspendftc.Looper
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveState
 import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
+import org.firstinspires.ftc.teamcode.actions.hardware.OuttakeState
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.vision.VisionState
@@ -20,6 +21,7 @@ data class RobotState(
     val imuState: ImuState,
     val driveState: DriveState,
     val extensionState: ExtensionState,
+    val outtakeState: OuttakeState,
 
     val visionState: VisionState
 ) { companion object }

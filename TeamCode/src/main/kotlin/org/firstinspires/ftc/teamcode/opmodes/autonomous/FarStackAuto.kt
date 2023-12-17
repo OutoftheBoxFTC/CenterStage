@@ -90,6 +90,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
                 PreloadDetectionPipeline.RandomizationPosition.LEFT -> preloadLeftTrajectory
                 PreloadDetectionPipeline.RandomizationPosition.CENTER -> preloadCenterTrajectory
             }.let {
+                suspendFor(250)
                 followTrajectoryFixpoint(it)
             }
         }
