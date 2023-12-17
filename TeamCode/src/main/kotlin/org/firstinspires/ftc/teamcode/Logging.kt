@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode
 import com.acmerobotics.dashboard.config.Config
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
+import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 
 private interface TreeLog {
     fun put(group: String, key: String, value: Any?)
@@ -40,6 +41,10 @@ private fun TreeLog.rootLog(state: RobotState) {
 
     "drive" {
         "Drive State" set state.driveState.driveControlState
+    }
+
+    "extension" {
+        "Extension length" set extensionLength()
     }
 
     "looptime" {
@@ -83,7 +88,7 @@ private fun TreeLog.rootLog(state: RobotState) {
 
 @Config
 object LoggingConfig {
-    @JvmField var queryString = "localizer"
+    @JvmField var queryString = "localizer;extension"
 }
 
 fun Telemetry.logState(state: RobotState) = object : TreeLog {
