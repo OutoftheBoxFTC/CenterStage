@@ -197,13 +197,21 @@ class MainTeleop : RobotOpMode() {
         loopYieldWhile({ !C.enterMainState }) {
             if (C.releaseFarPixel) releaseFar()
             if (C.releaseClosePixel) releaseClose()
+
+            G.ehub.outtakeLift.power = when {
+                C.liftUp -> 1.0
+                C.liftDown -> -0.5
+                else -> 0.5
+            }
         }
 
         mainState(launch {
+            G.ehub.outtakeLift.power = -1.0
             armJob.cancelAndJoin()
             openClaws()
             setTwistPosition(TwistPosition.STRAIGHT)
             profileArm(ArmPosition.NEUTRAL)
+            G.ehub.outtakeLift.power = 0.0
         })
     }
 

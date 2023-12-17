@@ -74,7 +74,7 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
 
     val intakeTilt = servo("s6")
 
-    val outtakeLift = motor("6")
+    val outtakeLift = motor("6") { direction = DcMotorSimple.Direction.REVERSE }
 
     val hang0 = crServo("s7")
     val hang1 = crServo("s8")
