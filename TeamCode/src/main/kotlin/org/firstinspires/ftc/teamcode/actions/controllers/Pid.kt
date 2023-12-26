@@ -3,11 +3,11 @@ package org.firstinspires.ftc.teamcode.actions.controllers
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.acmerobotics.roadrunner.util.Angle
-import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.util.mainLoop
 import kotlin.math.min
 
 data class PidCoefs(
@@ -19,6 +19,15 @@ data class PidCoefs(
         kP*error + kI*integral + kD*deriv
 }
 
+/**
+ * Runs a PID Controller loop indefinitely.
+ *
+ * @param coefs The PID coefficients.
+ * @param input The input function.
+ * @param target The target function.
+ * @param output The output function.
+ * @param integralLimit The maximum value of the integral term.
+ */
 suspend inline fun runPidController(
     coefs: PidCoefs,
     input: () -> Double,
@@ -35,7 +44,7 @@ suspend inline fun runPidController(
 
     yieldLooper()
 
-    loopYieldWhile({ true }) {
+    mainLoop {
         val dt = timer.seconds()
         timer.reset()
 
@@ -48,10 +57,17 @@ suspend inline fun runPidController(
 
         output(coefs.computeGain(error, errorAcc, ddt))
     }
-
-    error("Return from runPidController")
 }
 
+/**
+ * Runs a PID Pose lock controller loop indefinitely.
+ *
+ * @param translationalCoefs The translational PID coefficients.
+ * @param headingCoefs The heading PID coefficients.
+ * @param input The input function.
+ * @param target The target function.
+ * @param output The output function.
+ */
 suspend inline fun runPosePidController(
     translationalCoefs: PidCoefs,
     headingCoefs: PidCoefs,
@@ -63,6 +79,7 @@ suspend inline fun runPosePidController(
     var y = 0.0
     var r = 0.0
 
+    // Component PID controllers
     launch { runPidController(
         coefs = translationalCoefs,
         input = { input().x },
@@ -85,7 +102,7 @@ suspend inline fun runPosePidController(
         r = headingCoefs.kP * lastError
 
         yieldLooper()
-        loopYieldWhile({ true }) {
+        mainLoop {
             val dt = timer.seconds()
             timer.reset()
 
@@ -101,14 +118,13 @@ suspend inline fun runPosePidController(
         }
     }
 
-    loopYieldWhile({ true }) {
+    mainLoop {
         output(
             Pose2d(
+                // Rotate to account for heading error - always drives towards target
                 Vector2d(x, y).rotated(-input().heading),
                 r
             )
         )
     }
-
-    error("Return from runPosePidController")
 }

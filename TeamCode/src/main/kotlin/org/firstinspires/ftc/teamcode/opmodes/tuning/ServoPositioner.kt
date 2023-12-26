@@ -22,6 +22,12 @@ import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 
+/**
+ * Servo position tuning opmode.
+ *
+ * X/B to cycle between arm, twist, tilt, red claw, and black claw servos.
+ * Bumpers to adjust position.
+ */
 @TeleOp
 @Config
 class ServoPositioner : RobotOpMode() {

@@ -13,7 +13,7 @@ import org.opencv.imgproc.Imgproc
 import org.openftc.easyopencv.OpenCvPipeline
 import kotlin.math.abs
 
-
+// Will be rewritten at some point. Detects where the pixel stack is.
 @Config
 @Suppress("PrivatePropertyName")
 class PixelStackPipeline : OpenCvPipeline() {

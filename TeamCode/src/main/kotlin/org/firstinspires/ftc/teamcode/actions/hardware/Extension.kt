@@ -6,7 +6,6 @@ import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
-import org.firstinspires.ftc.teamcode.Command
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
@@ -16,6 +15,9 @@ import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.abs
 
+/**
+ * @param encoderBias The encoder value of the extension when it is fully retracted
+ */
 @optics
 data class ExtensionState(
     val encoderBias: Int
@@ -35,8 +37,19 @@ fun resetExtensionLength(newPos: Int = 0) {
 
 fun setExtensionPower(power: Double) { G.ehub.extension.power = power }
 
+/**
+ * Gives the extension a constant power to hold its retract position
+ */
 fun setExtensionHold() = setExtensionPower(ExtensionConfig.extensionHoldPower)
 
+/**
+ * Runs the extension to the given encoder position
+ *
+ * @param target The target encoder position
+ * @param timeout The maximum time to run the extension
+ * @param tolerance The maximum error from the target position to be considered "at" the target
+ * @param keepPid Whether to keep the PID controller running after the extension reaches the target
+ */
 suspend fun runExtensionTo(
     target: Int,
     timeout: Long = 2000,
@@ -59,6 +72,9 @@ suspend fun runExtensionTo(
     if (!keepPid) pidJob.cancelAndJoin()
 }
 
+/**
+ * Retracts the extension until the limit switch is pressed, then resets the encoder position.
+ */
 suspend fun retractExtension() {
     setExtensionPower(-1.0)
     suspendUntil { G.chub.extensionLimitSwitch }
@@ -66,6 +82,9 @@ suspend fun retractExtension() {
     setExtensionPower(-0.15)
 }
 
+/**
+ * Launches a PID controller to the given target encoder position.
+ */
 fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine {
     G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
         runPidController(

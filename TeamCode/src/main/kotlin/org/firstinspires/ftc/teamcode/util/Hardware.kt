@@ -4,6 +4,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 
+/**
+ * Creates a wrapper [DcMotorEx] instance that allows for independent direction control.
+ */
 fun DcMotorEx.cloneMotor() = object : DcMotorEx by this {
     private var direction: Direction = Direction.FORWARD
 

@@ -32,12 +32,23 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
+/**
+ * Experimental opmode designed for use with fastload plugin that stores the robot's pose in a file
+ * between runs.
+ */
 @TeleOp
 @Disabled
 class FastloadOpmode : RobotOpMode(
     monitorOpmodeStop = false,
     resetPoseOnStart = false
 ) {
+    /*
+        X - Run fixpoint to starting pose
+        Y - Run action
+        B - Interrupt action
+     */
+
+
     private val startingPose = Pose2d()
 
     private suspend fun runAction() {
@@ -62,6 +73,7 @@ class FastloadOpmode : RobotOpMode(
                 if (storagePath.exists()) {
                     Json
                         .decodeFromString<StoredPose>(storagePath.readText())
+                        // Only load the stored pose if it was saved less than 5 minutes ago
                         .takeIf { (Clock.System.now() - it.date).inWholeMinutes < 5.0 }
                 } else null
             }.getOrNull()

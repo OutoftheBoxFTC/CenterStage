@@ -9,10 +9,16 @@ import org.openftc.easyopencv.OpenCvCameraRotation
 import org.openftc.easyopencv.OpenCvWebcam
 import kotlin.coroutines.resume
 
+/**
+ * Wrapper for [OpenCvWebcam] that implements [KDevice].
+ */
 class KWebcam(private val camera: OpenCvWebcam) : KDevice, OpenCvWebcam by camera {
     override fun writeData() = Unit
     override fun readCurrent() = 0.0
 
+    /**
+     * OpenCameraDevice implemented as a suspend function.
+     */
     suspend fun startCamera(
         width: Int,
         height: Int,

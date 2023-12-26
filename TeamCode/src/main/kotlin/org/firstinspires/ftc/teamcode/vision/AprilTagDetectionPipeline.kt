@@ -24,6 +24,10 @@ import org.openftc.apriltag.AprilTagPose
 import org.openftc.easyopencv.OpenCvPipeline
 
 
+/**
+ * OpenFTC Example AprilTag Detection Pipeline ported to Kotlin. Updates the RobotState with the
+ * latest AprilTag detections.
+ */
 class AprilTagDetectionPipeline(
     // UNITS ARE METERS
     private val tagsize: Double,
@@ -33,6 +37,10 @@ class AprilTagDetectionPipeline(
     private val cy: Double
 ) : OpenCvPipeline() {
     companion object {
+        /**
+         * Pipeline with calibration parameters for Logitech C270 webcam at the outtake for aligning
+         * to the backboard.
+         */
         fun outtakePipeline() = AprilTagDetectionPipeline(
             tagsize = 2.0,
             fx = 822.317, fy = 822.317,

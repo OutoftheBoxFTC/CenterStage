@@ -11,11 +11,17 @@ import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
 
+/**
+ * Resets the robot's pose to the given pose, or the origin if no pose is given.
+ */
 fun resetDrivePose(newPose: Pose2d = Pose2d()) {
     resetImuAngle(newPose.heading)
     G[RobotState.driveState.currentPose] = newPose
 }
 
+/**
+ * Runs the intake transfer sequence.
+ */
 suspend fun intakeTransfer() {
     G.ehub.intakeRoller.power = -0.8
     setTiltPosition(IntakeTiltPosition.HIGH)

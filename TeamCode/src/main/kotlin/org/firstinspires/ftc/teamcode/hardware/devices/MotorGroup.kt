@@ -12,6 +12,9 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 
+/**
+ * A group of motors that act as one.
+ */
 class MotorGroup(private val motors: Nel<DcMotorEx>) : DcMotorEx {
     private var direction = DcMotorSimple.Direction.FORWARD
 

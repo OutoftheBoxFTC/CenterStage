@@ -20,7 +20,15 @@ import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 
+/**
+ * Base class for autonomous op modes.
+ *
+ * @param isBlue Whether the robot is on the blue alliance.
+ */
 abstract class AutonOpMode(protected val isBlue: Boolean) : RobotOpMode() {
+    /**
+     * Runs the autonomous init routine. Should be cancelled manually on start.
+     */
     suspend fun runAutonInit(): Nothing = coroutineScope {
         val cameraJob = launch {
             G.chub.outtakeCamera.let { webcam ->

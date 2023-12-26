@@ -43,19 +43,26 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
+/**
+ * Main Teleop program.
+ */
 @TeleOp
 class MainTeleop : RobotOpMode() {
     private val fieldCentricCommand = Command(Subsystem.DRIVETRAIN.nel()) {
         runFieldCentricDrive()
     }
 
+    /**
+     * Main state while driving to intake or outtake.
+     *
+     * @param transitionJob The job to wait for before transitioning to the next state.
+     */
     private fun mainState(transitionJob: Job? = null): FS = FS {
         launch { G.cmd.runCommand(fieldCentricCommand) }
 
-
-
         transitionJob?.join()
 
+        // Next state is determined by which button is pressed first.
         val nextState = async {
             raceN(
                 coroutineContext,
@@ -70,6 +77,7 @@ class MainTeleop : RobotOpMode() {
             ).merge()
         }
 
+        // Operate hang servos
         loopYieldWhile({ !nextState.isCompleted }) {
             G.ehub.hang0.power = C.hang0
             G.ehub.hang1.power = C.hang1
@@ -78,10 +86,14 @@ class MainTeleop : RobotOpMode() {
         nextState.await()
     }
 
+    /**
+     * State for intaking pixels.
+     */
     private val intakeState: FS = FS {
         openClaws()
 
         launch {
+            // Modified field centric drive that gives operator control over turning.
             G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
                 mainLoop {
                     val heading = currentImuAngle()
@@ -91,14 +103,17 @@ class MainTeleop : RobotOpMode() {
                     setDrivePowers(
                         multiplier * (C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading)),
                         multiplier * (C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)),
-                        if (extensionLength() > 100) 0.7 * C.operatorTurn else multiplier * C.driveTurn
+                        if (extensionLength() > 100 && C.operatorIntakeExtension <= 0.5)
+                            0.7 * C.operatorTurn else multiplier * C.driveTurn
                     )
                 }
             }
         }
 
+        // TODO add Tilt Controls
         setTiltPosition(IntakeTiltPosition.LOW)
 
+        // Operator intake control
         loopYieldWhile({!C.enterMainState && !C.exitIntakeNoTransfer}) {
             setExtensionPower(C.operatorIntakeExtension.let {
                 if (abs(it) < 0.1 && extensionLength() < 100) -0.15 else it
@@ -117,6 +132,7 @@ class MainTeleop : RobotOpMode() {
             retractExtension()
             setTiltPosition(IntakeTiltPosition.HIGH)
         } else launch {
+            // Transfer sequence
             G.ehub.intakeRoller.power = -0.8
             setTiltPosition(IntakeTiltPosition.HIGH)
             retractExtension()
@@ -134,12 +150,16 @@ class MainTeleop : RobotOpMode() {
         mainState(transferJob)
     }
 
+    /**
+     * State for outtaking pixels.
+     */
     private val outtakeState: FS = FS {
         launch { G.cmd.runCommand(fieldCentricCommand) }
 
         profileArm(ArmPosition.OUTTAKE)
         setTwistPosition(TwistPosition.HORIZONTAL)
 
+        // Twist position toggling
         fun nextTwistPos() {
             val positions = TwistPosition.entries
             G[RobotState.outtakeState.twistPos].ordinal.let {
@@ -178,6 +198,7 @@ class MainTeleop : RobotOpMode() {
             setClawPos(targetPos)
         }
 
+        // Claw rotation
         val armJob = launch {
             launch {
                 mainLoop {
@@ -195,6 +216,7 @@ class MainTeleop : RobotOpMode() {
         }
 
         loopYieldWhile({ !C.enterMainState }) {
+            // Operator claw release and lift control
             if (C.releaseFarPixel) releaseFar()
             if (C.releaseClosePixel) releaseClose()
 

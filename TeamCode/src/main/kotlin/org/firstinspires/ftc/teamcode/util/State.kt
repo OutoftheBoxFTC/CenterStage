@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.withIndex
 
+/**
+ * Creates a [StateFlow] that maps the values of this [StateFlow] using the given [transform] function.
+ */
 fun <U, V> StateFlow<U>.mapState(transform: (U) -> V) = object : StateFlow<V> {
     private val flow = this@mapState.map(transform)
 
@@ -26,6 +29,14 @@ fun <U, V> StateFlow<U>.mapState(transform: (U) -> V) = object : StateFlow<V> {
     }
 }
 
+/**
+ * Atomically updates the current value of this [MutableStateFlow] using the arrow-optics [Copy] DSL.
+ */
 fun <T> MutableStateFlow<T>.modify(block: Copy<T>.(T) -> Unit) = update { it.copy { block(it) } }
 
-suspend fun <T> StateFlow<T>.next() = withIndex().first { it.index > 0 }.value
+/**
+ * Suspends until a new value of this [StateFlow] is emitted.
+ */
+suspend fun <T> StateFlow<T>.next() =
+    // We ignore the first value because StateFlow repeats the existing value.
+    withIndex().first { it.index > 0 }.value

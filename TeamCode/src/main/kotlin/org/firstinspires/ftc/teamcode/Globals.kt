@@ -17,12 +17,26 @@ import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.vision.VisionState
 
+/**
+ * Global static object that holds the robot state and other global variables.
+ */
 object Globals {
+    /**
+     * Mutable state flow that holds the robot state.
+     */
     lateinit var robotState: MutableStateFlow<RobotState>
         private set
 
+    /**
+     * The current OpMode.
+     */
     private lateinit var currentOpMode: RobotOpMode
 
+    /**
+     * Creates a default robot state.
+     *
+     * @param hwMap The hardware map to use.
+     */
     fun defaultRobotState(hwMap: HardwareMap): RobotState {
         val chubLayer = ControlHubHardware(hwMap)
         val mainLooper = Looper()
@@ -42,30 +56,45 @@ object Globals {
         )
     }
 
+    /**
+     * Resets variables to use the given robot state and OpMode.
+     */
     fun initializeRobotState(state: RobotState, opMode: RobotOpMode) {
         robotState = MutableStateFlow(state)
         currentOpMode = opMode
     }
 
+    /**
+     * Stops coroutines and other resources.
+     */
     fun stop() {
         val state = robotState.value
 
         state.mainLooper.cancel()
+
+        // Make sure we don't call cancel() twice
         state.driveLooper.takeUnless { it == state.mainLooper }?.cancel()
 
         state.imuState.threadedImuJob?.cancel()
     }
 
+    // Convenience accessors for the control and expansion hub hardware layers.
     val chub get() = robotState.value.chub
     val ehub get() = robotState.value.ehub
 
+    // Convenience accessors for the gamepads.
     val gp1: Gamepad get() = currentOpMode.gamepad1
     val gp2: Gamepad get() = currentOpMode.gamepad2
 
+
+    // Convenience accessors for the command handler.
     val cmd get() = robotState.value.commandHandler
 
+    // Gets members of the robot state using arrow-optics lenses.
     operator fun <T> get(lens: Lens<RobotState, T>) = lens.get(robotState.value)
     operator fun <T> get(lens: Optional<RobotState, T>) = lens.getOrNull(robotState.value)
+
+    // Sets members of the robot state using arrow-optics lenses.
     operator fun <T> set(lens: Lens<RobotState, T>, value: T) {
         robotState.value = lens.set(robotState.value, value)
     }

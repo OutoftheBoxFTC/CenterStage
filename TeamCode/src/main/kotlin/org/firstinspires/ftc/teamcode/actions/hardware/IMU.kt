@@ -17,6 +17,11 @@ import org.firstinspires.ftc.teamcode.util.modify
 import org.firstinspires.ftc.teamcode.util.next
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * @param rawAngle The raw angle of the IMU, in radians
+ * @param angleBias The bias of the IMU, in radians
+ * @param threadedImuJob The job that runs the threaded IMU handler, if applicable
+ */
 @optics
 data class ImuState(
     val rawAngle: Double,
@@ -29,6 +34,9 @@ data class ImuState(
     companion object
 }
 
+/**
+ * Runs the IMU on the drive looper.
+ */
 suspend fun runDefaultImuHandler(imu: IMU): Nothing = coroutineScope {
     imu.resetYaw()
 
@@ -37,6 +45,9 @@ suspend fun runDefaultImuHandler(imu: IMU): Nothing = coroutineScope {
     }
 }
 
+/**
+ * Runs the IMU in its own thread, specified by [context].
+ */
 suspend fun runThreadedImuHandler(context: CoroutineContext, imu: IMU) = coroutineScope {
     imu.resetYaw()
 
@@ -52,4 +63,8 @@ fun currentImuAngle() = Globals[RobotState.imuState].angle
 fun resetImuAngle(newAngle: Double = 0.0) = Globals.robotState.modify {
     RobotState.imuState.angleBias set it.imuState.rawAngle - newAngle
 }
+
+/**
+ * Suspends until the next IMU angle is available.
+ */
 suspend fun nextImuAngle() = Globals.robotState.mapState { it.imuState.angle }.next()

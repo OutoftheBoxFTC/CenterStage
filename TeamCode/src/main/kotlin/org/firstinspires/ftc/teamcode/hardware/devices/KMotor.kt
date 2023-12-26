@@ -8,6 +8,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import kotlin.math.abs
 
+/**
+ * A wrapper for [DcMotorEx] that implements [KDevice] with power tolerance optimization.
+ */
 class KMotor(private val motor: DcMotorEx) : KDevice, DcMotorEx by motor {
     var powerTolerance = 1.0 / 8192
 

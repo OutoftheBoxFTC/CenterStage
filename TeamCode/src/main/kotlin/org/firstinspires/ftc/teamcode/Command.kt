@@ -11,6 +11,9 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Represents a physical subsystem on the robot.
+ */
 enum class Subsystem {
     DRIVETRAIN,
     EXTENSION,
@@ -19,6 +22,7 @@ enum class Subsystem {
     OUTTAKE
 }
 
+// This is scuffed, will be replaced with a better implementation (rk012/TicKT) soon
 class Command(val required: Nel<Subsystem>, val action: suspend () -> Unit)
 
 private class RunningCommand(val job: Job, val command: Command)

@@ -15,10 +15,12 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+// Convenience type aliases
 typealias G = Globals
 typealias C = Controls
 typealias FS = FunctionalState
 
+// Interfaces that simplify property delegation
 interface ReadOnlyProperty<out V> : ReadOnlyProperty<Any?, V> {
     val value: V
 
@@ -32,8 +34,15 @@ interface ReadWriteProperty<V> : ReadWriteProperty<Any?, V> {
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) { this.value = value }
 }
 
+// Operator overload for adding to telemetry
 operator fun Telemetry.set(caption: String, value: Any) { addData(caption, value) }
 
+/**
+ * DSL-esque trajectory sequence builder.
+ *
+ * @param startPose The starting pose of the robot.
+ * @param block The [TrajectorySequenceBuilder] block.
+ */
 fun buildTrajectory(
     startPose: Pose2d,
     block: TrajectorySequenceBuilder.() -> Unit
@@ -42,6 +51,8 @@ fun buildTrajectory(
     .apply(block)
     .build()
 
+// Convenience functions for setting velocity and acceleration constraints
+// on a trajectory sequence builder
 fun TrajectorySequenceBuilder.setAccelConstraint(maxAccel: Double): TrajectorySequenceBuilder =
     setAccelConstraint(SampleMecanumDrive.getAccelerationConstraint(maxAccel))
 

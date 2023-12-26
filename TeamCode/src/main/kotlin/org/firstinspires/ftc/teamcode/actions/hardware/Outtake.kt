@@ -68,6 +68,9 @@ fun openClaws() {
     setClawPos(ClawPosition.BLACK_OPEN)
 }
 
+/**
+ * Moves the arm to the given position using a motion profile.
+ */
 suspend fun profileArm(targetPos: Double) {
     val profile = MotionProfileGenerator.generateSimpleMotionProfile(
         start = MotionState(G.chub.arm.position, 0.0),
@@ -88,4 +91,7 @@ suspend fun profileArm(targetPos: Double) {
     setArmPosition(targetPos)
 }
 
+/**
+ * Moves the arm to the given position using a motion profile.
+ */
 suspend fun profileArm(target: ArmPosition) = profileArm(target.pos)

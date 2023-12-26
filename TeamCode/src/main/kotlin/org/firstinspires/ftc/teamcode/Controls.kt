@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode
 import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 
+/**
+ * Delegated properties that map controls to gamepad inputs.
+ */
 object Controls {
     // Autonomous
     val openClaw by driverInput { right_bumper }
@@ -57,7 +60,7 @@ object Controls {
     val releaseFarPixel by operatorInput { left_bumper }
     val releaseClosePixel by operatorInput { right_bumper }
 
-
+    // Property delegates
     private fun <T> driverInput(block: Gamepad.() -> T) = object : ReadOnlyProperty<T> {
         override val value get() = Globals.gp1.block()
     }

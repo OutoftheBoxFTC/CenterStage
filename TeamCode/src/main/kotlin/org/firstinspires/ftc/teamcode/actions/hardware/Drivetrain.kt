@@ -6,7 +6,6 @@ import arrow.optics.optics
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.acmerobotics.roadrunner.util.Angle
-import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
 import com.outoftheboxrobotics.suspendftc.yieldLooper
@@ -35,6 +34,11 @@ import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
 
+/**
+ * @param currentPose Current pose of the robot from the odometry system.
+ * @param driveControlState Current state of the drivetrain.
+ * @param rrDrive Roadrunner [SampleMecanumDrive] instance.
+ */
 @optics
 data class DriveState(
     val currentPose: Pose2d,
@@ -43,12 +47,27 @@ data class DriveState(
 ) { companion object }
 
 sealed interface DriveControlState {
+    /**
+     * No active drivetrain control. Can set motor powers manually.
+     */
     data object Idle : DriveControlState
+
+    /**
+     * Active pose lock to [target].
+     */
     data class Fixpoint(val target: Pose2d) : DriveControlState
+
+    /**
+     * Following a [trajectory].
+     */
     data class Trajectory(val trajectory: TrajectorySequence) : DriveControlState {
         override fun toString() =
             "Following(trajectory=${trajectory.start()} -> ${trajectory.end()})"
     }
+
+    /**
+     * Running an optimized line path follower.
+     */
     data class LinePath(
         val start: Vector2d, val end: Vector2d,
         val heading: Double
@@ -61,20 +80,24 @@ object DriveConfig {
     const val lineFollowerLookaheadDist = 6.0
 }
 
+/**
+ * Main coroutine for running odometry.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coroutineScope {
     val poseLens = RobotState.driveState.currentPose
 
+    // Gets the next IMU angle when the robot is near-stationary.
     fun imuAngleAsync() = async {
-        var n = 0
-
-        loopYieldWhile({ n < 100 }) { n++ }
+        // This is to prevent constantly calling setPoseEstimate()
+        repeat(100) { yieldLooper() }
 
         var lastPose = G[poseLens]
         val timer = ElapsedTime()
 
         yieldLooper()
 
+        // Wait until the robot is near-stationary
         suspendUntil {
             val dt = timer.seconds()
             timer.reset()
@@ -84,6 +107,7 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
             poseVel.vec().norm() <= 5.0 && abs(poseVel.heading) <= PI / 2
         }
 
+        // Poll for next IMU angle
         nextImuAngle()
     }
 
@@ -97,6 +121,7 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
     mainLoop {
         val currentState = G[RobotState.driveState]
 
+        // Check if another coroutine changed the pose, and if so call setPoseEstimate()
         if (!(lastSetPose epsilonEquals currentState.currentPose)) {
             val newPose = currentState.currentPose
 
@@ -109,26 +134,31 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
         G[poseLens] = rrDrive.poseEstimate
         lastSetPose = rrDrive.poseEstimate
 
-        nextImuAngle.let {
-            if (it.isCompleted) {
-                val imuAngle = it.getCompleted()
-                val currentPose = G[poseLens]
+        if (nextImuAngle.isCompleted) {
+            // Run the IMU angle correction
+            // Essentially, the vector delta from the last corrected pose is rotated to be
+            // consistent with the IMU reading
 
-                val angDelta = Angle.normDelta(imuAngle - currentPose.heading)
-                val vecDelta = currentPose.vec() - lastCorrectedPose.vec()
+            val imuAngle = nextImuAngle.getCompleted()
+            val currentPose = G[poseLens]
 
-                // Pose estimate will be set in the beginning of the next loop
-                G[poseLens] = Pose2d(
-                    lastCorrectedPose.vec() + vecDelta.rotated(angDelta),
-                    imuAngle
-                )
-            }
+            val angDelta = Angle.normDelta(imuAngle - currentPose.heading)
+            val vecDelta = currentPose.vec() - lastCorrectedPose.vec()
+
+            // Pose estimate will be set in the beginning of the next loop
+            G[poseLens] = Pose2d(
+                lastCorrectedPose.vec() + vecDelta.rotated(angDelta),
+                imuAngle
+            )
         }
     }
 }
 
 fun currentDrivePose() = G[RobotState.driveState.currentPose]
 
+/**
+ * Launches a pose lock to [target].
+ */
 fun launchFixpoint(target: Pose2d) = G[RobotState.driveLooper].scheduleCoroutine {
     Globals.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
         G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(target)
@@ -148,10 +178,14 @@ private suspend fun runDriveCommand(action: suspend () -> Unit) =
         G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel(), action)
     }
 
+/**
+ * Follows a roadrunner [trajectory][traj].
+ */
 suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
     resourceScope {
         G[RobotState.driveState.driveControlState] = DriveControlState.Trajectory(traj)
 
+        // Arrow-kt resource dsl
         val rrDrive = install(
             acquire = {
                 requireNotNull(G[RobotState.driveState.rrDrive]) { "rrDrive missing" }
@@ -169,6 +203,9 @@ suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
     }
 }
 
+/**
+ * Optimized line path follower.
+ */
 suspend fun followLinePath(
     start: Vector2d,
     end: Vector2d,
@@ -178,6 +215,8 @@ suspend fun followLinePath(
 ) = runDriveCommand {
     G[RobotState.driveState.driveControlState] = DriveControlState.LinePath(start, end, heading)
 
+    // We rotate our drive vector such that it faces a point lookaheadDist ahead of the robot's
+    // current position projected onto the line.
     suspendUntil {
         val pose = currentDrivePose()
         val multiplier = maxPower().coerceIn(0.0..1.0)
@@ -205,6 +244,9 @@ suspend fun followLinePath(
     G[RobotState.driveState.driveControlState] = DriveControlState.Idle
 }
 
+/**
+ * Follows a [trajectory][traj] and then launches a pose lock to the end of the trajectory.
+ */
 suspend fun followTrajectoryFixpoint(
     traj: TrajectorySequence,
     stopDist: Double = 0.5
@@ -217,6 +259,9 @@ suspend fun followTrajectoryFixpoint(
         launchFixpoint(traj.end())
     }
 
+/**
+ * Follows a line path from the robot's current position to [target].
+ */
 suspend fun lineTo(target: Pose2d, maxPower: () -> Double = { 1.0 }, stopDist: Double = 18.0) =
     followLinePath(currentDrivePose().vec(), target.vec(), target.heading, maxPower, stopDist)
 
@@ -228,7 +273,9 @@ suspend fun setDrivetrainIdle() = withLooper(G[RobotState.driveLooper]) {
     Globals.cmd.runCommand(stopDrivetrainCommand)
 }
 
-
+/**
+ * Manually set the drivetrain robot-relative fwd, strafe, and turn powers.
+ */
 fun setDrivePowers(x: Double, y: Double, r: Double) = G.chub.run {
     tr.power = +x +y +r
     tl.power = -x +y +r
@@ -236,8 +283,15 @@ fun setDrivePowers(x: Double, y: Double, r: Double) = G.chub.run {
     br.power = +x -y +r
 }
 
+/**
+ * Manually set the drivetrain robot-relative fwd, strafe, and turn powers.
+ */
 fun setDrivePowers(poseVel: Pose2d) = setDrivePowers(poseVel.x, poseVel.y, poseVel.heading)
 
+/**
+ * Manually set the drivetrain field-relative fwd, strafe, and turn powers with
+ * voltage compensation and strafe multiplier.
+ */
 fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
     val multiplier = 12.0 / G.chub.voltageSensor.voltage
 
@@ -248,6 +302,9 @@ fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
     )
 }
 
+/**
+ * Runs a field-centric drive loop.
+ */
 suspend fun runFieldCentricDrive(): Nothing = mainLoop {
     if (C.imuResetAngle) resetImuAngle()
 

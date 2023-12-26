@@ -18,6 +18,16 @@ data class FeedforwardCoefs(
         kG + kS*sign(state.v) + kV*state.v + kA*state.a
 }
 
+/**
+ * Runs a motion profile with feedforward and PID control.
+ *
+ * @param profile The motion profile.
+ * @param feedforward The feedforward coefficients.
+ * @param pid The PID coefficients.
+ * @param input The input function.
+ * @param output The output function.
+ * @param pidIntegralLimit The maximum value of the integral term.
+ */
 suspend inline fun runMotionProfile(
     profile: MotionProfile,
     feedforward: FeedforwardCoefs,

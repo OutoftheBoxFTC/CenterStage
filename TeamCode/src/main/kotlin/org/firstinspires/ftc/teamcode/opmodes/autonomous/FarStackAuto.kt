@@ -48,6 +48,9 @@ import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
 import kotlin.math.PI
 
+/**
+ * Cycling auto using the center-most lane.
+ */
 abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
     abstract val rightPreloadFloor: Pose2d
     abstract val frontPreloadFloor: Pose2d
@@ -107,6 +110,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         resetDrivePose(Pose2d())
         closeClaws()
 
+        // Drive to preload position
         coroutineScope {
             launch { retractExtension() }
             launch { profileArm(ArmPosition.FLOOR) }
@@ -124,6 +128,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         suspendFor(200)
         setClawPos(ClawPosition.RED_OPEN)
 
+        // Drive to backboard to outtake yellow pixel
         coroutineScope {
             launch { profileArm(ArmPosition.NEUTRAL) }
 
@@ -136,12 +141,14 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             }
         }
 
+        // Score on backboard
         profileArm(ArmPosition.OUTTAKE)
         outtakeFixpoint()
         suspendFor(400)
         openClaws()
         suspendFor(200)
 
+        // Go back to pre-outtake position
         when (randomizationPos) {
             RandomizationPosition.LEFT -> preOuttakeLeft
             RandomizationPosition.CENTER -> preOuttakeCenter
@@ -150,6 +157,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
 
         suspendFor(200)
 
+        // Drive to pre-intake position
         coroutineScope {
             launch { profileArm(ArmPosition.NEUTRAL) }
 
@@ -160,6 +168,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             }.let { followTrajectoryFixpoint(it) }
         }
 
+        // Park for now
         launchFixpoint(preIntakePos + Pose2d(
             0.0,
             6.0 * if (isBlue) -1.0 else 1.0,
@@ -181,16 +190,21 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
         suspendFor(5000)
     }
 
+    /**
+     * Launches fixpoint to score position based on apriltag detections.
+     */
     private suspend fun outtakeFixpoint(): Job = coroutineScope {
         val targetPose = raceN(
             coroutineContext,
             {
                 val poses = G.robotState
                     .mapState { it.visionState.aprilTagDetections }
+                    // Wait for next non-empty detection list
                     .filter { it.isNotEmpty() }
                     .withIndex()
                     .first { it.index > 0 }
                     .value
+                    // Get target pose
                     .map { it to currentDrivePose() }
                     .map { (detection, currentPose) ->
                         val fwd = detection.pose.z - 8.63
@@ -208,6 +222,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
                         )
                     }
 
+                // Average from all apriltags
                 Pose2d(
                     poses.map { it.x }.average(),
                     poses.map { it.y }.average(),
@@ -215,6 +230,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
                 )
             },
             {
+                // Fallback if we don't see any apriltags
                 suspendFor(500)
                 val pose = currentDrivePose()
 

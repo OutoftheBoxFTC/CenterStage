@@ -5,11 +5,27 @@ import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 
+/**
+ * Convenience DSL for logging data to telemetry.
+ *
+ * "Subtrees" pipe telemetry data upstream and append their own group name.
+ *
+ * Example:
+ * ```
+ * "group_name" {
+ *   "key" set value    // group_name
+ *   "subgroup" {
+ *     "key" set value  // group_name.subgroup
+ *   }
+ * }
+ * ```
+ */
 private interface TreeLog {
     fun put(group: String, key: String, value: Any?)
 
     operator fun String.invoke(block: TreeLog.() -> Unit) = object : TreeLog {
         override fun put(group: String, key: String, value: Any?) =
+            // Pipe data upstream with group name appended at the beginning
             this@TreeLog.put(
                 this@invoke + if (group.isNotBlank()) ".$group" else "",
                 key,
@@ -20,6 +36,9 @@ private interface TreeLog {
     infix fun String.set(value: Any?) = put("", this, value)
 }
 
+/**
+ * Logs the robot state to telemetry.
+ */
 private fun TreeLog.rootLog(state: RobotState) {
     "imu" {
         "IMU Angle" set state.imuState.angle
@@ -86,13 +105,23 @@ private fun TreeLog.rootLog(state: RobotState) {
     }
 }
 
+/**
+ * FTCDashboard config for selecting which data to show in telemetry.
+ *
+ * Semicolons separate group names, items are filtered according to whether their group starts with
+ * any of the group names. An asterisk matches all groups.
+ */
 @Config
 object LoggingConfig {
     @JvmField var queryString = "localizer;extension"
 }
 
+/**
+ * Logs the robot state to telemetry with filtering.
+ */
 fun Telemetry.logState(state: RobotState) = object : TreeLog {
     override fun put(group: String, key: String, value: Any?) {
+        // Implementation of TreeLog for adding filtered data to telemetry
         val str = LoggingConfig.queryString
 
         if (
@@ -100,6 +129,7 @@ fun Telemetry.logState(state: RobotState) = object : TreeLog {
             str
                 .split(';')
                 .filter { it.isNotBlank() }
+                // Check if group name matches
                 .any { group.startsWith(it) }
         ) addData(key, value)
     }

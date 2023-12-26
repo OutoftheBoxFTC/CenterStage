@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.hardware.devices.ServoGroup
 
 const val IMU_NAME = "imu"
 
+// Referenced in RoadRunner SampleMecanumDrive
 object DriveHardwareNames {
     const val tr = "1"
     const val tl = "2"
@@ -21,9 +22,14 @@ object DriveHardwareNames {
     const val odoLeft = "0"
 }
 
+/**
+ * Hardware layer for the control hub.
+ */
 class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub") {
     val voltageSensor: VoltageSensor = hwMap.voltageSensor.first()
 
+    // Drive motors
+    // Top is intake side
     val tr = motor(DriveHardwareNames.tr)
     val tl = motor(DriveHardwareNames.tl)
     val br = motor(DriveHardwareNames.br)
@@ -35,7 +41,6 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
 
     val intakeWheel = crServo("s0")
 
-    // Temporary hardware mappings
     val arm = ServoGroup(
         nonEmptyListOf(
             // Right
@@ -57,6 +62,9 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     val outtakeCamera = webcam("Outtake Webcam", true)
 }
 
+/**
+ * Hardware layer for the expansion hub.
+ */
 class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2") {
     val extension = MotorGroup(
         nonEmptyListOf(

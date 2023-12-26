@@ -12,6 +12,9 @@ import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 import org.openftc.easyopencv.OpenCvPipeline
 
+/**
+ * Pipeline for detecting location of the team prop for randomization.
+ */
 @Config
 class PreloadDetectionPipeline : OpenCvPipeline() {
     enum class RandomizationPosition {
@@ -21,19 +24,23 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
     }
 
     companion object {
+        // Center rect
         @JvmField var cx0 = 0.0
         @JvmField var cy0 = 0.0
         @JvmField var cx1 = 0.0
         @JvmField var cy1 = 0.0
 
+        // Side rect
         @JvmField var sx0 = 0.0
         @JvmField var sy0 = 0.0
         @JvmField var sx1 = 0.0
         @JvmField var sy1 = 0.0
 
+        // Thresholds
         @JvmField var redCutoff = 120
         @JvmField var blueCutoff = 120
 
+        // Color to look for
         @JvmField var isBlue = true
     }
 
@@ -50,6 +57,10 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
     }
 
     override fun processFrame(input: Mat): Mat {
+        // Using YCbCr color space for thresholding with blue and red in specific regions
+        // We can't actually see all three positions, so we default to the third position if the
+        // other two are below the threshold.
+
         Imgproc.cvtColor(input, yCrCbMat, Imgproc.COLOR_BGR2YCrCb)
 
         val centerRect = Rect(Point(cx0, cy0), Point(cx1, cy1))
@@ -61,6 +72,7 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
         val centerSubmat = yCrCbMat.submat(centerRect)
         val sideSubmat = yCrCbMat.submat(sideRect)
 
+        // Could have used average here, but now I don't feel like changing it
         val centerSum = Core.sumElems(centerSubmat).`val`
         val sideSum = Core.sumElems(sideSubmat).`val`
 
