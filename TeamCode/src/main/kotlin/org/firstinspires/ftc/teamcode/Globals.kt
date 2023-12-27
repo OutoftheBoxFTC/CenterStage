@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode
 
+import arrow.core.toNonEmptyListOrNull
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.Looper
+import com.outoftheboxrobotics.tickt.TicketScheduler
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +48,7 @@ object Globals {
             driveLooper = mainLooper,
             chub = chubLayer,
             ehub = ExHubHardware(hwMap),
+            ticketScheduler = TicketScheduler(Subsystem.entries.toNonEmptyListOrNull()!!),
             commandHandler = CommandHandler.new(),
 
             imuState = ImuState(0.0, 0.0),
@@ -70,6 +73,8 @@ object Globals {
     fun stop() {
         val state = robotState.value
 
+        state.ticketScheduler.cancel()
+
         state.mainLooper.cancel()
 
         // Make sure we don't call cancel() twice
@@ -91,6 +96,9 @@ object Globals {
 
 
     // Convenience accessors for the command handler.
+    val scheduler get() = robotState.value.ticketScheduler
+
+    // TODO Remove this once the new command handler is implemented
     val cmd get() = robotState.value.commandHandler
 
     // Gets members of the robot state using arrow-optics lenses.

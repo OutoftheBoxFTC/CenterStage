@@ -160,7 +160,7 @@ fun currentDrivePose() = G[RobotState.driveState.currentPose]
 /**
  * Launches a pose lock to [target].
  */
-fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driveLooper].scheduleCoroutine {
+fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driveLooper].scheduleCoroutine(G.scheduler) {
     Globals.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
         G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(target)
 

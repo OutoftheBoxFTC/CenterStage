@@ -65,7 +65,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2"
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
-    implementation 'com.github.rk012:SuspendLooper:main-SNAPSHOT'
+    implementation 'com.github.rk012:SuspendLooper:6491c0b5c2'
+    implementation 'com.github.rk012:TicKT:8aba435f61'
 
     implementation 'org.team11260:fast-load:0.1.1'
 }

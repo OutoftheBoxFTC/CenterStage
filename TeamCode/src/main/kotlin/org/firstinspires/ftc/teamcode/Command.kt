@@ -4,6 +4,7 @@ import arrow.core.Nel
 import arrow.fx.stm.TMap
 import arrow.fx.stm.atomically
 import arrow.fx.stm.check
+import com.outoftheboxrobotics.tickt.TicketKey
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -14,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 /**
  * Represents a physical subsystem on the robot.
  */
-enum class Subsystem {
+enum class Subsystem : TicketKey {
     DRIVETRAIN,
     EXTENSION,
     INTAKE,

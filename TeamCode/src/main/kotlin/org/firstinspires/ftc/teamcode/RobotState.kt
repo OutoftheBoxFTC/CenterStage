@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode
 
 import arrow.optics.optics
 import com.outoftheboxrobotics.suspendftc.Looper
+import com.outoftheboxrobotics.tickt.TicketScheduler
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveState
 import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionState
 import org.firstinspires.ftc.teamcode.actions.hardware.ImuState
@@ -19,8 +20,7 @@ import org.firstinspires.ftc.teamcode.vision.VisionState
  * @param driveLooper The looper for drive train actions which interacts with the control hub.
  * @param chub The control hub hardware layer.
  * @param ehub The expansion hub hardware layer.
- * @param commandHandler The command handler for the robot for running actions that require
- * exclusive access to a subsystem.
+ * @param ticketScheduler The ticket scheduler for the robot.
  * @param imuState IMU-related state.
  * @param driveState Drivetrain-related state.
  * @param extensionState Extension-related state.
@@ -33,6 +33,9 @@ data class RobotState(
     val driveLooper: Looper = mainLooper,
     val chub: ControlHubHardware,
     val ehub: ExHubHardware,
+    val ticketScheduler: TicketScheduler,
+
+
     val commandHandler: CommandHandler,
 
     val imuState: ImuState,

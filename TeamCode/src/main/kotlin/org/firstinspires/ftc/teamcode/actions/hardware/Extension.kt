@@ -85,7 +85,7 @@ suspend fun retractExtension() {
 /**
  * Launches a PID controller to the given target encoder position.
  */
-fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine {
+fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine(G.scheduler) {
     G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
         runPidController(
             coefs = ExtensionConfig.pidCoefs,

@@ -36,6 +36,7 @@ import org.firstinspires.ftc.teamcode.hardware.devices.KWebcam
 import org.firstinspires.ftc.teamcode.logState
 import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
+import org.firstinspires.ftc.teamcode.ticketScheduler
 
 /**
  * Base class for all OpModes.
@@ -118,6 +119,10 @@ abstract class RobotOpMode(
             if (runMultiThreaded) { driveLooperLens set Looper() }
         }.let { Globals.initializeRobotState(it, this) }
 
+        Globals[mainLooperLens].scheduleCoroutine {
+            Globals[RobotState.ticketScheduler].runScheduler()
+        }
+
         // Roadrunner SampleMecanumDrive
         val rrDrive = SampleMecanumDrive(hardwareMap)
 
@@ -154,7 +159,7 @@ abstract class RobotOpMode(
             }
         }
 
-        Globals[mainLooperLens].scheduleCoroutine {
+        Globals[mainLooperLens].scheduleCoroutine(Globals.scheduler) {
             // Main runSuspendOpMode job
             val job = launch { runSuspendOpMode() }
 
