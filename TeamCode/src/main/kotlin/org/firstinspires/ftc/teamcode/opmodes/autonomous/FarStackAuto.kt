@@ -153,7 +153,11 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             RandomizationPosition.LEFT -> preOuttakeLeft
             RandomizationPosition.CENTER -> preOuttakeCenter
             RandomizationPosition.RIGHT -> preOuttakeRight
-        }.let { launchFixpoint(it) }
+        }.let {
+            launchFixpoint(it.copy(
+                y = it.y + 1.0 * if (isBlue) -1.0 else -1.0
+            ))
+        }
 
         suspendFor(200)
 
@@ -242,7 +246,7 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             }
         ).merge()
 
-        launchFixpoint(targetPose)
+        launchFixpoint(targetPose, 0.5)
     }
 }
 

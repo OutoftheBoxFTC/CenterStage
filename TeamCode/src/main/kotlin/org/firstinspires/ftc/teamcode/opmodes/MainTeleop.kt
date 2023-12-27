@@ -141,8 +141,9 @@ class MainTeleop : RobotOpMode() {
             G.ehub.intakeRoller.power = 0.0
             closeClaws()
             suspendFor(100)
-            setArmPosition(ArmPosition.NEUTRAL)
             setTiltPosition(IntakeTiltPosition.LOW)
+            suspendFor(50)
+            setArmPosition(ArmPosition.NEUTRAL)
             suspendFor(200)
             setTiltPosition(IntakeTiltPosition.HIGH)
         }
