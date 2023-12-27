@@ -6,12 +6,14 @@ import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.tickt.Ticket
+import com.outoftheboxrobotics.tickt.runTicket
+import com.outoftheboxrobotics.tickt.withTicket
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
-import org.firstinspires.ftc.teamcode.Command
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
@@ -48,7 +50,7 @@ import kotlin.math.sin
  */
 @TeleOp
 class MainTeleop : RobotOpMode() {
-    private val fieldCentricCommand = Command(Subsystem.DRIVETRAIN.nel()) {
+    private val fieldCentricCommand = Ticket(Subsystem.DRIVETRAIN.nel()) {
         runFieldCentricDrive()
     }
 
@@ -58,7 +60,7 @@ class MainTeleop : RobotOpMode() {
      * @param transitionJob The job to wait for before transitioning to the next state.
      */
     private fun mainState(transitionJob: Job? = null): FS = FS {
-        launch { G.cmd.runCommand(fieldCentricCommand) }
+        launch { runTicket(fieldCentricCommand) }
 
         transitionJob?.join()
 
@@ -94,7 +96,7 @@ class MainTeleop : RobotOpMode() {
 
         launch {
             // Modified field centric drive that gives operator control over turning.
-            G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
+            withTicket(Subsystem.DRIVETRAIN) {
                 mainLoop {
                     val heading = currentImuAngle()
 
@@ -155,7 +157,7 @@ class MainTeleop : RobotOpMode() {
      * State for outtaking pixels.
      */
     private val outtakeState: FS = FS {
-        launch { G.cmd.runCommand(fieldCentricCommand) }
+        launch { runTicket(fieldCentricCommand) }
 
         profileArm(ArmPosition.OUTTAKE)
         setTwistPosition(TwistPosition.HORIZONTAL)

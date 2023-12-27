@@ -35,9 +35,6 @@ data class RobotState(
     val ehub: ExHubHardware,
     val ticketScheduler: TicketScheduler,
 
-
-    val commandHandler: CommandHandler,
-
     val imuState: ImuState,
     val driveState: DriveState,
     val extensionState: ExtensionState,

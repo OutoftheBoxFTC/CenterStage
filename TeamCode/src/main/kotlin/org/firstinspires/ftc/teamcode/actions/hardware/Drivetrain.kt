@@ -9,13 +9,14 @@ import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
 import com.outoftheboxrobotics.suspendftc.yieldLooper
+import com.outoftheboxrobotics.tickt.Ticket
+import com.outoftheboxrobotics.tickt.runTicket
+import com.outoftheboxrobotics.tickt.withTicket
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.supervisorScope
-import org.firstinspires.ftc.teamcode.Command
-import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
@@ -161,7 +162,7 @@ fun currentDrivePose() = G[RobotState.driveState.currentPose]
  * Launches a pose lock to [target].
  */
 fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driveLooper].scheduleCoroutine(G.scheduler) {
-    Globals.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
+    withTicket(Subsystem.DRIVETRAIN) {
         G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(target)
 
         runPosePidController(
@@ -174,9 +175,9 @@ fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driv
     }
 }
 
-private suspend fun runDriveCommand(action: suspend () -> Unit) =
+private suspend inline fun runDriveCommand(crossinline action: suspend () -> Unit) =
     withLooper(G[RobotState.driveLooper]) {
-        G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel(), action)
+        withTicket(Subsystem.DRIVETRAIN) { action.invoke() }
     }
 
 /**
@@ -266,12 +267,12 @@ suspend fun followTrajectoryFixpoint(
 suspend fun lineTo(target: Pose2d, maxPower: () -> Double = { 1.0 }, stopDist: Double = 18.0) =
     followLinePath(currentDrivePose().vec(), target.vec(), target.heading, maxPower, stopDist)
 
-private val stopDrivetrainCommand = Command(Subsystem.DRIVETRAIN.nel()) {
+private val stopDrivetrainCommand = Ticket(Subsystem.DRIVETRAIN.nel()) {
     G[RobotState.driveState.driveControlState] = DriveControlState.Idle
 }
 
 suspend fun setDrivetrainIdle() = withLooper(G[RobotState.driveLooper]) {
-    Globals.cmd.runCommand(stopDrivetrainCommand)
+    runTicket(stopDrivetrainCommand)
 }
 
 /**

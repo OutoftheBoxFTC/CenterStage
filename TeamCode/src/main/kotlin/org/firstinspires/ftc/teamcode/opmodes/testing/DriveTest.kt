@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
-import arrow.core.nel
-import arrow.core.nonEmptyListOf
 import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
@@ -9,24 +7,25 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
-import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
-import org.firstinspires.ftc.teamcode.util.launchCommand
+import org.firstinspires.ftc.teamcode.util.launchTicket
+import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 @Disabled
 class DriveTest : RobotOpMode() {
     private val joystickDrive: FS by lazy { FS {
-        G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
+        launchTicket(Subsystem.DRIVETRAIN) {
             launch {
-                loopYieldWhile({ true }) {
+                mainLoop {
                     telemetry["Current State"] = "Joystick Drive"
                 }
             }
@@ -38,8 +37,8 @@ class DriveTest : RobotOpMode() {
     } }
 
     private val intakeJoystickDrive: FS by lazy { FS {
-        G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
-            loopYieldWhile({ true }) {
+        launchTicket(Subsystem.DRIVETRAIN) {
+            mainLoop {
                 setDrivePowers(
                     0.0,
                     0.0,
@@ -57,8 +56,8 @@ class DriveTest : RobotOpMode() {
     } }
 
     private val buttonPower: FS by lazy { FS {
-        G.cmd.launchCommand(nonEmptyListOf(Subsystem.DRIVETRAIN)) {
-            loopYieldWhile({ true }) {
+        launchTicket(Subsystem.DRIVETRAIN) {
+            mainLoop {
                 with(G.chub) {
                     tl.power = if (G.gp1.left_trigger > 0.9) 1.0 else 0.0
                     tr.power = if (G.gp1.right_trigger > 0.9) 1.0 else 0.0

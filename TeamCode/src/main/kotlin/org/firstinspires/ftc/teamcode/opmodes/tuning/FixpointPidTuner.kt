@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes.tuning
 
-import arrow.core.nel
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
@@ -9,18 +8,17 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.setAdjustedDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
-import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
-import org.firstinspires.ftc.teamcode.util.G
-import org.firstinspires.ftc.teamcode.util.launchCommand
+import org.firstinspires.ftc.teamcode.util.launchTicket
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
@@ -59,7 +57,7 @@ class FixpointPidTuner : RobotOpMode() {
     }
 
     private val fixpointState: FS = FS {
-        G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
+        launchTicket(Subsystem.DRIVETRAIN) {
             runPosePidController(
                 translationalCoefs = translationalCoefs,
                 headingCoefs = headingCoefs,
@@ -77,7 +75,7 @@ class FixpointPidTuner : RobotOpMode() {
     }
 
     private val freeControlState: FS = FS {
-        G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
+        launchTicket(Subsystem.DRIVETRAIN) {
             loopYieldWhile({ true }) {
                 setAdjustedDrivePowers(
                     C.driveStrafeX,

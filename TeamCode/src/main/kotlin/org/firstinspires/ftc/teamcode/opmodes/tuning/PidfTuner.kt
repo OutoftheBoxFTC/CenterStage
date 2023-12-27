@@ -1,28 +1,27 @@
 package org.firstinspires.ftc.teamcode.opmodes.tuning
 
 import arrow.core.merge
-import arrow.core.nel
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.profile.MotionProfileGenerator
 import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.tickt.withTicket
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runMotionProfile
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
-import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.FS
-import org.firstinspires.ftc.teamcode.util.G
-import org.firstinspires.ftc.teamcode.util.launchCommand
+import org.firstinspires.ftc.teamcode.util.launchTicket
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 
@@ -88,7 +87,7 @@ abstract class PidfTuner(
             maxVel, maxAccel
         )
 
-        G.cmd.runNewCommand(subsystem.nel()) {
+        withTicket(subsystem) {
             runMotionProfile(
                 profile = profile,
                 feedforward = feedforwardCoefs,
@@ -96,7 +95,7 @@ abstract class PidfTuner(
                 input = ::readInput,
                 output = {
                     updateOutput(it)
-                    this.target = profile[timer.seconds()].x
+                    this@PidfTuner.target = profile[timer.seconds()].x
                 }
             )
         }
@@ -104,7 +103,7 @@ abstract class PidfTuner(
 
 
     private val freeState: FS = FS {
-        G.cmd.launchCommand(subsystem.nel()) {
+        launchTicket(subsystem) {
             mainLoop {
                 updateOutput(feedforwardCoefs.kG)
             }
@@ -144,7 +143,7 @@ abstract class PidfTuner(
     }
 
     private val pidState: FS = FS {
-        G.cmd.launchCommand(subsystem.nel()) {
+        launchTicket(subsystem) {
             runPid((minPos + maxPos) / 2)
         }
 

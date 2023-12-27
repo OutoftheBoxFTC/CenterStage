@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.util
 
-import arrow.core.Nel
 import arrow.fx.coroutines.Race3
 import arrow.optics.Copy
 import arrow.optics.copy
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.tickt.withTicket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
-import org.firstinspires.ftc.teamcode.CommandHandler
 import org.firstinspires.ftc.teamcode.Subsystem
 
 /**
@@ -40,14 +39,13 @@ suspend inline fun suspendUntilFallingEdge(predicate: () -> Boolean) {
 }
 
 /**
- * Launches a new command with the [CommandHandler] using the [CoroutineScope] context receiver.
+ * Launches a new Ticket.
  *
- * @param required The required subsystems for the command.
- * @param action The action to run in the command.
+ * @param required The required subsystems for the ticket.
+ * @param action The action to run in the ticket.
  */
-context(CoroutineScope)
-fun CommandHandler.launchCommand(required: Nel<Subsystem>, action: suspend () -> Unit) = launch {
-    runNewCommand(required, action)
+fun CoroutineScope.launchTicket(vararg required: Subsystem, action: suspend () -> Unit) = launch {
+    withTicket(*required) { action.invoke() }
 }
 
 /**

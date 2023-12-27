@@ -40,16 +40,14 @@ object Globals {
      * @param hwMap The hardware map to use.
      */
     fun defaultRobotState(hwMap: HardwareMap): RobotState {
-        val chubLayer = ControlHubHardware(hwMap)
         val mainLooper = Looper()
 
         return RobotState(
             mainLooper = mainLooper,
             driveLooper = mainLooper,
-            chub = chubLayer,
+            chub = ControlHubHardware(hwMap),
             ehub = ExHubHardware(hwMap),
             ticketScheduler = TicketScheduler(Subsystem.entries.toNonEmptyListOrNull()!!),
-            commandHandler = CommandHandler.new(),
 
             imuState = ImuState(0.0, 0.0),
             driveState = DriveState(null, Pose2d(), DriveControlState.Idle),
@@ -95,11 +93,8 @@ object Globals {
     val gp2: Gamepad get() = currentOpMode.gamepad2
 
 
-    // Convenience accessors for the command handler.
+    // Convenience accessor for the ticket scheduler.
     val scheduler get() = robotState.value.ticketScheduler
-
-    // TODO Remove this once the new command handler is implemented
-    val cmd get() = robotState.value.commandHandler
 
     // Gets members of the robot state using arrow-optics lenses.
     operator fun <T> get(lens: Lens<RobotState, T>) = lens.get(robotState.value)

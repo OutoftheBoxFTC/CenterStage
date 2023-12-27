@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.actions.hardware
 
-import arrow.core.nel
 import arrow.optics.optics
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.tickt.withTicket
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
 import org.firstinspires.ftc.teamcode.RobotState
@@ -56,7 +56,7 @@ suspend fun runExtensionTo(
     tolerance: Int = 30,
     keepPid: Boolean = false
 ) {
-    G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
+    withTicket(Subsystem.EXTENSION) {
         loopYieldWhile({ abs(extensionLength() - target) < ExtensionConfig.pidRange }) {
             setExtensionPower(if (extensionLength() < target) 1.0 else -1.0)
         }
@@ -86,7 +86,7 @@ suspend fun retractExtension() {
  * Launches a PID controller to the given target encoder position.
  */
 fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine(G.scheduler) {
-    G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
+    withTicket(Subsystem.EXTENSION) {
         runPidController(
             coefs = ExtensionConfig.pidCoefs,
             input = { extensionLength().toDouble() },

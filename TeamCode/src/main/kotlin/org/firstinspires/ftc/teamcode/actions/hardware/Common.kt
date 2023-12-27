@@ -3,10 +3,12 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.outoftheboxrobotics.suspendftc.suspendFor
+import com.outoftheboxrobotics.tickt.withTicket
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
@@ -22,7 +24,7 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
 /**
  * Runs the intake transfer sequence.
  */
-suspend fun intakeTransfer() {
+suspend fun intakeTransfer() = withTicket(Subsystem.INTAKE, Subsystem.EXTENSION, Subsystem.OUTTAKE) {
     G.ehub.intakeRoller.power = -0.8
     setTiltPosition(IntakeTiltPosition.HIGH)
     retractExtension()
