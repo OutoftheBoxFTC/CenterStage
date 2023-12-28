@@ -66,7 +66,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     implementation 'com.github.rk012:SuspendLooper:6491c0b5c2'
-    implementation 'com.github.rk012:TicKT:8aba435f61'
+    implementation 'com.github.rk012:TicKT:v0.2'
 
     implementation 'org.team11260:fast-load:0.1.1'
 }

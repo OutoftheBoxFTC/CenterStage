@@ -1,13 +1,17 @@
 package org.firstinspires.ftc.teamcode
 
+import arrow.core.Nel
 import arrow.core.toNonEmptyListOrNull
 import arrow.optics.Lens
 import arrow.optics.Optional
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.Looper
+import com.outoftheboxrobotics.tickt.SchedulingPolicy
+import com.outoftheboxrobotics.tickt.Ticket
 import com.outoftheboxrobotics.tickt.TicketScheduler
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveState
@@ -17,6 +21,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.OuttakeState
 import org.firstinspires.ftc.teamcode.hardware.ControlHubHardware
 import org.firstinspires.ftc.teamcode.hardware.ExHubHardware
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
+import org.firstinspires.ftc.teamcode.util.fail
 import org.firstinspires.ftc.teamcode.vision.VisionState
 
 /**
@@ -35,6 +40,33 @@ object Globals {
     private lateinit var currentOpMode: RobotOpMode
 
     /**
+     * Scheduling policy for the robot ticket scheduler.
+     *
+     * Similar to the default scheduling policy, but tries to fail fast if conflicting tickets are
+     * scheduled.
+     */
+    private val robotTicketSchedulingPolicy = object : SchedulingPolicy {
+        override fun schedule(
+            ticket: Ticket,
+            active: Set<Ticket>,
+            queued: Set<Ticket>,
+            standby: List<Ticket>
+        ): SchedulingPolicy.TicketAction {
+            if (
+                ((active + queued).flatMap { it.requirements } intersect ticket.requirements)
+                .isNotEmpty()
+            ) {
+                RobotLog.a("Conflicting tickets scheduled")
+                fail("Conflicting tickets scheduled") {}
+            }
+
+            return SchedulingPolicy.TicketAction.Queue(true)
+        }
+
+        override fun select(standby: Nel<Ticket>) = standby.head
+    }
+
+    /**
      * Creates a default robot state.
      *
      * @param hwMap The hardware map to use.
@@ -47,7 +79,10 @@ object Globals {
             driveLooper = mainLooper,
             chub = ControlHubHardware(hwMap),
             ehub = ExHubHardware(hwMap),
-            ticketScheduler = TicketScheduler(Subsystem.entries.toNonEmptyListOrNull()!!),
+            ticketScheduler = TicketScheduler(
+                Subsystem.entries.toNonEmptyListOrNull()!!,
+                robotTicketSchedulingPolicy
+            ),
 
             imuState = ImuState(0.0, 0.0),
             driveState = DriveState(null, Pose2d(), DriveControlState.Idle),

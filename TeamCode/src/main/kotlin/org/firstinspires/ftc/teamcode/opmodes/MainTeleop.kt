@@ -2,12 +2,14 @@ package org.firstinspires.ftc.teamcode.opmodes
 
 import arrow.core.merge
 import arrow.core.nel
+import arrow.core.toNonEmptyListOrNull
 import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.tickt.Ticket
 import com.outoftheboxrobotics.tickt.runTicket
+import com.outoftheboxrobotics.tickt.ticketSchedulerContext
 import com.outoftheboxrobotics.tickt.withTicket
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.Job
@@ -250,6 +252,11 @@ class MainTeleop : RobotOpMode() {
 
         suspendUntilStart()
 
-        runStateMachine(mainState())
+        // Use the default scheduling policy for teleop as conflicts are expected here
+        withTicket(Subsystem.entries.toNonEmptyListOrNull()!!) {
+            ticketSchedulerContext(Subsystem.entries.toNonEmptyListOrNull()!!) {
+                runStateMachine(mainState())
+            }
+        }
     }
 }
