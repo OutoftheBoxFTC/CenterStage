@@ -43,8 +43,8 @@ object Controls {
     val rollerIn by operatorInput { left_bumper }
     val rollerOut by operatorInput { right_bumper }
 
-    val operatorIntakeExtension by operatorInput { -left_stick_y.toDouble() }
-    val operatorTurn by operatorInput { -left_stick_x.toDouble() }
+    val operatorIntakeExtension by driverInput { -right_stick_y.toDouble() }
+    val operatorTurn by driverInput { -right_stick_x.toDouble() }
 
     // Outtake state
     val enterOuttakeState by operatorInput { b }
