@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 object Controls {
     // Autonomous
     val openClaw by driverInput { right_bumper }
+    val toggleAutoBreakpointEnable by driverInput { x }
 
     // Common
     val driveStrafeX by driverInput { -left_stick_y.toDouble() }

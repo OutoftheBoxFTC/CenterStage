@@ -125,6 +125,8 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             }
         }
 
+        breakpoint()
+
         suspendFor(200)
         setClawPos(ClawPosition.RED_OPEN)
 
@@ -141,10 +143,15 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             }
         }
 
+        breakpoint()
+
         // Score on backboard
         profileArm(ArmPosition.OUTTAKE)
         outtakeFixpoint()
         suspendFor(400)
+
+        breakpoint()
+
         openClaws()
         suspendFor(200)
 
@@ -161,6 +168,8 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
 
         suspendFor(200)
 
+        breakpoint()
+
         // Drive to pre-intake position
         coroutineScope {
             launch { profileArm(ArmPosition.NEUTRAL) }
@@ -172,12 +181,16 @@ abstract class FarStackAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
             }.let { followTrajectoryFixpoint(it) }
         }
 
+        breakpoint()
+
         // Park for now
         launchFixpoint(preIntakePos + Pose2d(
             0.0,
             6.0 * if (isBlue) -1.0 else 1.0,
             0.0
         ))
+
+        breakpoint()
 
 
         // In progress cycling auto
