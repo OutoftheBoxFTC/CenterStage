@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.util.mainLoop
  */
 fun resetDrivePose(newPose: Pose2d = Pose2d()) {
     resetImuAngle(newPose.heading)
-    G[RobotState.driveState.currentPose] = newPose
+    G[RobotState.driveState.newPose] = newPose
 }
 
 /**

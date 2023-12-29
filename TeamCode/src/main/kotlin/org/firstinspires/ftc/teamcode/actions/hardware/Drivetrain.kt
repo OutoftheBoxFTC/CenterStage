@@ -35,12 +35,14 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
+ * @param newPose New pose that the robot should be set to.
  * @param currentPose Current pose of the robot from the odometry system.
  * @param driveControlState Current state of the drivetrain.
  * @param rrDrive Roadrunner [SampleMecanumDrive] instance.
  */
 @optics
 data class DriveState(
+    val newPose: Pose2d? = null,
     val currentPose: Pose2d,
     val driveControlState: DriveControlState,
     val rrDrive: SampleMecanumDrive? = null
@@ -116,23 +118,22 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
     var nextImuAngle = imuAngleAsync()
     var lastCorrectedPose = G[poseLens]
 
-    var lastSetPose = lastCorrectedPose
-
     mainLoop {
         val currentState = G[RobotState.driveState]
 
         // Check if another coroutine changed the pose, and if so call setPoseEstimate()
-        if (!(lastSetPose epsilonEquals currentState.currentPose)) {
-            val newPose = currentState.currentPose
+        if (currentState.newPose != null) {
+            val newPose = currentState.newPose
 
             rrDrive.poseEstimate = newPose
             lastCorrectedPose = newPose
             nextImuAngle = imuAngleAsync()
+
+            G[RobotState.driveState.nullableNewPose] = null
         }
 
         rrDrive.update()
         G[poseLens] = rrDrive.poseEstimate
-        lastSetPose = rrDrive.poseEstimate
 
         if (nextImuAngle.isCompleted) {
             // Run the IMU angle correction
@@ -146,7 +147,7 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
             val vecDelta = currentPose.vec() - lastCorrectedPose.vec()
 
             // Pose estimate will be set in the beginning of the next loop
-            G[poseLens] = Pose2d(
+            G[RobotState.driveState.newPose] = Pose2d(
                 lastCorrectedPose.vec() + vecDelta.rotated(angDelta),
                 imuAngle
             )
