@@ -78,7 +78,7 @@ suspend fun runExtensionTo(
 suspend fun retractExtension() {
     setExtensionPower(-1.0)
     suspendUntil { G.chub.extensionLimitSwitch }
-    // resetExtensionLength()
+    resetExtensionLength()
     setExtensionPower(-0.15)
 }
 

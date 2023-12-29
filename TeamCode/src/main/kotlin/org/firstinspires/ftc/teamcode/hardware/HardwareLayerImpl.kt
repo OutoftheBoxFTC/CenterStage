@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.DigitalChannel
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.VoltageSensor
-import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 import org.firstinspires.ftc.teamcode.hardware.devices.MotorGroup
 import org.firstinspires.ftc.teamcode.hardware.devices.ServoGroup
 
@@ -59,8 +58,7 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
         hwMap[DigitalChannel::class.java, "extensionLimitSwitch"]
 
     val extensionLimitSwitch by inputField(true) {
-        // !extensionLimitSwitchDevice.state
-        extensionLength() < 10
+        !extensionLimitSwitchDevice.state
     }
 
     val outtakeCamera = webcam("Outtake Webcam", true)
