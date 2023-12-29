@@ -13,6 +13,8 @@ import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
 import org.firstinspires.ftc.teamcode.extensionState
 import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.util.G
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.abs
 
 /**
@@ -55,14 +57,12 @@ suspend fun runExtensionTo(
     timeout: Long = 2000,
     tolerance: Int = 30,
     keepPid: Boolean = false
-) {
-    withTicket(Subsystem.EXTENSION) {
-        loopYieldWhile({ abs(extensionLength() - target) < ExtensionConfig.pidRange }) {
-            setExtensionPower(if (extensionLength() < target) 1.0 else -1.0)
-        }
+) = withTicket(Subsystem.EXTENSION) {
+    loopYieldWhile({ abs(extensionLength() - target) < ExtensionConfig.pidRange }) {
+        setExtensionPower(if (extensionLength() < target) 1.0 else -1.0)
     }
 
-    val pidJob = launchExtensionPid(target)
+    val pidJob = launchExtensionPid(target, context = coroutineContext)
     val timer = ElapsedTime()
 
     suspendUntil {
@@ -75,7 +75,7 @@ suspend fun runExtensionTo(
 /**
  * Retracts the extension until the limit switch is pressed, then resets the encoder position.
  */
-suspend fun retractExtension() {
+suspend fun retractExtension() = withTicket(Subsystem.EXTENSION) {
     setExtensionPower(-1.0)
     suspendUntil { G.chub.extensionLimitSwitch }
     resetExtensionLength()
@@ -84,14 +84,17 @@ suspend fun retractExtension() {
 
 /**
  * Launches a PID controller to the given target encoder position.
+ *
+ * For ticketing to work properly, the coroutine context must be specified.
  */
-fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine(G.scheduler) {
-    withTicket(Subsystem.EXTENSION) {
-        runPidController(
-            coefs = ExtensionConfig.pidCoefs,
-            input = { extensionLength().toDouble() },
-            target = { target.toDouble() },
-            output = ::setExtensionPower
-        )
+fun launchExtensionPid(target: Int, context: CoroutineContext = EmptyCoroutineContext) =
+    G[RobotState.mainLooper].scheduleCoroutine(G.scheduler + context) {
+        withTicket(Subsystem.EXTENSION) {
+            runPidController(
+                coefs = ExtensionConfig.pidCoefs,
+                input = { extensionLength().toDouble() },
+                target = { target.toDouble() },
+                output = ::setExtensionPower
+            )
+        }
     }
-}

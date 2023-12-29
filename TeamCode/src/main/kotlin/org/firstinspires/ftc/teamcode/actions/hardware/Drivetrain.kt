@@ -29,6 +29,8 @@ import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.cross
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan
@@ -160,20 +162,23 @@ fun currentDrivePose() = G[RobotState.driveState.currentPose]
 
 /**
  * Launches a pose lock to [target].
+ *
+ * For ticketing to work properly, the coroutine context must be specified.
  */
-fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driveLooper].scheduleCoroutine(G.scheduler) {
-    withTicket(Subsystem.DRIVETRAIN) {
-        G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(target)
+fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0, context: CoroutineContext = EmptyCoroutineContext) =
+    G[RobotState.driveLooper].scheduleCoroutine(G.scheduler + context) {
+        withTicket(Subsystem.DRIVETRAIN) {
+            G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(target)
 
-        runPosePidController(
-            translationalCoefs = DriveConfig.translationalPid,
-            headingCoefs = DriveConfig.headingPid,
-            input = { currentDrivePose() },
-            target = { target },
-            output = { setDrivePowers(multiplier * it.x, multiplier * it.y, it.heading) }
-        )
+            runPosePidController(
+                translationalCoefs = DriveConfig.translationalPid,
+                headingCoefs = DriveConfig.headingPid,
+                input = { currentDrivePose() },
+                target = { target },
+                output = { setDrivePowers(multiplier * it.x, multiplier * it.y, it.heading) }
+            )
+        }
     }
-}
 
 private suspend inline fun runDriveCommand(crossinline action: suspend () -> Unit) =
     withLooper(G[RobotState.driveLooper]) {
@@ -258,7 +263,7 @@ suspend fun followTrajectoryFixpoint(
 //        suspendUntil { currentDrivePose().vec() distTo traj.end().vec() <= stopDist }
 
         followTrajectory(traj)
-        launchFixpoint(traj.end())
+        launchFixpoint(traj.end(), context = coroutineContext)
     }
 
 /**
@@ -307,16 +312,18 @@ fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
 /**
  * Runs a field-centric drive loop.
  */
-suspend fun runFieldCentricDrive(): Nothing = mainLoop {
-    if (C.imuResetAngle) resetImuAngle()
+suspend fun runFieldCentricDrive(): Nothing = withTicket(Subsystem.DRIVETRAIN) {
+    mainLoop {
+        if (C.imuResetAngle) resetImuAngle()
 
-    val heading = currentImuAngle()
+        val heading = currentImuAngle()
 
-    val multiplier = if (C.slowDrive) 0.4 else 1.0
+        val multiplier = if (C.slowDrive) 0.4 else 1.0
 
-    setDrivePowers(
-        multiplier * (C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading)),
-        multiplier * (C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)),
-        multiplier * C.driveTurn
-    )
+        setDrivePowers(
+            multiplier * (C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading)),
+            multiplier * (C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)),
+            multiplier * C.driveTurn
+        )
+    }
 }

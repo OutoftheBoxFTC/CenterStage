@@ -24,7 +24,12 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
 /**
  * Runs the intake transfer sequence.
  */
-suspend fun intakeTransfer() = withTicket(Subsystem.INTAKE, Subsystem.EXTENSION, Subsystem.OUTTAKE) {
+suspend fun intakeTransfer() = withTicket(
+    Subsystem.INTAKE,
+    Subsystem.EXTENSION,
+    Subsystem.ARM,
+    Subsystem.CLAW
+) {
     G.ehub.intakeRoller.power = -0.8
     setTiltPosition(IntakeTiltPosition.HIGH)
     retractExtension()
@@ -71,7 +76,7 @@ suspend fun swoop(
             maxPower = { driveMultiplier }
         )
 
-        launchFixpoint(Pose2d(target, heading))
+        launchFixpoint(Pose2d(target, heading), context = coroutineContext)
         currentMonitor.cancelAndJoin()
     }
 

@@ -10,5 +10,6 @@ enum class Subsystem : TicketKey {
     EXTENSION,
     INTAKE,
     LIFT,
-    OUTTAKE
+    ARM,
+    CLAW
 }

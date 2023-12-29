@@ -4,8 +4,10 @@ import arrow.optics.optics
 import com.acmerobotics.roadrunner.profile.MotionProfileGenerator
 import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.tickt.withTicket
 import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.outtakeState
 import org.firstinspires.ftc.teamcode.util.G
 
@@ -71,7 +73,7 @@ fun openClaws() {
 /**
  * Moves the arm to the given position using a motion profile.
  */
-suspend fun profileArm(targetPos: Double) {
+suspend fun profileArm(targetPos: Double) = withTicket(Subsystem.ARM) {
     val profile = MotionProfileGenerator.generateSimpleMotionProfile(
         start = MotionState(G.chub.arm.position, 0.0),
         goal = MotionState(targetPos, 0.0),
