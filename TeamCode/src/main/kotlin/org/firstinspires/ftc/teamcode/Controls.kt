@@ -5,6 +5,8 @@ import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
 
 /**
  * Delegated properties that map controls to gamepad inputs.
+ *
+ * [See Github issue for full explanation](https://github.com/OutoftheBoxFTC/CenterStage/issues/2)
  */
 object Controls {
     // Autonomous
@@ -16,11 +18,8 @@ object Controls {
     val driveStrafeY by driverInput { -left_stick_x.toDouble() }
     val driveTurn by driverInput { -right_stick_x.toDouble() }
 
-    val slowDrive by driverInput { left_bumper || lockHeading }
-    val imuResetAngle by driverInput { right_bumper }
-
-    // Main state
-    val enterMainState by operatorInput { dpad_right }
+    val slowDrive by driverInput { left_trigger > 0.9 }
+    val imuResetAngle by driverInput { x }
 
     val hang0 by driverInput { when {
         dpad_up -> -1.0
@@ -34,32 +33,33 @@ object Controls {
         else -> 0.0
     } }
 
-    // Intake state
-    val enterIntakeState by operatorInput { dpad_left }
-    val exitIntakeNoTransfer by operatorInput { x }
+    // Default Main/Intake State
+    val extendExtension by driverInput { left_bumper }
+    val retractExtension by driverInput { right_bumper }
 
-    val intakeTiltUp by operatorInput { y }
-    val intakeTiltDown by operatorInput { a }
+    val tiltToggle by driverInput { b }
 
-    val rollerIn by operatorInput { left_bumper }
-    val rollerOut by operatorInput { right_bumper }
+    val runTransfer by operatorInput { x }
 
-    val operatorIntakeExtension by driverInput { -right_stick_y.toDouble() }
-    val operatorTurn by driverInput { -right_stick_x.toDouble() }
+    val stopRoller by operatorInput { left_bumper }
+    val expelRoller by operatorInput { right_bumper }
 
-    // Outtake state
-    val enterOuttakeState by operatorInput { b }
+    val outtakeLow by operatorInput { dpad_down }
+    val outtakeHigh by operatorInput { dpad_up }
 
-    val lockHeading by driverInput { left_trigger > 0.9 }
+    // Outtake State
+    val releaseLeftClaw by driverInput { left_bumper }
+    val releaseRightPixel by driverInput { right_bumper }
+
+    val autoPosition by driverInput { right_trigger > 0.9 }
+
+    val twistClawLeft by operatorInput { x }
+    val twistClawRight by operatorInput { b }
 
     val liftUp by operatorInput { y }
     val liftDown by operatorInput { a }
 
-    val clawRotateLeft by operatorInput { x }
-    val clawRotateRight by operatorInput { b }
-
-    val releaseFarPixel by operatorInput { left_bumper }
-    val releaseClosePixel by operatorInput { right_bumper }
+    val exitOuttake by driverInput { b }
 
     // Property delegates
     private fun <T> driverInput(block: Gamepad.() -> T) = object : ReadOnlyProperty<T> {
