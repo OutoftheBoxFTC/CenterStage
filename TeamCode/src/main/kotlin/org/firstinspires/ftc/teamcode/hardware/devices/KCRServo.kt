@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware.devices
 
 import com.qualcomm.robotcore.hardware.CRServo
+import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.abs
 
 /**
@@ -14,7 +15,7 @@ class KCRServo(private val servo: CRServo): KDevice, CRServo by servo {
     override fun setPower(power: Double) { this.power = power }
     override fun writeData() {
         power?.let {
-            if (abs(it - servo.power) > powerTolerance) servo.power = it
+            if (G.isInit || abs(it - servo.power) > powerTolerance) servo.power = it
             power = null
         }
     }

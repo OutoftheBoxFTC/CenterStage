@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware.devices
 
 import com.qualcomm.robotcore.hardware.Servo
+import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.abs
 
 /**
@@ -15,7 +16,7 @@ class KServo(private val servo: Servo) : KDevice, Servo by servo {
 
     override fun writeData() {
         position?.let {
-            if (abs(it - servo.position) > positionTolerance) servo.position = it
+            if (G.isInit || abs(it - servo.position) > positionTolerance) servo.position = it
             position = null
         }
     }

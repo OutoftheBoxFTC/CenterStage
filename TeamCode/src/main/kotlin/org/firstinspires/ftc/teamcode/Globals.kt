@@ -78,6 +78,9 @@ object Globals {
         state.imuState.threadedImuJob?.cancel()
     }
 
+    // Check if opmode in init
+    val isInit get() = currentOpMode.opModeInInit()
+
     // Convenience accessors for the control and expansion hub hardware layers.
     val chub get() = robotState.value.chub
     val ehub get() = robotState.value.ehub

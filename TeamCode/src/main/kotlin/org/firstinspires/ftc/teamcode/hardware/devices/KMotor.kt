@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
+import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.abs
 
 /**
@@ -88,7 +89,7 @@ class KMotor(private val motor: DcMotorEx) : KDevice, DcMotorEx by motor {
         }
 
         power?.let {
-            if (abs(it - motor.power) > powerTolerance) motor.power = it
+            if (G.isInit || abs(it - motor.power) > powerTolerance) motor.power = it
             power = null
         }
 
