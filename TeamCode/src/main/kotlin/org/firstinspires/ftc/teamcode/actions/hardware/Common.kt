@@ -39,8 +39,13 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
 /**
  * Runs the intake transfer sequence.
  */
-suspend fun intakeTransfer() {
-    G.ehub.intakeRoller.power = -0.8
+suspend fun intakeTransfer() = coroutineScope {
+    launch {
+        G.ehub.intakeRoller.power = 0.7
+        suspendFor(300)
+        G.ehub.intakeRoller.power = -1.0
+    }
+
     setTiltPosition(IntakeTiltPosition.HIGH)
     retractExtension()
     suspendFor(1000)
@@ -48,8 +53,9 @@ suspend fun intakeTransfer() {
     G.ehub.intakeRoller.power = 0.0
     closeClaws()
     suspendFor(100)
-    setArmPosition(ArmPosition.NEUTRAL)
     setTiltPosition(IntakeTiltPosition.LOW)
+    suspendFor(50)
+    setArmPosition(ArmPosition.NEUTRAL)
     suspendFor(200)
     setTiltPosition(IntakeTiltPosition.HIGH)
 }
