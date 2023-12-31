@@ -10,6 +10,8 @@ import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
 import com.qualcomm.robotcore.util.MovingStatistics
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,6 +88,11 @@ fun CommandHandler.launchCommand(required: Nel<Subsystem>, action: suspend () ->
  * Merges a [Race3] into a single value.
  */
 fun <T> Race3<T, T, T>.merge() = fold({ it }, { it }, { it })
+
+/**
+ * Runs the given block and cancels the job when it finishes.
+ */
+suspend inline fun <T> Job.use(block: () -> T) = block().also { cancelAndJoin() }
 
 /**
  * Creates a [StateFlow] that maps the values of this [StateFlow] using the given [transform] function.

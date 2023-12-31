@@ -49,7 +49,7 @@ object Controls {
 
     // Outtake State
     val releaseLeftClaw by driverInput { left_bumper }
-    val releaseRightPixel by driverInput { right_bumper }
+    val releaseRightClaw by driverInput { right_bumper }
 
     val autoPosition by driverInput { right_trigger > 0.9 }
 

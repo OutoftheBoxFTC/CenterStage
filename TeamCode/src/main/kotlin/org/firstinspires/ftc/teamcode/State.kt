@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.supervisorScope
+import org.firstinspires.ftc.teamcode.util.FS
 
 /**
  * State machines where each state is a suspend function that returns the next state.
@@ -34,4 +35,10 @@ suspend fun runStateMachine(state: FunctionalState) = supervisorScope {
     while (currentState != FunctionalState.StopState) {
         currentState = with(currentState) { runState() }
     }
+}
+
+interface StateMachine {
+    val defaultState: FS
+
+    suspend fun run() = runStateMachine(defaultState)
 }
