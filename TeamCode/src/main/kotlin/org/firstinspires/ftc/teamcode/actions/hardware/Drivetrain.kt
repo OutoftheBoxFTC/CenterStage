@@ -5,7 +5,9 @@ import arrow.fx.coroutines.resourceScope
 import arrow.optics.optics
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
+import com.acmerobotics.roadrunner.path.Path
 import com.acmerobotics.roadrunner.util.Angle
+import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
 import com.outoftheboxrobotics.suspendftc.yieldLooper
@@ -24,6 +26,7 @@ import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence
+import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.sequencesegment.TrajectorySegment
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.cross
@@ -32,6 +35,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
+import kotlin.math.sign
 import kotlin.math.sin
 
 /**
@@ -77,9 +81,10 @@ sealed interface DriveControlState {
 }
 
 object DriveConfig {
-    val translationalPid = PidCoefs(0.3, 0.0, 0.02)
+    val translationalPid = PidCoefs(0.4, 0.0, 0.025)
     val headingPid = PidCoefs(3.2, 0.0, 0.2)
-    const val lineFollowerLookaheadDist = 6.0
+    const val lookaheadDist = 6.0
+    const val kStatic = 0.05
 }
 
 /**
@@ -169,7 +174,7 @@ fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driv
             headingCoefs = DriveConfig.headingPid,
             input = { currentDrivePose() },
             target = { target },
-            output = { setDrivePowers(multiplier * it.x, multiplier * it.y, it.heading) }
+            output = { setAdjustedDrivePowers(multiplier * it.x, multiplier * it.y, it.heading) }
         )
     }
 }
@@ -204,6 +209,47 @@ suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
     }
 }
 
+suspend fun followTrajectoryPath(
+    trajSeq: TrajectorySequence,
+    maxPower: () -> Double = { 1.0 },
+) {
+    val path = List(trajSeq.size()) { trajSeq[it] }
+        .filterIsInstance<TrajectorySegment>()
+        .flatMap { it.trajectory.path.segments }
+        .let { Path(it) }
+
+    var dist = path.project(currentDrivePose().vec()) + DriveConfig.lookaheadDist
+
+    runDriveCommand {
+        loopYieldWhile({
+            dist = path.fastProject(
+                currentDrivePose().vec(),
+                dist - DriveConfig.lookaheadDist
+            ) + DriveConfig.lookaheadDist
+
+            dist < path.length()
+        }) {
+            val multiplier = maxPower().coerceIn(0.0..1.0)
+            val projected = path[dist]
+            val currentPose = currentDrivePose()
+
+            val driveVec = (projected.vec() - currentPose.vec()).rotated(-currentPose.heading)
+                .let { it / it.norm() }
+
+            setDrivePowers(
+                Pose2d(
+                    driveVec * multiplier,
+                    DriveConfig.headingPid.kP * Angle.normDelta(
+                        projected.heading - currentPose.heading
+                    )
+                )
+            )
+        }
+    }
+
+    launchFixpoint(path.end())
+}
+
 /**
  * Optimized line path follower.
  */
@@ -227,7 +273,7 @@ suspend fun followLinePath(
 
         val dist = startToPose cross lineVec / lineVec.norm()
 
-        val driveHeading = lineVec.angle() + atan(dist / DriveConfig.lineFollowerLookaheadDist)
+        val driveHeading = lineVec.angle() + atan(dist / DriveConfig.lookaheadDist)
         val headingError = Angle.normDelta(heading - pose.heading)
 
         // TODO Account for non-zero heading (?)
@@ -277,11 +323,15 @@ suspend fun setDrivetrainIdle() = withLooper(G[RobotState.driveLooper]) {
 /**
  * Manually set the drivetrain robot-relative fwd, strafe, and turn powers.
  */
-fun setDrivePowers(x: Double, y: Double, r: Double) = G.chub.run {
-    tr.power = +x +y +r
-    tl.power = -x +y +r
-    bl.power = -x -y +r
-    br.power = +x -y +r
+fun setDrivePowers(x: Double, y: Double, r: Double, useKStatic: Boolean = false) = G.chub.run {
+    fun Double.applyKStatic() =
+        if (useKStatic) this + DriveConfig.kStatic * sign(this)
+        else this
+
+    tr.power = (+x +y +r).applyKStatic()
+    tl.power = (-x +y +r).applyKStatic()
+    bl.power = (-x -y +r).applyKStatic()
+    br.power = (+x -y +r).applyKStatic()
 }
 
 /**
@@ -291,7 +341,7 @@ fun setDrivePowers(poseVel: Pose2d) = setDrivePowers(poseVel.x, poseVel.y, poseV
 
 /**
  * Manually set the drivetrain field-relative fwd, strafe, and turn powers with
- * voltage compensation and strafe multiplier.
+ * voltage compensation, strafe multiplier, and kStatic.
  */
 fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
     val multiplier = 12.0 / G.chub.voltageSensor.voltage
@@ -299,7 +349,8 @@ fun setAdjustedDrivePowers(x: Double, y: Double, r: Double) {
     setDrivePowers(
         multiplier * x,
         multiplier * y * SampleMecanumDrive.LATERAL_MULTIPLIER,
-        multiplier * r
+        multiplier * r,
+        true
     )
 }
 
