@@ -1,20 +1,20 @@
-package org.firstinspires.ftc.teamcode.util
+package org.firstinspires.ftc.teamcode.hardware.devices
 
 import com.qualcomm.robotcore.hardware.DcMotorEx
-import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction
+import com.qualcomm.robotcore.hardware.DcMotorSimple
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 
 /**
  * Creates a wrapper [DcMotorEx] instance that allows for independent direction control.
  */
 fun DcMotorEx.cloneMotor() = object : DcMotorEx by this {
-    private var direction: Direction = Direction.FORWARD
+    private var direction: DcMotorSimple.Direction = DcMotorSimple.Direction.FORWARD
 
-    private val Direction.multiplier get() = if (this == Direction.FORWARD) 1 else -1
+    private val DcMotorSimple.Direction.multiplier get() = if (this == DcMotorSimple.Direction.FORWARD) 1 else -1
     private val multiplier get() = direction.multiplier * this@cloneMotor.direction.multiplier
 
     override fun getDirection() = direction
-    override fun setDirection(direction: Direction) { this.direction = direction }
+    override fun setDirection(direction: DcMotorSimple.Direction) { this.direction = direction }
 
     override fun getPower() = multiplier * this@cloneMotor.power
     override fun setPower(power: Double) { this@cloneMotor.power = multiplier * power }
