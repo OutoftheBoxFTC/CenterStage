@@ -85,6 +85,8 @@ object DriveConfig {
     val headingPid = PidCoefs(2.5, 0.0, 0.2)
     const val lookaheadDist = 6.0
     const val kStatic = 0.05
+
+    const val intakeOdoMultiplier = 1.0
 }
 
 /**
