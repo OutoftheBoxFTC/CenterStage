@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.VoltageSensor
 import org.firstinspires.ftc.teamcode.hardware.devices.MotorGroup
 import org.firstinspires.ftc.teamcode.hardware.devices.ServoGroup
+import org.firstinspires.ftc.teamcode.roadrunner.util.Encoder
 
 const val IMU_NAME = "imu"
 
@@ -42,6 +43,13 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
 
     val intakeWheel = crServo("s0") {
         direction = DcMotorSimple.Direction.REVERSE
+    }
+
+    private val odoIntakeMotor = motor("2")
+    val odoIntake = Encoder(odoIntakeMotor)
+
+    init {
+        odoIntakeMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
     }
 
     val arm = ServoGroup(
