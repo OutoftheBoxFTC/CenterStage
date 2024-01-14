@@ -33,7 +33,8 @@ suspend inline fun runPidController(
     input: () -> Double,
     target: () -> Double,
     output: (Double) -> Unit,
-    integralLimit: Double = Double.MAX_VALUE
+    integralLimit: Double = Double.MAX_VALUE,
+    hz: Int? = null
 ): Nothing {
     val timer = ElapsedTime()
 
@@ -44,7 +45,7 @@ suspend inline fun runPidController(
 
     yieldLooper()
 
-    mainLoop {
+    mainLoop(hz) {
         val dt = timer.seconds()
         timer.reset()
 
@@ -73,7 +74,8 @@ suspend inline fun runPosePidController(
     headingCoefs: PidCoefs,
     crossinline input: () -> Pose2d,
     crossinline target: () -> Pose2d,
-    crossinline output: (Pose2d) -> Unit
+    crossinline output: (Pose2d) -> Unit,
+    hz: Int? = 30
 ): Nothing = coroutineScope {
     var x = 0.0
     var y = 0.0
@@ -84,14 +86,16 @@ suspend inline fun runPosePidController(
         coefs = translationalCoefs,
         input = { input().x },
         target = { target().x },
-        output = { x = it }
+        output = { x = it },
+        hz = hz
     ) }
 
     launch { runPidController(
         coefs = translationalCoefs,
         input = { input().y },
         target = { target().y },
-        output = { y = it }
+        output = { y = it },
+        hz = hz
     ) }
 
     launch {
@@ -102,7 +106,7 @@ suspend inline fun runPosePidController(
         r = headingCoefs.kP * lastError
 
         yieldLooper()
-        mainLoop {
+        mainLoop(hz) {
             val dt = timer.seconds()
             timer.reset()
 
@@ -113,12 +117,11 @@ suspend inline fun runPosePidController(
             errorAcc += error * dt
             errorAcc = min(errorAcc, Double.MAX_VALUE)
 
-            headingCoefs.computeGain(error, errorAcc, ddt)
             r = headingCoefs.computeGain(error, errorAcc, ddt)
         }
     }
 
-    mainLoop {
+    mainLoop(hz) {
         output(
             Pose2d(
                 // Rotate to account for heading error - always drives towards target

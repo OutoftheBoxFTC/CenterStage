@@ -6,6 +6,9 @@ import arrow.optics.Copy
 import arrow.optics.copy
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.suspendftc.yieldLooper
+import com.qualcomm.robotcore.util.ElapsedTime
+import com.qualcomm.robotcore.util.MovingStatistics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
@@ -20,13 +23,42 @@ import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.CommandHandler
 import org.firstinspires.ftc.teamcode.Subsystem
+import kotlin.math.abs
 
 /**
- * [loopYieldWhile] that repeats forever, so this function never returns.
+ * [loopYieldWhile] that repeats forever, so this function never returns. Can also set a fixed
+ * frequency to run at.
  */
-suspend inline fun mainLoop(block: () -> Unit): Nothing {
-    loopYieldWhile({ true }, block)
-    error("Return from mainLoop()")
+suspend inline fun mainLoop(hz: Int? = null, block: () -> Unit): Nothing {
+    val targetDelay = hz?.let { 1.0 / it }
+
+    val mainTimer = ElapsedTime()
+    val cycleTimer = ElapsedTime()
+
+    val dt = MovingStatistics(10)
+
+    block()
+    yieldLooper()
+
+    while (true) {
+        if (targetDelay == null) {
+            block()
+            yieldLooper()
+            continue
+        }
+
+        dt.add(cycleTimer.seconds())
+        cycleTimer.reset()
+
+        val t = mainTimer.seconds()
+
+        if (abs(t - targetDelay) < abs(t + dt.mean - targetDelay)) {
+            block()
+            mainTimer.reset()
+        }
+
+        yieldLooper()
+    }
 }
 
 suspend inline fun suspendUntilRisingEdge(predicate: () -> Boolean) {

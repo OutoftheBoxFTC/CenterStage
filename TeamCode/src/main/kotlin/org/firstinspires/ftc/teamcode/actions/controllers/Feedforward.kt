@@ -34,7 +34,8 @@ suspend inline fun runMotionProfile(
     pid: PidCoefs,
     crossinline input: () -> Double,
     crossinline output: (Double) -> Unit,
-    pidIntegralLimit: Double = Double.MAX_VALUE
+    pidIntegralLimit: Double = Double.MAX_VALUE,
+    hz: Int? = null
 ) = coroutineScope {
     val timer = ElapsedTime()
 
@@ -45,7 +46,8 @@ suspend inline fun runMotionProfile(
         input = input,
         target = { profile[timer.seconds()].x },
         output = { pidGain = it },
-        integralLimit = pidIntegralLimit
+        integralLimit = pidIntegralLimit,
+        hz = hz
     ) }
 
     loopYieldWhile({ timer.seconds() <= profile.duration() }) {
