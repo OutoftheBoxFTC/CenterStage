@@ -81,8 +81,8 @@ sealed interface DriveControlState {
 }
 
 object DriveConfig {
-    val translationalPid = PidCoefs(0.4, 0.0, 0.025)
-    val headingPid = PidCoefs(3.2, 0.0, 0.2)
+    val translationalPid = PidCoefs(0.22, 0.0, 0.037)
+    val headingPid = PidCoefs(2.5, 0.0, 0.2)
     const val lookaheadDist = 6.0
     const val kStatic = 0.05
 }

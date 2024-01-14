@@ -47,6 +47,7 @@ class FixpointPidTuner : RobotOpMode() {
         @JvmField var translational_kD = DriveConfig.translationalPid.kD
 
         @JvmField var kStaticOffset = 0.05
+        @JvmField var targetHz = 30
     }
 
     private val translationalCoefs = PidCoefs(0.0, 0.0, 0.0)
@@ -88,7 +89,8 @@ class FixpointPidTuner : RobotOpMode() {
                     headingCoefs = headingCoefs,
                     input = ::currentDrivePose,
                     target = { Pose2d(target_x, target_y, target_heading) },
-                    output = { setAdjustedDrivePowers(it.x, it.y, it.heading) }
+                    output = { setAdjustedDrivePowers(it.x, it.y, it.heading) },
+                    hz = targetHz
                 )
             }
         }
@@ -102,7 +104,7 @@ class FixpointPidTuner : RobotOpMode() {
 
     private val freeControlState: FS = FS {
         G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
-            loopYieldWhile({ true }) {
+            mainLoop {
                 setAdjustedDrivePowers(
                     C.driveStrafeX,
                     C.driveStrafeY,

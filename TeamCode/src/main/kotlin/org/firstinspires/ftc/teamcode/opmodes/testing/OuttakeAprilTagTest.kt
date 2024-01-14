@@ -14,9 +14,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.launchOuttakeFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.nextBackboardApriltagPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
@@ -32,6 +35,9 @@ import org.openftc.easyopencv.OpenCvCameraRotation
 @Autonomous
 class OuttakeAprilTagTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
+         closeClaws()
+         setArmPosition(ArmPosition.OUTTAKE)
+
         G.chub.outtakeCamera.let {
             it.startCamera(640, 480, OpenCvCameraRotation.UPRIGHT)
             streamCamera(it)
