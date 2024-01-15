@@ -5,7 +5,8 @@ import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -17,16 +18,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
-import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
-import org.firstinspires.ftc.teamcode.actions.hardware.driveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.launchOuttakeFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.nextBackboardApriltagPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
-import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
@@ -40,7 +38,8 @@ import org.openftc.apriltag.AprilTagDetection
 import org.openftc.easyopencv.OpenCvCameraRotation
 import kotlin.coroutines.coroutineContext
 
-@Autonomous
+@TeleOp
+@Disabled
 class OuttakeAprilTagTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
          closeClaws()
