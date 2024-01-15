@@ -120,7 +120,7 @@ suspend fun nextBackboardApriltagPosition(): Pose2d {
     ).plus(
         Pose2d(
             7.91,
-            2.0,
+            3.0,
             0.0
         )
     ).let {
@@ -146,7 +146,7 @@ suspend fun launchOuttakeFixpoint(
             val hvec = backstagePos.headingVec()
 
             Pose2d(
-                backstagePos.vec() + hvec * 16.8 + hvec.rotated(PI / 2) * when (target) {
+                backstagePos.vec() + hvec * 17.0 + hvec.rotated(PI / 2) * when (target) {
                      PreloadDetectionPipeline.RandomizationPosition.LEFT -> -6.0
                      PreloadDetectionPipeline.RandomizationPosition.CENTER -> 0.0
                      PreloadDetectionPipeline.RandomizationPosition.RIGHT -> 6.0

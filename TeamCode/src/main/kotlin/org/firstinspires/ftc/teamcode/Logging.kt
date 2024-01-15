@@ -114,7 +114,7 @@ private fun TreeLog.rootLog(state: RobotState) {
  */
 @Config
 object LoggingConfig {
-    @JvmField var queryString = "localizer;extension"
+    @JvmField var queryString = "localizer;extension;looptime"
 }
 
 /**
