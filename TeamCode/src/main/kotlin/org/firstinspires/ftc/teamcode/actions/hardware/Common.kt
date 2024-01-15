@@ -138,7 +138,7 @@ suspend fun nextBackboardApriltagPosition(): Pose2d {
 suspend fun launchOuttakeFixpoint(
     estimate: Pose2d,
     target: PreloadDetectionPipeline.RandomizationPosition
-): Job = coroutineScope {
+): Pair<Job, Pose2d> = coroutineScope {
     val targetPose = raceN(
         coroutineContext,
         {
@@ -160,7 +160,7 @@ suspend fun launchOuttakeFixpoint(
         }
     ).merge()
 
-    launchFixpoint(targetPose)
+    launchFixpoint(targetPose) to targetPose
 }
 
 suspend fun swoop(
