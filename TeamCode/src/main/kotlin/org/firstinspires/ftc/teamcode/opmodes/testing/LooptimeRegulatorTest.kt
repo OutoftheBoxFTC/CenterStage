@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.coroutineScope
@@ -9,6 +10,7 @@ import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
+@Disabled
 class LooptimeRegulatorTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         val timer = ElapsedTime()
