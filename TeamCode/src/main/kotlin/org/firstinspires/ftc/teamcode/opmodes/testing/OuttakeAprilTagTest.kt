@@ -3,13 +3,11 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
-import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
@@ -20,10 +18,8 @@ import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
-import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
-import org.firstinspires.ftc.teamcode.actions.hardware.launchOuttakeFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.nextBackboardApriltagPosition
-import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
+import org.firstinspires.ftc.teamcode.actions.hardware.scoreOnBackstage
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
@@ -36,7 +32,6 @@ import org.firstinspires.ftc.teamcode.vision.aprilTagDetections
 import org.firstinspires.ftc.teamcode.visionState
 import org.openftc.apriltag.AprilTagDetection
 import org.openftc.easyopencv.OpenCvCameraRotation
-import kotlin.coroutines.coroutineContext
 
 @TeleOp
 @Disabled
@@ -95,27 +90,7 @@ class OuttakeAprilTagTest : RobotOpMode() {
 
         val preOuttake = currentDrivePose()
 
-        val (job, target) = launchOuttakeFixpoint(Pose2d(), targetPos.await())
-
-        val returnPos = Pose2d(
-            target.vec() + target.headingVec() * preOuttake.vec().distTo(target.vec()),
-            preOuttake.heading
-        )
-
-        raceN(
-            coroutineContext,
-            {
-                suspendFor(1000)
-            },
-            {
-                suspendUntil { currentDrivePose().vec().distTo(target.vec()) < 1.0 }
-                suspendFor(200)
-            }
-        )
-
-        openClaws()
-        job.cancelAndJoin()
-        launchFixpoint(returnPos)
+        scoreOnBackstage(Pose2d(), targetPos.await())
 
         mainLoop {  }
     }

@@ -58,8 +58,10 @@ abstract class AutonOpMode(protected val isBlue: Boolean) : RobotOpMode() {
         setTiltPosition(IntakeTiltPosition.HIGH)
 
         launch {
-            suspendUntilRisingEdge { C.toggleAutoBreakpointEnable }
-            enableBreakpoints = !enableBreakpoints
+            while (true) {
+                suspendUntilRisingEdge { C.toggleAutoBreakpointEnable }
+                enableBreakpoints = !enableBreakpoints
+            }
         }
 
         mainLoop {

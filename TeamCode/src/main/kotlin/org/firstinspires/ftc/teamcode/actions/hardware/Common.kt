@@ -6,6 +6,7 @@ import arrow.fx.coroutines.raceN
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.outoftheboxrobotics.suspendftc.suspendFor
+import com.outoftheboxrobotics.suspendftc.suspendUntil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -23,6 +24,7 @@ import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.mapState
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
+import kotlin.coroutines.coroutineContext
 import kotlin.math.PI
 import kotlin.math.abs
 
@@ -161,6 +163,35 @@ suspend fun launchOuttakeFixpoint(
     ).merge()
 
     launchFixpoint(targetPose) to targetPose
+}
+
+suspend fun scoreOnBackstage(
+    estimate: Pose2d,
+    target: PreloadDetectionPipeline.RandomizationPosition,
+    preOuttake: Pose2d = currentDrivePose()
+): Job {
+    val (job, target) = launchOuttakeFixpoint(estimate, target)
+
+    val returnPos = Pose2d(
+        target.vec() + target.headingVec() * preOuttake.vec().distTo(target.vec()),
+        preOuttake.heading
+    )
+
+    raceN(
+        coroutineContext,
+        {
+            suspendFor(1000)
+        },
+        {
+            suspendUntil { currentDrivePose().vec().distTo(target.vec()) < 1.0 }
+            suspendFor(200)
+        }
+    )
+
+    openClaws()
+    job.cancelAndJoin()
+
+    return launchFixpoint(returnPos)
 }
 
 suspend fun swoop(
