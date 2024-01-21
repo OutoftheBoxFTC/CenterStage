@@ -5,8 +5,11 @@ import arrow.core.toNonEmptyListOrNull
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
+import com.acmerobotics.roadrunner.profile.MotionProfileGenerator
+import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -40,24 +43,70 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
  * Runs the intake transfer sequence.
  */
 suspend fun intakeTransfer() = coroutineScope {
-    launch {
-        G.ehub.intakeRoller.power = 0.7
-        suspendFor(300)
-        G.ehub.intakeRoller.power = -1.0
+    openClaws()
+    setTiltPosition(IntakeTiltPosition.HIGH)
+    suspendFor(100)
+    G.ehub.intakeRoller.power = 1.0
+    suspendFor(100)
+    G.ehub.intakeRoller.power = -0.8
+
+    coroutineScope {
+        launch { retractExtension() }
+        launch { profileArm(ArmPosition.PRE_TRANSFER) }
     }
 
-    setTiltPosition(IntakeTiltPosition.HIGH)
-    retractExtension()
-    suspendFor(1000)
-    profileArm(ArmPosition.TRANSFER)
+    val start = MotionState(G.ehub.intakeTilt.position, 0.0)
+    val top = MotionState(IntakeTiltPosition.PRE_TRANSFER.pos, 0.0)
+    val end = MotionState(IntakeTiltPosition.LOW.pos, 0.0)
+
+    val accelLimit = 10.0
+
+    val upProfile = MotionProfileGenerator.generateSimpleMotionProfile(
+        start,
+        top,
+        10.0,
+        accelLimit
+    )
+
+    val downProfile = MotionProfileGenerator.generateSimpleMotionProfile(
+        top,
+        end,
+        10.0,
+        accelLimit
+    )
+
+    val timer = ElapsedTime()
+
+    suspendUntil {
+        val t = timer.seconds()
+        setTiltPosition(upProfile[t].x)
+        t >= upProfile.duration()
+    }
+
+    timer.reset()
     G.ehub.intakeRoller.power = 0.0
+
+    coroutineScope {
+        launch { profileArm(ArmPosition.TRANSFER) }
+
+        suspendUntil {
+            val t = timer.seconds()
+            setTiltPosition(downProfile[t].x)
+            t >= downProfile.duration()
+        }
+    }
+
+    setTiltPosition(IntakeTiltPosition.TRANSFER)
+    suspendFor(500)
     closeClaws()
-    suspendFor(100)
+    suspendFor(150)
+    G.ehub.intakeRoller.power = -0.8
     setTiltPosition(IntakeTiltPosition.LOW)
     suspendFor(50)
     setArmPosition(ArmPosition.NEUTRAL)
     suspendFor(200)
     setTiltPosition(IntakeTiltPosition.HIGH)
+    G.ehub.intakeRoller.power = 0.0
 }
 
 suspend fun nextBackboardApriltagPosition(): Pose2d {
