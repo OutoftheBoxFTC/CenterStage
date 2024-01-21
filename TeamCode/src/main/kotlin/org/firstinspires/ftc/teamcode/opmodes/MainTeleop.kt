@@ -33,7 +33,6 @@ import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
-import org.firstinspires.ftc.teamcode.util.repeatInf
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 import org.firstinspires.ftc.teamcode.util.use
 
@@ -42,7 +41,7 @@ import org.firstinspires.ftc.teamcode.util.use
  */
 @TeleOp
 class MainTeleop : RobotOpMode() {
-    private suspend fun mainExtensionControl(): Nothing = repeatInf {
+    private suspend fun mainExtensionControl(): Nothing = mainLoop {
         // Retracted
         loopYieldWhile({ !C.extendExtension }) {
             G.ehub.extension.power =
@@ -132,7 +131,7 @@ class MainTeleop : RobotOpMode() {
 
     private val mainState: FS = FS {
         launch {
-            repeatInf {
+            while (true) {
                 launch {
                     launch { mainExtensionControl() }
                     launch { mainRollerJob() }
@@ -197,7 +196,7 @@ class MainTeleop : RobotOpMode() {
         launch {
             // Claw twisting
             launch {
-                repeatInf {
+                while (true) {
                     raceN(
                         coroutineContext,
                         {

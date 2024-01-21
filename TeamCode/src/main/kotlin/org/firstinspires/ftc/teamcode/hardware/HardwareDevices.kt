@@ -81,7 +81,10 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
 
     val twist = servo("s11")
 
-    val intakeRoller = motor("7") { zeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT }
+    val intakeRoller = motor("7") {
+        direction = DcMotorSimple.Direction.REVERSE
+        zeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT
+    }
 
     val intakeTilt = servo("s6")
 
