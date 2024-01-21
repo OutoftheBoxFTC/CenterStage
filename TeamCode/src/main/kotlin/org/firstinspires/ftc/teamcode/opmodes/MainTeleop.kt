@@ -41,23 +41,23 @@ import org.firstinspires.ftc.teamcode.util.use
  */
 @TeleOp
 class MainTeleop : RobotOpMode() {
-    private suspend fun mainExtensionControl(): Nothing = mainLoop {
-        // Retracted
-        loopYieldWhile({ !C.extendExtension }) {
-            G.ehub.extension.power =
-                if (G.chub.extensionLimitSwitch) -1.0
-                else -0.15
-        }
+    private suspend fun mainExtensionControl(): Nothing {
+        while (true) {
+            // Retracted
+            loopYieldWhile({ !C.extendExtension }) {
+                G.ehub.extension.power =
+                    if (!G.chub.extensionLimitSwitch) -1.0
+                    else -0.15
+            }
 
-        // Extended
-        loopYieldWhile({
-            G.ehub.extension.currentPosition > 100 || !C.retractExtension
-        }) {
-            G.ehub.extension.power = when {
-                C.retractExtension -> -1.0
-                C.extendExtension -> 1.0
-                G.ehub.extension.currentPosition < 100 -> 1.0
-                else -> 0.0
+            // Extended
+            loopYieldWhile({ G.ehub.extension.currentPosition > 100 || !C.retractExtension }) {
+                G.ehub.extension.power = when {
+                    C.retractExtension -> -1.0
+                    C.extendExtension -> 1.0
+                    G.ehub.extension.currentPosition < 100 -> 1.0
+                    else -> 0.0
+                }
             }
         }
     }
@@ -137,6 +137,7 @@ class MainTeleop : RobotOpMode() {
                     launch { mainRollerJob() }
 
                     // TODO Tilt controls
+                    setTiltPosition(IntakeTiltPosition.LOW)
                 }.use { suspendUntilRisingEdge { C.runTransfer } }
 
                 intakeTransfer()
