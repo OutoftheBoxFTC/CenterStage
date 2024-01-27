@@ -9,8 +9,10 @@ import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setBlackClawPos
 import org.firstinspires.ftc.teamcode.actions.hardware.setRedClawPos
@@ -127,9 +129,9 @@ class ServoPositioner : RobotOpMode() {
     }
 
     override suspend fun runSuspendOpMode() = coroutineScope {
-        armPos = 0.5
-        twistPos = 0.5
-        tiltPos = IntakeTiltPosition.HIGH.pos
+        armPos = ArmPosition.NEUTRAL.pos
+        twistPos = TwistPosition.STRAIGHT.pos
+        tiltPos = IntakeTiltPosition.LOW.pos
 
         redPos = ClawPosition.RED_OPEN.pos
         blackPos = ClawPosition.BLACK_OPEN.pos
