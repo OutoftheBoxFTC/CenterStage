@@ -14,7 +14,7 @@ enum class ArmPosition(val pos: Double) {
     OUTTAKE(0.900),
     AUTON_INIT(0.174),
     NEUTRAL(0.041),
-    TRANSFER(0.408)
+    TRANSFER(0.041)
 }
 
 @Suppress("unused")
