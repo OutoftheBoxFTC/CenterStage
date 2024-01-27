@@ -4,12 +4,12 @@ import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.util.ElapsedTime
+import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
-@Disabled
 class IntakeTest : RobotOpMode(
     runMultiThreaded = true,
     imuRunMode = ImuRunMode.THREADED
@@ -18,7 +18,7 @@ class IntakeTest : RobotOpMode(
         suspendUntilStart()
 
         val timer = ElapsedTime()
-        var servoPos = 0.144
+        var servoPos = IntakeTiltPosition.LOW.pos
 
         val increment = 0.05
 
