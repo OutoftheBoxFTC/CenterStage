@@ -10,11 +10,11 @@ import org.firstinspires.ftc.teamcode.outtakeState
 import org.firstinspires.ftc.teamcode.util.G
 
 enum class ArmPosition(val pos: Double) {
-    FLOOR(0.976),
-    OUTTAKE(0.819),
-    AUTON_INIT(0.299),
-    NEUTRAL(0.220),
-    TRANSFER(0.09)
+    FLOOR(1.0),
+    OUTTAKE(0.900),
+    AUTON_INIT(0.174),
+    NEUTRAL(0.041),
+    TRANSFER(0.408)
 }
 
 @Suppress("unused")
