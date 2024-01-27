@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config
 import org.firstinspires.ftc.robotcore.external.Telemetry
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
+import org.firstinspires.ftc.teamcode.actions.hardware.liftPos
 
 /**
  * Convenience DSL for logging data to telemetry.
@@ -65,6 +66,10 @@ private fun TreeLog.rootLog(state: RobotState) {
     "extension" {
         "Extension length" set extensionLength()
         "Extension limit switch" set state.chub.extensionLimitSwitch
+    }
+
+    "lift" {
+        "Lift pos" set liftPos()
     }
 
     "looptime" {
