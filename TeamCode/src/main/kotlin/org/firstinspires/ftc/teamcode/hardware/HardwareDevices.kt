@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import arrow.core.nonEmptyListOf
+import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.DigitalChannel
 import com.qualcomm.robotcore.hardware.HardwareMap
@@ -80,11 +81,11 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
 
     val twist = servo("s11")
 
-    val intakeRoller = motor("7")
+    val intakeRoller = motor("7") { zeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT }
 
     val intakeTilt = servo("s6")
 
-    val outtakeLift = motor("6") { direction = DcMotorSimple.Direction.REVERSE }
+    val outtakeLift = motor("6")
 
     val hang0 = crServo("s7")
     val hang1 = crServo("s8")

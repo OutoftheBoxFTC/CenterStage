@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 import arrow.optics.optics
 import com.acmerobotics.roadrunner.profile.MotionProfileGenerator
 import com.acmerobotics.roadrunner.profile.MotionState
+import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.teamcode.RobotState
@@ -45,6 +46,14 @@ object ArmConfig {
     const val maxArmAccel = 4.0
 }
 
+object LiftConfig {
+    const val liftDown = -0.5
+    const val liftHold = 0.2
+    const val liftUp = 1.0
+
+    const val transferHeightMin = 50
+}
+
 fun setArmPosition(pos: Double) { G.chub.arm.position = pos }
 fun setArmPosition(pos: ArmPosition) = setArmPosition(pos.pos)
 
@@ -66,6 +75,32 @@ fun closeClaws() {
 fun openClaws() {
     setClawPos(ClawPosition.RED_OPEN)
     setClawPos(ClawPosition.BLACK_OPEN)
+}
+
+fun liftPos() = G.ehub.outtakeLift.currentPosition
+
+fun liftDown() { G.ehub.outtakeLift.power = LiftConfig.liftDown }
+fun liftHold() { G.ehub.outtakeLift.power = LiftConfig.liftHold }
+fun liftUp() { G.ehub.outtakeLift.power = LiftConfig.liftUp }
+
+suspend fun liftUpTo(pos: Double) {
+    liftUp()
+    suspendUntil { liftPos() >= pos }
+    liftHold()
+}
+
+suspend fun liftDownTo(pos: Double) {
+    liftDown()
+    suspendUntil { liftPos() <= pos }
+    liftHold()
+}
+
+suspend fun retractLift() {
+    liftDown()
+    val timer = ElapsedTime()
+    suspendUntil { liftPos() < 3 || timer.seconds() > 0.9 }
+    suspendFor(100)
+    G.ehub.outtakeLift.power = 0.0
 }
 
 /**

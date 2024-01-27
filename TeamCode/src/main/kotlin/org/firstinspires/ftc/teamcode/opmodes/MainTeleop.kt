@@ -223,13 +223,13 @@ class MainTeleop : RobotOpMode() {
 
             G.ehub.outtakeLift.power = when {
                 C.liftUp -> 1.0
-                C.liftDown -> -0.5
-                else -> 0.5
+                C.liftDown -> 0.5
+                else -> -0.5
             }
         }
 
         mainState(launch {
-            G.ehub.outtakeLift.power = -1.0
+            G.ehub.outtakeLift.power = 1.0
             armJob.cancelAndJoin()
             openClaws()
             setTwistPosition(TwistPosition.STRAIGHT)
