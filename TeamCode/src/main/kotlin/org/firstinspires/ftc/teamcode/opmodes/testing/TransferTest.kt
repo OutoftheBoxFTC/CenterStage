@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.use
 
 @TeleOp
-@Disabled
 class TransferTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         closeClaws()

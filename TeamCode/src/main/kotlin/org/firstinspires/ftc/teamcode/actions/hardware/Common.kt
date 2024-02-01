@@ -42,7 +42,10 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
 /**
  * Runs the intake transfer sequence.
  */
-suspend fun intakeTransfer() = coroutineScope {
+suspend fun intakeTransfer(
+    finalArmPos: Double = ArmPosition.OUTTAKE.pos,
+    finalLiftPos: Int? = null
+) = coroutineScope {
     openClaws()
     setTiltPosition(IntakeTiltPosition.HIGH)
     suspendFor(100)
@@ -50,63 +53,50 @@ suspend fun intakeTransfer() = coroutineScope {
     suspendFor(100)
     G.ehub.intakeRoller.power = -0.8
 
-    coroutineScope {
-        launch { retractExtension() }
-        launch { profileArm(ArmPosition.PRE_TRANSFER) }
-    }
+    profileArm(ArmPosition.TRANSFER)
+    retractExtension()
 
-    val start = MotionState(G.ehub.intakeTilt.position, 0.0)
-    val top = MotionState(IntakeTiltPosition.PRE_TRANSFER.pos, 0.0)
-    val end = MotionState(IntakeTiltPosition.LOW.pos, 0.0)
-
-    val accelLimit = 10.0
-
-    val upProfile = MotionProfileGenerator.generateSimpleMotionProfile(
-        start,
-        top,
+    val profile = MotionProfileGenerator.generateSimpleMotionProfile(
+        MotionState(G.ehub.intakeTilt.position, 0.0),
+        MotionState(IntakeTiltPosition.TRANSFER.pos, 0.0),
         10.0,
-        accelLimit
-    )
-
-    val downProfile = MotionProfileGenerator.generateSimpleMotionProfile(
-        top,
-        end,
-        10.0,
-        accelLimit
+        10.0
     )
 
     val timer = ElapsedTime()
 
     suspendUntil {
         val t = timer.seconds()
-        setTiltPosition(upProfile[t].x)
-        t >= upProfile.duration()
+        setTiltPosition(profile[t].x)
+        t >= profile.duration()
     }
 
-    timer.reset()
     G.ehub.intakeRoller.power = 0.0
 
-    coroutineScope {
-        launch { profileArm(ArmPosition.TRANSFER) }
+    closeClaws()
+    suspendFor(150)
 
-        suspendUntil {
-            val t = timer.seconds()
-            setTiltPosition(downProfile[t].x)
-            t >= downProfile.duration()
+    setTiltPosition(IntakeTiltPosition.POST_TRANSFER)
+    G.ehub.intakeRoller.power = -0.8
+    suspendFor(50)
+    G.ehub.intakeRoller.power = 0.0
+
+
+    liftUpTo(LiftConfig.transferHeightMin)
+
+    val armJob = launch {
+        profileArm(finalArmPos)
+    }
+
+    launch {
+        if (finalLiftPos != null) liftUpTo(finalLiftPos)
+        else {
+            armJob.join()
+            retractLift()
         }
     }
 
-    setTiltPosition(IntakeTiltPosition.TRANSFER)
-    suspendFor(500)
-    closeClaws()
-    suspendFor(150)
-    G.ehub.intakeRoller.power = -0.8
-    setTiltPosition(IntakeTiltPosition.LOW)
-    suspendFor(50)
-    setArmPosition(ArmPosition.NEUTRAL)
-    suspendFor(200)
     setTiltPosition(IntakeTiltPosition.HIGH)
-    G.ehub.intakeRoller.power = 0.0
 }
 
 suspend fun nextBackboardApriltagPosition(): Pose2d {

@@ -13,7 +13,6 @@ import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
-@Disabled
 class ExtensionTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()
