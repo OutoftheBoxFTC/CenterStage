@@ -83,13 +83,13 @@ fun liftDown() { G.ehub.outtakeLift.power = LiftConfig.liftDown }
 fun liftHold() { G.ehub.outtakeLift.power = LiftConfig.liftHold }
 fun liftUp() { G.ehub.outtakeLift.power = LiftConfig.liftUp }
 
-suspend fun liftUpTo(pos: Double) {
+suspend fun liftUpTo(pos: Int) {
     liftUp()
     suspendUntil { liftPos() >= pos }
     liftHold()
 }
 
-suspend fun liftDownTo(pos: Double) {
+suspend fun liftDownTo(pos: Int) {
     liftDown()
     suspendUntil { liftPos() <= pos }
     liftHold()

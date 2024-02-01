@@ -72,10 +72,10 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
     val extension = MotorGroup(
         nonEmptyListOf(
             // Left
-            motor("4"),
+            motor("4") { direction = DcMotorSimple.Direction.REVERSE },
 
             // Right
-            motor("5") { direction = DcMotorSimple.Direction.REVERSE }
+            motor("5")
         )
     )
 
