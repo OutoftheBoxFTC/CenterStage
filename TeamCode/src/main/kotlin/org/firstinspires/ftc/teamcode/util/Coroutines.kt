@@ -9,6 +9,7 @@ import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
 import com.qualcomm.robotcore.util.MovingStatistics
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -61,6 +62,16 @@ suspend inline fun mainLoop(hz: Int? = null, block: () -> Unit): Nothing {
 
         yieldLooper()
     }
+}
+
+suspend fun <T> cancellationScope(block: suspend CoroutineScope.() -> T): T = coroutineScope {
+    val result = CompletableDeferred<T>()
+
+    val job = launch {
+        result.complete(block())
+    }
+
+    result.await().also { job.cancelAndJoin() }
 }
 
 suspend inline fun suspendUntilRisingEdge(predicate: () -> Boolean) {

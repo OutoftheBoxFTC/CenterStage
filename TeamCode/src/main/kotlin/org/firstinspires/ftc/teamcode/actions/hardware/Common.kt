@@ -22,6 +22,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
@@ -250,8 +251,13 @@ suspend fun swoop(
 
         val currentMonitor = launch {
             mainLoop {
+                val chubCurrentJob = G[RobotState.driveLooper].scheduleCoroutine {
+                    G.chub.readCurrents()
+                }
+
                 G.ehub.readCurrents()
-                G.chub.readCurrents()
+                // TODO make SuspendLooper use Dispatcher implementation so I can call join here
+                suspendUntil { chubCurrentJob.isCompleted }
 
                 val driveCurrentBudget = 19.8 - G.ehub.hubCurrent
                 val driveCurrent = G.chub.hubCurrent
