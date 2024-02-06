@@ -86,7 +86,9 @@ object DriveConfig {
     const val lookaheadDist = 6.0
     const val kStatic = 0.05
 
-    const val intakeOdoMultiplier = 1.0
+    const val intakeOdoMultiplier = 63.837375232725385 / 102867
+    const val intakeOdoRadius = 5.7064
+    const val intakeOdoExtensionMultiplier = 48.0/943
 }
 
 /**

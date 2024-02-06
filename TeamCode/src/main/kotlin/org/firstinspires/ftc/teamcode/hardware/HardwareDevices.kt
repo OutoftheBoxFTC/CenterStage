@@ -48,10 +48,6 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     private val odoIntakeMotor = motor("2")
     val odoIntake = Encoder(odoIntakeMotor)
 
-    init {
-        odoIntakeMotor.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
-    }
-
     val arm = ServoGroup(
         nonEmptyListOf(
             // Right
