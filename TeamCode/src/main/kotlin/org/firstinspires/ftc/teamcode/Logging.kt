@@ -77,9 +77,13 @@ private fun TreeLog.rootLog(state: RobotState) {
         "Ehub loop frequency (Hz)" set state.ehub.lastLoopFrequency
     }
 
-    "current" {
+    "power" {
         val chub = state.chub
         val ehub = state.ehub
+
+        "voltage" {
+            "Voltage" set chub.voltageSensor.voltage
+        }
 
         "Total Current" set chub.hubCurrent + ehub.hubCurrent
 
@@ -119,7 +123,7 @@ private fun TreeLog.rootLog(state: RobotState) {
  */
 @Config
 object LoggingConfig {
-    @JvmField var queryString = "localizer;extension;looptime"
+    @JvmField var queryString = "localizer;extension;looptime;power.voltage"
 }
 
 /**
