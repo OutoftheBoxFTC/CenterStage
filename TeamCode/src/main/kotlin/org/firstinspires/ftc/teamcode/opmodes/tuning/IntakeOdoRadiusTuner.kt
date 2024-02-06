@@ -17,7 +17,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 @TeleOp
-class IntakeOdoDistanceTuner : RobotOpMode() {
+class IntakeOdoRadiusTuner : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()
 
