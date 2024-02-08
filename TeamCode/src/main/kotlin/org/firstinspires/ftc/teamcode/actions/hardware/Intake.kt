@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 import org.firstinspires.ftc.teamcode.util.G
 
 enum class IntakeTiltPosition(val pos: Double) {
-    TRANSFER(0.261),
+    TRANSFER(0.277),
     POST_TRANSFER(0.462),
 
     HIGH(0.639),
@@ -14,7 +14,7 @@ enum class IntakeTiltPosition(val pos: Double) {
     POS_3(0.755),
     POS_4(0.790),
 
-    LOW(0.809)
+    LOW(0.806)
 }
 
 fun setTiltPosition(pos: Double) { G.ehub.intakeTilt.position = pos }
