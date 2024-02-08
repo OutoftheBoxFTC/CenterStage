@@ -48,10 +48,9 @@ suspend fun intakeTransfer(
     finalLiftPos: Int? = null
 ) = coroutineScope {
     openClaws()
-    setTiltPosition(IntakeTiltPosition.HIGH)
+    setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
     suspendFor(100)
-    G.ehub.intakeRoller.power = 1.0
-    suspendFor(100)
+
     G.ehub.intakeRoller.power = -0.8
 
     profileArm(ArmPosition.TRANSFER)
@@ -59,8 +58,8 @@ suspend fun intakeTransfer(
 
     val profile = MotionProfileGenerator.generateSimpleMotionProfile(
         MotionState(G.ehub.intakeTilt.position, 0.0),
-        MotionState(IntakeTiltPosition.TRANSFER.pos, 0.0),
-        10.0,
+        MotionState(IntakeTiltPosition.PRE_TRANSFER.pos, 0.0),
+        6.0,
         10.0
     )
 
@@ -72,10 +71,16 @@ suspend fun intakeTransfer(
         t >= profile.duration()
     }
 
+    suspendFor(100)
+
+    setTiltPosition(IntakeTiltPosition.TRANSFER)
+
+    suspendFor(100)
+
     G.ehub.intakeRoller.power = 0.0
 
     closeClaws()
-    suspendFor(150)
+    suspendFor(100)
 
     setTiltPosition(IntakeTiltPosition.POST_TRANSFER)
     G.ehub.intakeRoller.power = -0.8
