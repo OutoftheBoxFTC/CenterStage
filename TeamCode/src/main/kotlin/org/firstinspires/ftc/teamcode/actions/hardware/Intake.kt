@@ -3,8 +3,11 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 import org.firstinspires.ftc.teamcode.util.G
 
 enum class IntakeTiltPosition(val pos: Double) {
+    TRANSFER_FLAT(0.767),
+
     TRANSFER(0.277),
-    POST_TRANSFER(0.462),
+    PRE_TRANSFER(0.503),
+    POST_TRANSFER(0.482),
 
     HIGH(0.639),
 
