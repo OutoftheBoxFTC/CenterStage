@@ -14,8 +14,8 @@ enum class ArmPosition(val pos: Double) {
     FLOOR(1.0),
     OUTTAKE(0.900),
     AUTON_INIT(0.174),
-    NEUTRAL(0.041),
-    TRANSFER(0.041)
+    NEUTRAL(0.036),
+    TRANSFER(0.036)
 }
 
 @Suppress("unused")
@@ -47,8 +47,8 @@ object ArmConfig {
 }
 
 object LiftConfig {
-    const val liftDown = -0.5
-    const val liftHold = 0.2
+    const val liftDown = -0.6
+    const val liftHold = 0.1
     const val liftUp = 1.0
 
     const val transferHeightMin = 50
