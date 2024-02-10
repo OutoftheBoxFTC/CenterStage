@@ -41,7 +41,7 @@ object Controls {
 
     val runTransfer by operatorInput { x }
 
-    val stopRoller by operatorInput { left_bumper }
+    val intakeRoller by operatorInput { left_bumper }
     val expelRoller by operatorInput { right_bumper }
 
     val outtakeLow by operatorInput { dpad_down }
