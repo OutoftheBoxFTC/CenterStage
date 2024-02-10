@@ -15,10 +15,12 @@ import org.firstinspires.ftc.teamcode.StateMachine
 import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.LiftConfig
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.intakeTransfer
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
+import org.firstinspires.ftc.teamcode.actions.hardware.resetExtensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
 import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
@@ -47,12 +49,20 @@ class MainTeleop : RobotOpMode() {
             loopYieldWhile({ !C.extendExtension }) {
                 G.ehub.extension.power =
                     if (!G.chub.extensionLimitSwitch) -1.0
-                    else -0.15
+                    else {
+                        resetExtensionLength()
+                        -0.15
+                    }
             }
 
             // Extended
             loopYieldWhile({ G.ehub.extension.currentPosition > 100 || !C.retractExtension }) {
                 G.ehub.extension.power = when {
+                    // Failsafe if encoder loses track
+                    G.chub.extensionLimitSwitch -> {
+                        resetExtensionLength()
+                        -0.15
+                    }
                     C.retractExtension -> -1.0
                     C.extendExtension -> 1.0
                     G.ehub.extension.currentPosition < 100 -> 1.0
@@ -64,8 +74,24 @@ class MainTeleop : RobotOpMode() {
 
     private suspend fun mainRollerJob(): Nothing {
         object : StateMachine {
-            // Intaking
+            // Stopped
             override val defaultState: FS = FS {
+                G.ehub.intakeRoller.power = 0.0
+
+                raceN(
+                    coroutineContext,
+                    {
+                        suspendUntil { C.expelRoller && !C.intakeRoller }
+                        outtakeState
+                    },
+                    {
+                        suspendUntil { !C.expelRoller && C.intakeRoller }
+                        intakeState
+                    }
+                ).merge()
+            }
+
+            private val intakeState: FS = FS {
                 launch {
                     while (true) {
                         G.ehub.readCurrents()
@@ -86,8 +112,8 @@ class MainTeleop : RobotOpMode() {
                             outtakeState
                         },
                         {
-                            suspendUntil { C.stopRoller }
-                            stopState
+                            suspendUntil { !C.expelRoller && !C.intakeRoller }
+                            defaultState
                         }
                     ).merge()
                 }
@@ -99,27 +125,11 @@ class MainTeleop : RobotOpMode() {
                 raceN(
                     coroutineContext,
                     {
-                        suspendUntil { C.stopRoller }
-                        stopState
+                        suspendUntil { !C.expelRoller && !C.intakeRoller }
+                        defaultState
                     },
                     {
                         suspendUntil { timer.milliseconds() >= 300 && !C.expelRoller }
-                        defaultState
-                    }
-                ).merge()
-            }
-
-            private val stopState: FS = FS {
-                G.ehub.intakeRoller.power = 0.0
-
-                raceN(
-                    coroutineContext,
-                    {
-                        suspendUntil { C.expelRoller && !C.stopRoller }
-                        outtakeState
-                    },
-                    {
-                        suspendUntil { !C.expelRoller && !C.stopRoller }
                         defaultState
                     }
                 ).merge()
@@ -218,9 +228,9 @@ class MainTeleop : RobotOpMode() {
                     if (C.releaseRightClaw) releaseRight()
 
                     G.ehub.outtakeLift.power = when {
-                        C.liftUp -> 1.0
-                        C.liftDown -> -0.5
-                        else -> 0.5
+                        C.liftUp -> LiftConfig.liftUp
+                        C.liftDown -> LiftConfig.liftDown
+                        else -> LiftConfig.liftHold
                     }
                 }
             }
