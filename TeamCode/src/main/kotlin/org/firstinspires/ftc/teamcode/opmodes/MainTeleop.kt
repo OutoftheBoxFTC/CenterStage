@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
@@ -30,6 +31,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetExtensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
+import org.firstinspires.ftc.teamcode.actions.hardware.retractLift
 import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setClawPos
@@ -42,6 +44,7 @@ import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.lerp
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
@@ -54,10 +57,10 @@ import kotlin.math.sin
  */
 @TeleOp
 class MainTeleop : RobotOpMode() {
-    private suspend fun mainExtensionControl(): Nothing {
+    private suspend fun mainExtensionControl(enabled: () -> Boolean): Nothing {
         while (true) {
             // Retracted
-            loopYieldWhile({ !C.extendExtension }) {
+            loopYieldWhile({ !(enabled() && C.extendExtension) }) {
                 G.ehub.extension.power =
                     if (!G.chub.extensionLimitSwitch) -1.0
                     else {
@@ -67,7 +70,7 @@ class MainTeleop : RobotOpMode() {
             }
 
             // Extended
-            loopYieldWhile({ extensionLength() > 100 || !C.retractExtension }) {
+            loopYieldWhile({ enabled() && (extensionLength() > 100 || !C.retractExtension) }) {
                 G.ehub.extension.power = when {
                     C.extendExtension -> 1.0
                     // Failsafe if encoder loses track
@@ -151,6 +154,7 @@ class MainTeleop : RobotOpMode() {
     }
 
     private val mainState: FS = FS {
+        var enableExtension = true
 
         // Prevents state from exiting while held
         val stateExitLock = Mutex()
@@ -164,15 +168,30 @@ class MainTeleop : RobotOpMode() {
 
             while (true) {
                 launch {
-                    launch { mainExtensionControl() }
+                    launch { mainExtensionControl { enableExtension } }
                     launch { mainRollerJob() }
 
-                    // TODO Tilt controls
                     setTiltPosition(IntakeTiltPosition.LOW)
                 }.use { suspendUntilRisingEdge { C.runTransfer } }
 
                 stateExitLock.withLock {
-                    intakeTransfer(finalArmPos = ArmPosition.NEUTRAL.pos, liftEnd = false)
+                    enableExtension = false
+
+                    raceN(
+                        coroutineContext,
+                        {
+                            intakeTransfer(finalArmPos = ArmPosition.NEUTRAL.pos, liftEnd = false)
+                        },
+                        {
+                            suspendUntilRisingEdge { C.stopTransfer }
+                        }
+                    ).onRight {
+                        setArmPosition(ArmPosition.NEUTRAL)
+                        setTiltPosition(IntakeTiltPosition.LOW)
+                        retractLift()
+                    }
+
+                    enableExtension = true
                 }
             }
         }.use {
@@ -189,11 +208,17 @@ class MainTeleop : RobotOpMode() {
             ).merge()
 
             stateExitLock.withLock {
-                coroutineScope {
-                    launch { profileArm(ArmPosition.OUTTAKE) }
-                    launch { retractExtension() }
+                enableExtension = false
 
-                    liftUpTo(targetLiftPos)
+                select {
+                    launch { suspendFor(250) }.onJoin.invoke {}
+                    launch {
+                        launch { profileArm(ArmPosition.OUTTAKE) }
+                        launch { retractExtension() }
+
+
+                        liftUpTo(targetLiftPos)
+                    }.onJoin.invoke {}
                 }
 
                 setTwistPosition(TwistPosition.HORIZONTAL)
@@ -276,9 +301,11 @@ class MainTeleop : RobotOpMode() {
                     if (C.releaseLeftClaw) releaseLeft()
                     if (C.releaseRightClaw) releaseRight()
 
+                    val liftMultiplier = if (C.liftSlow) 0.5 else 1.0
+
                     G.ehub.outtakeLift.power = when {
-                        C.liftUp -> LiftConfig.liftUp
-                        C.liftDown -> LiftConfig.liftDown
+                        C.liftUp -> lerp(LiftConfig.liftHold, LiftConfig.liftUp, liftMultiplier)
+                        C.liftDown -> lerp(LiftConfig.liftHold, LiftConfig.liftDown, liftMultiplier)
                         else -> LiftConfig.liftHold
                     }
                 }
