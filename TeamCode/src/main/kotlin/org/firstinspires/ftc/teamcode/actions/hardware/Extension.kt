@@ -32,7 +32,7 @@ object ExtensionConfig {
 
 fun extensionLength() = G.ehub.extension.currentPosition - G[RobotState.extensionState.encoderBias]
 fun resetExtensionLength(newPos: Int = 0) {
-    G[RobotState.extensionState.encoderBias] = extensionLength() - newPos
+    G[RobotState.extensionState.encoderBias] = G.ehub.extension.currentPosition - newPos
 }
 
 fun setExtensionPower(power: Double) { G.ehub.extension.power = power }
@@ -91,7 +91,8 @@ fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine
             coefs = ExtensionConfig.pidCoefs,
             input = { extensionLength().toDouble() },
             target = { target.toDouble() },
-            output = ::setExtensionPower
+            output = ::setExtensionPower,
+            hz = 30
         )
     }
 }

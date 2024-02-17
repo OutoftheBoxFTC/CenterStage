@@ -99,6 +99,8 @@ object DriveConfig {
 suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coroutineScope {
     val poseLens = RobotState.driveState.currentPose
 
+    var imuResetEnabled = true
+
     // Gets the next IMU angle when the robot is near-stationary.
     fun imuAngleAsync() = async {
         // This is to prevent constantly calling setPoseEstimate()
@@ -109,14 +111,14 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
 
         yieldLooper()
 
-        // Wait until the robot is near-stationary
+        // Wait until the robot is near-stationary and imu reset is enabled
         suspendUntil {
             val dt = timer.seconds()
             timer.reset()
 
             val poseVel = (-lastPose + G[poseLens].also { lastPose = it }) / dt
 
-            poseVel.vec().norm() <= 5.0 && abs(poseVel.heading) <= PI / 2
+            imuResetEnabled && poseVel.vec().norm() <= 5.0 && abs(poseVel.heading) <= PI / 2
         }
 
         // Poll for next IMU angle
@@ -157,16 +159,24 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
         val dt = timer.seconds()
         timer.reset()
 
+        val drivePose = G[poseLens]
+
         if (G.chub.extensionLimitSwitch || poseVel == null) {
-            G[RobotState.driveState.extendoPose] = G[poseLens]
+            imuResetEnabled = true
+
+            G[RobotState.driveState.extendoPose] = Pose2d(
+                drivePose.vec() + Vector2d.polar(DriveConfig.intakeOdoRadius, drivePose.heading),
+                drivePose.heading
+            )
+
             extendoAngleOffset = 0.0
         } else {
-            val drivePose = G[poseLens]
+            imuResetEnabled = false
 
-            val r = G.ehub.extension.currentPosition * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius
+            val r = extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius
             val v = G.chub.odoIntake.correctedVelocity * DriveConfig.intakeOdoMultiplier
 
-            val vPerp = poseVel.vec().rotated(-drivePose.heading).y
+            val vPerp = poseVel.vec().y // .rotated(-drivePose.heading).y
 
             extendoAngleOffset += dt * (((v - vPerp * cos(extendoAngleOffset)) / r) - poseVel.heading)
 
@@ -175,6 +185,8 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
                 drivePose.heading + extendoAngleOffset
             )
         }
+
+        if (G.chub.extensionLimitSwitch) resetExtensionLength()
 
         if (nextImuAngle.isCompleted) {
             // Run the IMU angle correction
