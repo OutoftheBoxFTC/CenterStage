@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.testing
 
 import com.acmerobotics.dashboard.config.Config
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.coroutineScope
@@ -14,6 +15,7 @@ import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 @Config
+@Disabled
 class Racecar : RobotOpMode() {
     companion object {
         @JvmField var targetDist = 1300

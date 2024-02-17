@@ -4,6 +4,7 @@ import arrow.core.raise.nullable
 import com.acmerobotics.dashboard.config.Config
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.yieldLooper
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.util.ElapsedTime
@@ -21,6 +22,7 @@ import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 
 @TeleOp
 @Config
+@Disabled
 class GearRatioOptimizer : RobotOpMode() {
     companion object {
         @JvmField var ticksPerRot = 28

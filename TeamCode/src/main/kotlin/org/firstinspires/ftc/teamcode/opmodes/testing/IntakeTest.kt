@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.cancelAndJoin
@@ -20,6 +21,7 @@ import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 @Config
+@Disabled
 class IntakeTest : RobotOpMode(
     runMultiThreaded = true,
     imuRunMode = ImuRunMode.THREADED
