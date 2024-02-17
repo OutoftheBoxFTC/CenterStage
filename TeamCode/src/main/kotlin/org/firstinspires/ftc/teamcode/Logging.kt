@@ -66,10 +66,12 @@ private fun TreeLog.rootLog(state: RobotState) {
     "extension" {
         "Extension length" set extensionLength()
         "Extension limit switch" set state.chub.extensionLimitSwitch
+        "Extension power" set state.ehub.extension.power
     }
 
     "lift" {
         "Lift pos" set liftPos()
+        "Lift power" set state.ehub.outtakeLift.power
     }
 
     "looptime" {

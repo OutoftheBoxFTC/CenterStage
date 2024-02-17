@@ -18,7 +18,7 @@ object Controls {
     val driveStrafeY by driverInput { -left_stick_x.toDouble() }
     val driveTurn by driverInput { -right_stick_x.toDouble() }
 
-    val slowDrive by driverInput { left_trigger > 0.9 }
+    val slowDrive by driverInput { left_bumper }
     val imuResetAngle by driverInput { x }
 
     val hang0 by driverInput { when {
@@ -34,8 +34,8 @@ object Controls {
     } }
 
     // Default Main/Intake State
-    val extendExtension by driverInput { left_bumper }
-    val retractExtension by driverInput { right_bumper }
+    val extendExtension by driverInput { left_trigger > 0.9 }
+    val retractExtension by driverInput { right_trigger > 0.9 }
 
     val tiltToggle by driverInput { b }
 
@@ -48,10 +48,10 @@ object Controls {
     val outtakeHigh by operatorInput { dpad_up }
 
     // Outtake State
-    val releaseLeftClaw by driverInput { left_bumper }
-    val releaseRightClaw by driverInput { right_bumper }
+    val releaseLeftClaw by driverInput { left_trigger > 0.9 }
+    val releaseRightClaw by driverInput { right_trigger > 0.9 }
 
-    val autoPosition by driverInput { right_trigger > 0.9 }
+    val autoPosition by driverInput { right_bumper }
 
     val twistClawLeft by operatorInput { x }
     val twistClawRight by operatorInput { b }
@@ -59,7 +59,7 @@ object Controls {
     val liftUp by operatorInput { y }
     val liftDown by operatorInput { a }
 
-    val exitOuttake by driverInput { b }
+    val exitOuttake get() = Globals.gp1.b || Globals.gp2.dpad_right
 
     // Property delegates
     private fun <T> driverInput(block: Gamepad.() -> T) = object : ReadOnlyProperty<T> {

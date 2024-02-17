@@ -5,10 +5,14 @@ import arrow.fx.coroutines.raceN
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.StateMachine
@@ -17,7 +21,11 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.LiftConfig
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.currentImuAngle
+import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.intakeTransfer
+import org.firstinspires.ftc.teamcode.actions.hardware.liftDown
+import org.firstinspires.ftc.teamcode.actions.hardware.liftUpTo
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetExtensionLength
@@ -35,8 +43,11 @@ import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import org.firstinspires.ftc.teamcode.util.set
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 import org.firstinspires.ftc.teamcode.util.use
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Main Teleop program.
@@ -56,16 +67,16 @@ class MainTeleop : RobotOpMode() {
             }
 
             // Extended
-            loopYieldWhile({ G.ehub.extension.currentPosition > 100 || !C.retractExtension }) {
+            loopYieldWhile({ extensionLength() > 100 || !C.retractExtension }) {
                 G.ehub.extension.power = when {
+                    C.extendExtension -> 1.0
                     // Failsafe if encoder loses track
                     G.chub.extensionLimitSwitch -> {
                         resetExtensionLength()
                         -0.15
                     }
                     C.retractExtension -> -1.0
-                    C.extendExtension -> 1.0
-                    G.ehub.extension.currentPosition < 100 -> 1.0
+                    extensionLength() < 100 -> 1.0
                     else -> 0.0
                 }
             }
@@ -140,7 +151,17 @@ class MainTeleop : RobotOpMode() {
     }
 
     private val mainState: FS = FS {
+
+        // Prevents state from exiting while held
+        val stateExitLock = Mutex()
+
         launch {
+            launch {
+                mainLoop {
+                    telemetry["Current State"] = "INTAKE STATE"
+                }
+            }
+
             while (true) {
                 launch {
                     launch { mainExtensionControl() }
@@ -150,16 +171,35 @@ class MainTeleop : RobotOpMode() {
                     setTiltPosition(IntakeTiltPosition.LOW)
                 }.use { suspendUntilRisingEdge { C.runTransfer } }
 
-                intakeTransfer()
+                stateExitLock.withLock {
+                    intakeTransfer(finalArmPos = ArmPosition.NEUTRAL.pos, liftEnd = false)
+                }
             }
         }.use {
-            suspendUntilRisingEdge { C.outtakeLow || C.outtakeHigh }
-            coroutineScope {
-                launch { profileArm(ArmPosition.OUTTAKE) }
-                launch { retractExtension() }
-                // TODO Move lift to target
+            val targetLiftPos = raceN(
+                coroutineContext,
+                {
+                    suspendUntilRisingEdge { C.outtakeLow }
+                    305
+                },
+                {
+                    suspendUntilRisingEdge { C.outtakeHigh }
+                    305
+                }
+            ).merge()
+
+            stateExitLock.withLock {
+                coroutineScope {
+                    launch { profileArm(ArmPosition.OUTTAKE) }
+                    launch { retractExtension() }
+
+                    liftUpTo(targetLiftPos)
+                }
+
+                setTwistPosition(TwistPosition.HORIZONTAL)
+
+                outtakeState
             }
-            outtakeState
         }
     }
 
@@ -204,7 +244,16 @@ class MainTeleop : RobotOpMode() {
     }
 
     private val outtakeState: FS = FS {
+        G.ehub.extension.power = 0.0
+        G.ehub.intakeRoller.power = 0.0
+
         launch {
+            launch {
+                mainLoop {
+                    telemetry["Current State"] = "OUTTAKE STATE"
+                }
+            }
+
             // Claw twisting
             launch {
                 while (true) {
@@ -254,12 +303,23 @@ class MainTeleop : RobotOpMode() {
 
         retractExtension()
 
+        liftDown()
+        suspendFor(900)
+        G.ehub.outtakeLift.power = 0.0
+
+        G.ehub.outtakeLift.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
+        yieldLooper()
+        G.ehub.outtakeLift.mode = DcMotor.RunMode.RUN_WITHOUT_ENCODER
+
         suspendUntilStart()
 
         launch { runFieldCentricDrive() }
         launch {
             mainLoop {
-                G.chub.intakeWheel.power = C.driveTurn
+                val heading = currentImuAngle()
+                G.chub.intakeWheel.power =
+                    C.driveTurn + C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)
+
                 G.ehub.hang0.power = C.hang0
                 G.ehub.hang1.power = C.hang1
             }

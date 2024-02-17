@@ -366,7 +366,7 @@ suspend fun runFieldCentricDrive(): Nothing = mainLoop {
 
     setDrivePowers(
         multiplier * (C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading)),
-        multiplier * (C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)),
+        SampleMecanumDrive.LATERAL_MULTIPLIER * multiplier * (C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)),
         multiplier * C.driveTurn
     )
 }

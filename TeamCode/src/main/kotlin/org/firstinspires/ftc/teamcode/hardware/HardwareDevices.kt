@@ -40,7 +40,9 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     val odoAux = motor(DriveHardwareNames.odoAux)
     val odoLeft = motor(DriveHardwareNames.odoLeft)
 
-    val intakeWheel = crServo("s0")
+    val intakeWheel = crServo("s0") {
+        direction = DcMotorSimple.Direction.REVERSE
+    }
 
     val arm = ServoGroup(
         nonEmptyListOf(
