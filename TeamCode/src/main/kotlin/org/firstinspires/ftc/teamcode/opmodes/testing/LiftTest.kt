@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
 @Config
+@Disabled
 class LiftTest : RobotOpMode() {
     companion object {
         @JvmField var liftPower = 0.0
