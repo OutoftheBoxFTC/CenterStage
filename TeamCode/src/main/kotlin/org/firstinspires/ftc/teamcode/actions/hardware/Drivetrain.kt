@@ -48,6 +48,7 @@ import kotlin.math.sin
 data class DriveState(
     val newPose: Pose2d? = null,
     val currentPose: Pose2d,
+    val extendoPose: Pose2d,
     val driveControlState: DriveControlState,
     val rrDrive: SampleMecanumDrive? = null
 ) { companion object }

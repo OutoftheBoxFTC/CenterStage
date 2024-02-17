@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.roadrunner.util;
 
+import androidx.annotation.Nullable;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -44,11 +46,25 @@ public class DashboardUtil {
         drawSampledPath(canvas, path, DEFAULT_RESOLUTION);
     }
 
-    public static void drawRobot(Canvas canvas, Pose2d pose) {
+    public static void drawRobot(Canvas canvas, Pose2d pose, @Nullable Pose2d extendoPose) {
         canvas.strokeCircle(pose.getX(), pose.getY(), ROBOT_RADIUS);
         Vector2d v = pose.headingVec().times(ROBOT_RADIUS);
         double x1 = pose.getX() + v.getX() / 2, y1 = pose.getY() + v.getY() / 2;
         double x2 = pose.getX() + v.getX(), y2 = pose.getY() + v.getY();
         canvas.strokeLine(x1, y1, x2, y2);
+
+        if (extendoPose != null) {
+            Vector2d v_perp = v.rotated(Math.PI / 2).div(2);
+
+            Vector2d p2 = extendoPose.vec();
+            Vector2d p = p2.minus(v);
+
+            Vector2d p0 = p.plus(v_perp);
+            Vector2d p1 = p.minus(v_perp);
+
+            canvas.strokeLine(p0.getX(), p0.getY(), p1.getX(), p1.getY());
+            canvas.strokeLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+            canvas.strokeLine(p2.getX(), p2.getY(), p0.getX(), p0.getY());
+        }
     }
 }

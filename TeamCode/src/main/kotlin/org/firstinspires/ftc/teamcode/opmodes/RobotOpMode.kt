@@ -36,6 +36,7 @@ import org.firstinspires.ftc.teamcode.hardware.devices.KWebcam
 import org.firstinspires.ftc.teamcode.logState
 import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
+import org.firstinspires.ftc.teamcode.util.G
 
 /**
  * Base class for all OpModes.
@@ -119,7 +120,7 @@ abstract class RobotOpMode(
         }.let { Globals.initializeRobotState(it, this) }
 
         // Roadrunner SampleMecanumDrive
-        val rrDrive = SampleMecanumDrive(hardwareMap)
+        val rrDrive = SampleMecanumDrive(G.chub)
 
         Globals[driveLooperLens].scheduleCoroutine {
             launch {
@@ -142,7 +143,8 @@ abstract class RobotOpMode(
 
                 driveState.rrDrive?.let {
                     val packet = it.getDriveTelemetryPacket(
-                        (driveState.driveControlState as? DriveControlState.Fixpoint)?.target
+                        (driveState.driveControlState as? DriveControlState.Fixpoint)?.target,
+                        driveState.extendoPose
                     )
 
                     FtcDashboard.getInstance().sendTelemetryPacket(packet)

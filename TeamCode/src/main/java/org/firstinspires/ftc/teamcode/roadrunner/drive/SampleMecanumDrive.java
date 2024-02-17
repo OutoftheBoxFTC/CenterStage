@@ -157,7 +157,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         trajectorySequenceRunner = new TrajectorySequenceRunner(
                 follower, HEADING_PID, batteryVoltageSensor,
                 lastEncPositions, lastEncVels, lastTrackingEncPositions, lastTrackingEncVels,
-                hardwareSrc.isLeft()
+                hardwareSrc.leftOrNull() != null
         );
     }
 
@@ -230,14 +230,17 @@ public class SampleMecanumDrive extends MecanumDrive {
         updateFollower();
     }
 
-    public TelemetryPacket getDriveTelemetryPacket(@Nullable Pose2d targetPose) {
+    public TelemetryPacket getDriveTelemetryPacket(
+            @Nullable Pose2d targetPose,
+            @Nullable Pose2d extendoPose
+    ) {
         Pose2d target = targetPose;
 
         if (target == null) {
             target = trajectorySequenceRunner.getLastTargetPose();
         }
 
-        return trajectorySequenceRunner.getDriveTelemetryPacket(getPoseEstimate(), target);
+        return trajectorySequenceRunner.getDriveTelemetryPacket(getPoseEstimate(), target, extendoPose);
     }
 
     public void breakFollowing() {
