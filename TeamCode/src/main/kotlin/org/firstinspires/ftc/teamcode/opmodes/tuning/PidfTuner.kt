@@ -44,6 +44,10 @@ abstract class PidfTuner(
         @JvmField var maxPos = 0.0
         @JvmField var maxVel = 0.0
         @JvmField var maxAccel = 0.0
+
+        @JvmField var pidTarget = 0.0
+
+        @JvmField var hz = 30
     }
 
     abstract fun updateOutput(output: Double)
@@ -76,7 +80,8 @@ abstract class PidfTuner(
             coefs = pidCoefs,
             input = ::readInput,
             target = { target },
-            output = ::updateOutput
+            output = ::updateOutput,
+            hz = hz
         )
     }
 
@@ -97,7 +102,8 @@ abstract class PidfTuner(
                 output = {
                     updateOutput(it)
                     this.target = profile[timer.seconds()].x
-                }
+                },
+                hz = 30
             )
         }
     }
@@ -145,7 +151,7 @@ abstract class PidfTuner(
 
     private val pidState: FS = FS {
         G.cmd.launchCommand(subsystem.nel()) {
-            runPid((minPos + maxPos) / 2)
+            runPid(pidTarget)
         }
 
         suspendUntil { gamepad1.y }
