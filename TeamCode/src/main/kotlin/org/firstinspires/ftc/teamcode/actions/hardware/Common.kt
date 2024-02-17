@@ -22,9 +22,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation
 import org.firstinspires.ftc.teamcode.RobotState
-import org.firstinspires.ftc.teamcode.driveLooper
+import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
+import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.cross
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.mapState
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
@@ -248,52 +250,77 @@ suspend fun scoreOnBackstage(
     return launchFixpoint(returnPos)
 }
 
-suspend fun swoop(
-    start: Vector2d,
-    target: Vector2d,
-    heading: Double,
-    extensionLength: Int?
-) = coroutineScope {
-    val driveJob = launch {
-        var driveMultiplier = 1.0
+suspend fun intakeFixpoint(
+    intakePid: PidCoefs = PidCoefs(0.5, 0.0, 0.0),
+    target: () -> Vector2d,
+    headingOutput: (Double) -> Unit
+): Nothing = coroutineScope {
+    var parError = 0.0
+    var perpError = 0.0
 
-        val currentMonitor = launch {
-            mainLoop {
-                val chubCurrentJob = G[RobotState.driveLooper].scheduleCoroutine {
-                    G.chub.readCurrents()
-                }
+    var turnPower = 0.0
 
-                G.ehub.readCurrents()
-                // TODO make SuspendLooper use Dispatcher implementation so I can call join here
-                suspendUntil { chubCurrentJob.isCompleted }
+    launch {
+        mainLoop {
+            val extendoPose = G[RobotState.driveState.extendoPose]
+            val drivePose = currentDrivePose()
 
-                val driveCurrentBudget = 19.8 - G.ehub.hubCurrent
-                val driveCurrent = G.chub.hubCurrent
-
-                driveMultiplier =
-                    (driveMultiplier * driveCurrentBudget / driveCurrent)
-                        .coerceIn(0.0..1.0)
-
-                suspendFor(200)
-            }
+            parError = (target() - extendoPose.vec()) dot (target() - drivePose.vec()).let { it / it.norm() }
+            perpError = (target() - extendoPose.vec()) cross (target() - drivePose.vec()).let { it / it.norm() }
         }
+    }
 
-        followLinePath(
-            start,
-            target,
-            heading,
-            maxPower = { driveMultiplier }
+    launch {
+        runPidController(
+            coefs = intakePid,
+            input = { 0.0 },
+            target = { perpError },
+            output = { G.chub.intakeWheel.power = -it },  // Don't worry about it
+            hz = 30
         )
-
-        launchFixpoint(Pose2d(target, heading))
-        currentMonitor.cancelAndJoin()
     }
 
-    if (extensionLength != null) runExtensionTo(extensionLength, keepPid = true)
-    else {
-        intakeTransfer()
-        profileArm(ArmPosition.OUTTAKE)
+    launch {
+        runPidController(
+            coefs = ExtensionConfig.pidCoefs,
+            input = { 0.0 },
+            target = { parError / DriveConfig.intakeOdoExtensionMultiplier },
+            output = { setExtensionPower(it) },
+            hz = 30
+        )
     }
 
-    driveJob.join()
+    launch {
+        runPidController(
+            coefs = DriveConfig.headingPid,
+            input = { 0.0 },
+            target = { -perpError / (extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius) },
+            output = { turnPower = it },
+            hz = 30
+        )
+    }
+
+    mainLoop {
+        headingOutput.invoke(turnPower)
+    }
+}
+
+suspend fun dualFixpoint(
+    intakePid: PidCoefs = PidCoefs(0.5, 0.0, 0.0),
+    intakeTarget: Vector2d,
+    robotTarget: Vector2d
+): Nothing = coroutineScope {
+    val fixpointJob = launchFixpoint(
+        target = Pose2d(robotTarget, (intakeTarget - robotTarget).angle())
+    )
+
+    try {
+        intakeFixpoint(
+            intakePid = intakePid,
+            target = { intakeTarget },
+            headingOutput = {}
+        )
+    } finally {
+        fixpointJob.cancel()
+    }
 }
