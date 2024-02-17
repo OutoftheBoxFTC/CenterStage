@@ -48,6 +48,8 @@ suspend fun intakeTransfer(
     finalLiftPos: Int? = null,
     liftEnd: Boolean = true
 ) = coroutineScope {
+    retractLift()
+
     openClaws()
     setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
     suspendFor(100)

@@ -40,6 +40,7 @@ object Controls {
     val tiltToggle by driverInput { b }
 
     val runTransfer by operatorInput { x }
+    val stopTransfer by operatorInput { b }
 
     val intakeRoller by operatorInput { left_bumper }
     val expelRoller by operatorInput { right_bumper }
@@ -58,6 +59,8 @@ object Controls {
 
     val liftUp by operatorInput { y }
     val liftDown by operatorInput { a }
+
+    val liftSlow by operatorInput { left_bumper }
 
     val exitOuttake get() = Globals.gp1.b || Globals.gp2.dpad_right
 

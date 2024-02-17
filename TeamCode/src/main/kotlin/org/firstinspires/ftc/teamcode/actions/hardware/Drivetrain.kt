@@ -362,7 +362,7 @@ suspend fun runFieldCentricDrive(): Nothing = mainLoop {
 
     val heading = currentImuAngle()
 
-    val multiplier = if (C.slowDrive) 0.4 else 1.0
+    val multiplier = if (C.slowDrive) 0.3 else 1.0
 
     setDrivePowers(
         multiplier * (C.driveStrafeX * cos(-heading) - C.driveStrafeY * sin(-heading)),

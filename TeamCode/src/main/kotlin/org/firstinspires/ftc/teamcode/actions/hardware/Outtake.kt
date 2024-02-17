@@ -20,12 +20,12 @@ enum class ArmPosition(val pos: Double) {
 
 @Suppress("unused")
 enum class TwistPosition(val pos: Double) {
-    HORIZONTAL_0(0.016), // red far
-    POS_1(0.241), // red far
+    HORIZONTAL_0(0.0), // red far
+    POS_1(0.211), // red far
     STRAIGHT(0.344),
-    POS_2(0.462), // black far
-    HORIZONTAL(0.653), // black far
-    POS_3(0.853), // black far
+    POS_2(0.414), // black far
+    HORIZONTAL(0.632), // black far
+    POS_3(0.851), // black far
 }
 
 enum class ClawPosition(val pos: Double, val isBlack: Boolean) {
