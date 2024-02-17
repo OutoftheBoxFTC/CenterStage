@@ -236,14 +236,18 @@ public class TrajectorySequenceRunner {
         lastTargetPose = targetPose;
 
         if (logTelemetryOnUpdate) {
-            TelemetryPacket packet = getDriveTelemetryPacket(poseEstimate, targetPose);
+            TelemetryPacket packet = getDriveTelemetryPacket(poseEstimate, targetPose, null);
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
 
         return driveSignal;
     }
 
-    public TelemetryPacket getDriveTelemetryPacket(Pose2d poseEstimate, Pose2d targetPose) {
+    public TelemetryPacket getDriveTelemetryPacket(
+            Pose2d poseEstimate,
+            Pose2d targetPose,
+            @Nullable Pose2d extendoPose
+    ) {
         TelemetryPacket packet = new TelemetryPacket();
         Canvas fieldOverlay = packet.fieldOverlay();
 
@@ -264,7 +268,14 @@ public class TrajectorySequenceRunner {
             currentSegment = currentTrajectorySequence.get(currentSegmentIndex);
         }
 
-        draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
+        draw(
+                fieldOverlay,
+                currentTrajectorySequence,
+                currentSegment,
+                targetPose,
+                poseEstimate,
+                extendoPose
+        );
 
         return packet;
     }
@@ -272,7 +283,7 @@ public class TrajectorySequenceRunner {
     private void draw(
             Canvas fieldOverlay,
             TrajectorySequence sequence, SequenceSegment currentSegment,
-            Pose2d targetPose, Pose2d poseEstimate
+            Pose2d targetPose, Pose2d poseEstimate, @Nullable Pose2d extendoPose
     ) {
         if (sequence != null) {
             for (int i = 0; i < sequence.size(); i++) {
@@ -323,7 +334,7 @@ public class TrajectorySequenceRunner {
         if (targetPose != null) {
             fieldOverlay.setStrokeWidth(1);
             fieldOverlay.setStroke("#4CAF50");
-            DashboardUtil.drawRobot(fieldOverlay, targetPose);
+            DashboardUtil.drawRobot(fieldOverlay, targetPose, null);
         }
 
         fieldOverlay.setStroke("#3F51B5");
@@ -333,7 +344,7 @@ public class TrajectorySequenceRunner {
         }
 
         fieldOverlay.setStroke("#3F51B5");
-        DashboardUtil.drawRobot(fieldOverlay, poseEstimate);
+        DashboardUtil.drawRobot(fieldOverlay, poseEstimate, extendoPose);
     }
 
     public Pose2d getLastPoseError() {

@@ -49,7 +49,7 @@ object Globals {
             commandHandler = CommandHandler.new(),
 
             imuState = ImuState(0.0, 0.0),
-            driveState = DriveState(null, Pose2d(), DriveControlState.Idle),
+            driveState = DriveState(null, Pose2d(), Pose2d(), DriveControlState.Idle),
             extensionState = ExtensionState(0),
             outtakeState = OuttakeState(),
             visionState = VisionState()
