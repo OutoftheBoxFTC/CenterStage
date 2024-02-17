@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.util.G
 
 enum class ArmPosition(val pos: Double) {
     FLOOR(1.0),
-    OUTTAKE(0.900),
+    OUTTAKE(0.950),
     AUTON_INIT(0.174),
     NEUTRAL(0.036),
     TRANSFER(0.036)

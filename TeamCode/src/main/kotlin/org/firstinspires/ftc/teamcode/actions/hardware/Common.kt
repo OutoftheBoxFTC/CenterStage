@@ -45,7 +45,8 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
  */
 suspend fun intakeTransfer(
     finalArmPos: Double = ArmPosition.OUTTAKE.pos,
-    finalLiftPos: Int? = null
+    finalLiftPos: Int? = null,
+    liftEnd: Boolean = true
 ) = coroutineScope {
     openClaws()
     setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
@@ -75,7 +76,7 @@ suspend fun intakeTransfer(
 
     setTiltPosition(IntakeTiltPosition.TRANSFER)
 
-    suspendFor(100)
+    suspendFor(600)
 
     G.ehub.intakeRoller.power = 0.0
 
@@ -98,7 +99,7 @@ suspend fun intakeTransfer(
         if (finalLiftPos != null) liftUpTo(finalLiftPos)
         else {
             armJob.join()
-            retractLift()
+            if (liftEnd) retractLift()
         }
     }
 
