@@ -98,4 +98,6 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
 
     val hang0 = crServo("s7")
     val hang1 = crServo("s8")
+
+    val drone = servo("s10")
 }

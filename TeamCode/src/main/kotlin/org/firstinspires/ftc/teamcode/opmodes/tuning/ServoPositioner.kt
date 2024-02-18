@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setBlackClawPos
+import org.firstinspires.ftc.teamcode.actions.hardware.setDronePos
 import org.firstinspires.ftc.teamcode.actions.hardware.setRedClawPos
 import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setTwistPosition
@@ -43,6 +44,8 @@ class ServoPositioner : RobotOpMode() {
 
     private var redPos = 0.0
     private var blackPos = 0.0
+
+    private var dronePos = 0.0
 
     private var currentSystem = "Arm"
     private var currentPos = armPos
@@ -73,7 +76,7 @@ class ServoPositioner : RobotOpMode() {
             }
         }
 
-        nextToggledState(blackAdjust, twistAdjust).also { job.cancelAndJoin() }
+        nextToggledState(droneAdjust, twistAdjust).also { job.cancelAndJoin() }
     }
 
     private val twistAdjust: FS = FS {
@@ -128,6 +131,19 @@ class ServoPositioner : RobotOpMode() {
         nextToggledState(redAdjust, armAdjust).also { job.cancelAndJoin() }
     }
 
+    private val droneAdjust: FS = FS {
+        currentSystem = "Drone"
+        currentPos = dronePos
+
+        val job = launch {
+            mainLoop {
+                dronePos = currentPos
+            }
+        }
+
+        nextToggledState(blackAdjust, armAdjust).also { job.cancelAndJoin() }
+    }
+
     override suspend fun runSuspendOpMode() = coroutineScope {
         armPos = ArmPosition.NEUTRAL.pos
         twistPos = TwistPosition.STRAIGHT.pos
@@ -152,11 +168,14 @@ class ServoPositioner : RobotOpMode() {
             setRedClawPos(redPos)
             setBlackClawPos(blackPos)
 
+            setDronePos(dronePos)
+
             telemetry["Arm"] = armPos
             telemetry["Twist"] = twistPos
             telemetry["Tilt"] = tiltPos
             telemetry["Red Claw"] = redPos
             telemetry["Black Claw"] = blackPos
+            telemetry["Drone"] = dronePos
 
             telemetry["Current Servo"] = currentSystem
 
