@@ -22,9 +22,11 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.LiftConfig
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.closeDrone
 import org.firstinspires.ftc.teamcode.actions.hardware.currentImuAngle
 import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.intakeTransfer
+import org.firstinspires.ftc.teamcode.actions.hardware.launchDrone
 import org.firstinspires.ftc.teamcode.actions.hardware.liftDown
 import org.firstinspires.ftc.teamcode.actions.hardware.liftUpTo
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
@@ -360,6 +362,7 @@ class MainTeleop : RobotOpMode() {
         setArmPosition(ArmPosition.NEUTRAL)
         setTwistPosition(TwistPosition.STRAIGHT)
         setTiltPosition(IntakeTiltPosition.HIGH)
+        closeDrone()
         openClaws()
 
         retractExtension()
@@ -383,6 +386,8 @@ class MainTeleop : RobotOpMode() {
 
                 G.ehub.hang0.power = C.hang0
                 G.ehub.hang1.power = C.hang1
+
+                if (C.launchDrone) launchDrone() else closeDrone()
             }
         }
 

@@ -33,6 +33,8 @@ object Controls {
         else -> 0.0
     } }
 
+    val launchDrone by operatorInput { left_stick_button && right_stick_button }
+
     // Default Main/Intake State
     val extendExtension by driverInput { left_trigger > 0.9 }
     val retractExtension by driverInput { right_trigger > 0.9 }

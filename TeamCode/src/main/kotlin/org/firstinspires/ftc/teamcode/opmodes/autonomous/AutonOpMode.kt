@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
+import org.firstinspires.ftc.teamcode.actions.hardware.closeDrone
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.driveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
@@ -64,6 +65,7 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
         setTwistPosition(TwistPosition.STRAIGHT)
         setArmPosition(ArmPosition.AUTON_INIT)
         setTiltPosition(IntakeTiltPosition.HIGH)
+        closeDrone()
 
         launch {
             while (true) {
