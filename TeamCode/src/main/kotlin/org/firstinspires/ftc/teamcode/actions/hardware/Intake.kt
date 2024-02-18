@@ -12,8 +12,9 @@ enum class IntakeTiltPosition(val pos: Double) {
     HIGH(0.639),
     LOW(0.806),
 
+    POS_1(0.708),
+
     // TODO Finish these positions later
-    POS_1(0.689),
     POS_2(0.742),
     POS_3(0.755),
     POS_4(0.790),

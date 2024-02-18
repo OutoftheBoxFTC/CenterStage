@@ -35,8 +35,10 @@ class PreloadDetectionTest : RobotOpMode() {
             telemetry["Color"] = if (PreloadDetectionPipeline.isBlue) "Blue" else "Red"
             telemetry["Position"] = G[RobotState.visionState.preloadPosition]
 
-            if (gamepad1.x) pipeline.setBlue()
-            if (gamepad1.b) pipeline.setRed()
+            if (gamepad1.x) pipeline.setBlueBack()
+            if (gamepad1.y) pipeline.setRedBack()
+            if (gamepad1.a) pipeline.setBlueAud()
+            if (gamepad1.b) pipeline.setRedAud()
         }
     }
 }

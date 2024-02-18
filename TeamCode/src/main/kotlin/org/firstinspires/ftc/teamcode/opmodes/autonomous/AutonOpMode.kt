@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.driveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
+import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivetrainIdle
@@ -34,7 +35,7 @@ import org.firstinspires.ftc.teamcode.visionState
  *
  * @param isBlue Whether the robot is on the blue alliance.
  */
-abstract class AutonOpMode(protected val isBlue: Boolean) : RobotOpMode() {
+abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boolean) : RobotOpMode() {
     private var enableBreakpoints = false
 
     /**
@@ -48,7 +49,14 @@ abstract class AutonOpMode(protected val isBlue: Boolean) : RobotOpMode() {
                 webcam.startCamera(640, 480)
                 streamCamera(webcam)
                 webcam.setPipeline(
-                    PreloadDetectionPipeline().also { if (isBlue) it.setBlue() else it.setRed() }
+                    PreloadDetectionPipeline().also {
+                        when {
+                            isBlue && isAud -> it.setBlueAud()
+                            isBlue && !isAud -> it.setBlueBack()
+                            !isBlue && isAud -> it.setRedAud()
+                            else -> it.setRedBack()
+                        }
+                    }
                 )
             }
         }

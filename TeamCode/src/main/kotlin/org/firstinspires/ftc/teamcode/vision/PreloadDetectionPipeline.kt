@@ -42,6 +42,9 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
 
         // Color to look for
         @JvmField var isBlue = true
+
+        // Which side the side rect is on
+        @JvmField var sideRectRight  = true
     }
 
     private val yCrCbMat = Mat()
@@ -53,7 +56,7 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
     var sideRedStrength = 0.0
 
     init {
-        setBlue()
+        setBlueBack()
     }
 
     override fun processFrame(input: Mat): Mat {
@@ -86,22 +89,36 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
         sideSubmat.release()
 
         G[RobotState.visionState.preloadPosition] =
-            if (isBlue) when {
-                mainBlueStrength < blueCutoff -> RandomizationPosition.CENTER
-                sideBlueStrength < blueCutoff -> RandomizationPosition.LEFT
-                else -> RandomizationPosition.RIGHT
-            }
+            when {
+                sideRectRight && !isBlue -> when {
+                    mainRedStrength < redCutoff -> RandomizationPosition.CENTER
+                    sideRedStrength < redCutoff -> RandomizationPosition.RIGHT
+                    else -> RandomizationPosition.LEFT
+                }
 
-            else when {
-                mainRedStrength < redCutoff -> RandomizationPosition.CENTER
-                sideRedStrength < redCutoff -> RandomizationPosition.RIGHT
-                else -> RandomizationPosition.LEFT
+                sideRectRight && isBlue -> when {
+                    mainBlueStrength < blueCutoff -> RandomizationPosition.CENTER
+                    sideBlueStrength < blueCutoff -> RandomizationPosition.RIGHT
+                    else -> RandomizationPosition.LEFT
+                }
+
+                !sideRectRight && !isBlue -> when {
+                    mainRedStrength < redCutoff -> RandomizationPosition.CENTER
+                    sideRedStrength < redCutoff -> RandomizationPosition.LEFT
+                    else -> RandomizationPosition.RIGHT
+                }
+
+                else -> when {
+                    mainBlueStrength < blueCutoff -> RandomizationPosition.CENTER
+                    sideBlueStrength < blueCutoff -> RandomizationPosition.LEFT
+                    else -> RandomizationPosition.RIGHT
+                }
             }
 
         return input
     }
 
-    fun setRed() {
+    fun setRedBack() {
         cx0 = 320.0
         cx1 = 350.0
         cy0 = 380.0
@@ -113,9 +130,10 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
         sy1 = 375.0
 
         isBlue = false
+        sideRectRight = true
     }
 
-    fun setBlue() {
+    fun setBlueBack() {
         cx0 = 420.0
         cx1 = 450.0
         cy0 = 375.0
@@ -127,5 +145,36 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
         sy1 = 395.0
 
         isBlue = true
+        sideRectRight = false
+    }
+
+    fun setRedAud() {
+        cx0 = 400.0
+        cx1 = 430.0
+        cy0 = 375.0
+        cy1 = 345.0
+
+        sx0 = 50.0
+        sx1 = 80.0
+        sy0 = 350.0
+        sy1 = 380.0
+
+        isBlue = false
+        sideRectRight = false
+    }
+
+    fun setBlueAud() {
+        cx0 = 275.0
+        cx1 = 295.0
+        cy0 = 360.0
+        cy1 = 340.0
+
+        sx0 = 610.0
+        sx1 = 638.0
+        sy0 = 350.0
+        sy1 = 375.0
+
+        isBlue = true
+        sideRectRight = true
     }
 }

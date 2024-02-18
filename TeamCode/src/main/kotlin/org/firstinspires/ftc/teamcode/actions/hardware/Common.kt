@@ -236,7 +236,7 @@ suspend fun scoreOnBackstage(
     raceN(
         coroutineContext,
         {
-            suspendFor(1000)
+            suspendFor(2000)
         },
         {
             suspendUntil { currentDrivePose().vec().distTo(target.vec()) < 1.0 }
@@ -246,6 +246,8 @@ suspend fun scoreOnBackstage(
 
     openClaws()
     job.cancelAndJoin()
+
+    suspendFor(800)
 
     return launchFixpoint(returnPos)
 }
