@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.autonomous
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ import kotlin.math.PI
 /**
  * Cycling auto using the center-most lane.
  */
-abstract class PreloadBackstageAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
+abstract class PreloadBackstageAuto(isBlue: Boolean) : AutonOpMode(isBlue, false) {
     abstract val rightPreloadFloor: Pose2d
     abstract val frontPreloadFloor: Pose2d
     abstract val leftPreloadFloor: Pose2d
@@ -135,6 +136,7 @@ abstract class PreloadBackstageAuto(isBlue: Boolean) : AutonOpMode(isBlue) {
 }
 
 @Autonomous
+@Disabled
 class BluePreloadBackstageAuto : PreloadBackstageAuto(true) {
     override val rightPreloadFloor = Pose2d(-18.523, 5.557, 5.781)
     override val frontPreloadFloor = Pose2d(-19.315, 0.427, 6.263)
@@ -149,6 +151,7 @@ class BluePreloadBackstageAuto : PreloadBackstageAuto(true) {
 }
 
 @Autonomous
+@Disabled
 class RedPreloadBackstageAuto : PreloadBackstageAuto(false) {
     override val rightPreloadFloor = Pose2d(-20.378, 1.137, 5.869)
     override val frontPreloadFloor = Pose2d(-19.243, -1.822, 6.273)
