@@ -49,6 +49,7 @@ import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 import org.firstinspires.ftc.teamcode.util.use
+import kotlin.coroutines.coroutineContext
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -153,6 +154,40 @@ class MainTeleop : RobotOpMode() {
         error("Return from mainRollerJob()")
     }
 
+    private suspend fun mainTiltJob() {
+        var tiltPos = IntakeTiltPosition.LOW
+
+        setTiltPosition(tiltPos)
+
+        fun posFromOrd(ord: Int): IntakeTiltPosition {
+            val entries = IntakeTiltPosition.entries
+            val size = entries.size
+
+            return when {
+                ord < 5 -> entries[size - (5 - ord)]
+                ord >= size -> entries[5 + ord - size]
+                else -> entries[ord]
+            }
+        }
+
+        while (true) {
+            raceN(
+                coroutineContext,
+                {
+                    suspendUntilRisingEdge { C.tiltUp }
+                    posFromOrd(tiltPos.ordinal - 1)
+                },
+                {
+                    suspendUntilRisingEdge { C.tiltDown }
+                    posFromOrd(tiltPos.ordinal + 1)
+                }
+            ).merge().let {
+                setTiltPosition(it)
+                tiltPos = it
+            }
+        }
+    }
+
     private val mainState: FS = FS {
         var enableExtension = true
 
@@ -170,8 +205,7 @@ class MainTeleop : RobotOpMode() {
                 launch {
                     launch { mainExtensionControl { enableExtension } }
                     launch { mainRollerJob() }
-
-                    setTiltPosition(IntakeTiltPosition.LOW)
+                    launch { mainTiltJob() }
                 }.use { suspendUntilRisingEdge { C.runTransfer } }
 
                 stateExitLock.withLock {
