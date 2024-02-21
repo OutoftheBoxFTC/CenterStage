@@ -37,7 +37,8 @@ object Controls {
     val extendExtension by driverInput { left_trigger > 0.9 }
     val retractExtension by driverInput { right_trigger > 0.9 }
 
-    val tiltToggle by driverInput { b }
+    val tiltUp by operatorInput { y }
+    val tiltDown by operatorInput { a }
 
     val runTransfer by operatorInput { x }
     val stopTransfer by operatorInput { b }
