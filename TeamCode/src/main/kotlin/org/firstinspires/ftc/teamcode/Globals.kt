@@ -21,6 +21,8 @@ import org.firstinspires.ftc.teamcode.vision.VisionState
  * Global static object that holds the robot state and other global variables.
  */
 object Globals {
+    var imuStartingHeading: Double? = null
+
     /**
      * Mutable state flow that holds the robot state.
      */

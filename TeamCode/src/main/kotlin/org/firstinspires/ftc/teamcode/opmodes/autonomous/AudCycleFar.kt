@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectory
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.intakeTransfer
+import org.firstinspires.ftc.teamcode.actions.hardware.nextImuAngle
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
@@ -31,6 +32,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.buildTrajectory
 import org.firstinspires.ftc.teamcode.util.deg
+import org.firstinspires.ftc.teamcode.util.setAccelConstraint
 import org.firstinspires.ftc.teamcode.util.use
 import org.firstinspires.ftc.teamcode.vision.AprilTagDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline.RandomizationPosition
@@ -76,13 +78,12 @@ abstract class AudCycleFarAuto(isBlue: Boolean) : AutonOpMode(isBlue, true) {
         val centerPreloadOuttakeTraj = floorIntakeTrajectory(frontPreloadFloor)
         val leftPreloadOuttakeTraj = floorIntakeTrajectory(leftPreloadFloor)
 
+
         val preloadIntakeOuttakeTraj = buildTrajectory(preloadIntakePose) {
             setReversed(true)
-            setAccelConstraint(
-                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL / 4.0)
-            )
-            lineTo(preSwoop.vec())
-            splineToConstantHeading(preOuttake.vec(), preOuttake.heading + PI)
+            setAccelConstraint(DriveConstants.MAX_ACCEL / 4.0)
+            lineToConstantHeading(preSwoop.vec())
+            lineToConstantHeading(preOuttake.vec())
         }
 
         val parkTraj = buildTrajectory(preOuttake) {
@@ -190,7 +191,9 @@ abstract class AudCycleFarAuto(isBlue: Boolean) : AutonOpMode(isBlue, true) {
 
         breakpoint()
 
-        suspendFor(5000)
+        suspendFor(3000)
+
+        G.imuStartingHeading = nextImuAngle() + PI
     }
 }
 
@@ -202,16 +205,16 @@ class RedAudCycleFar : AudCycleFarAuto(false) {
     override val frontPreloadFloor = Pose2d(-42.581, -10.893, 251.828.deg)
     override val leftPreloadFloor = Pose2d(-46.531, -9.778, 182.910.deg)
 
-    override val preloadIntakePose = Pose2d(-49.859, -14.914, 270.0.deg)
+    override val preloadIntakePose = Pose2d(-49.859, -14.914, 270.deg)
 
-    override val preSwoop = Pose2d(-52.422, 55.168, 270.0.deg)
-    override val preOuttake = Pose2d(-29.142, 75.877, 270.0.deg)
+    override val preSwoop = Pose2d(-52.422, 75.0, 270.deg)
+    override val preOuttake = Pose2d(-29.142, 72.1, 270.deg)
 
-    override val outtakeRightEstimate = Pose2d(-19.918, 78.573, 270.0.deg)
-    override val outtakeCenterEstimate = Pose2d(-24.803, 79.088, 270.0.deg)
-    override val outtakeLeftEstimate = Pose2d(31.793, 78.825, 270.0.deg)
+    override val outtakeRightEstimate = Pose2d(-19.918, 78.573, 270.deg)
+    override val outtakeCenterEstimate = Pose2d(-24.803, 79.088, 270.deg)
+    override val outtakeLeftEstimate = Pose2d(31.793, 78.825, 270.deg)
 
-    override val park = Pose2d(-53.193, 82.901, 270.0.deg)
+    override val park = Pose2d(-53.193, 82.901, 270.deg)
 }
 
 @Autonomous
@@ -222,14 +225,14 @@ class BlueAudCycleFar : AudCycleFarAuto(true) {
     override val frontPreloadFloor = Pose2d(-42.404, 9.904, 109.653.deg)
     override val rightPreloadFloor = Pose2d(-47.941, 13.199, 161.320.deg)
 
-    override val preloadIntakePose = Pose2d(-50.387, 14.434, 90.0.deg)
+    override val preloadIntakePose = Pose2d(-50.387, 14.434, 90.deg)
 
-    override val preSwoop = Pose2d(-51.292, -57.422, 90.0.deg)
-    override val preOuttake = Pose2d(-25.634, -75.850,90.0.deg)
+    override val preSwoop = Pose2d(-51.292, -75.0, 90.deg)
+    override val preOuttake = Pose2d(-25.634, -72.1, 90.deg)
 
-    override val outtakeRightEstimate = Pose2d(-31.614, -79.335, 90.0.deg)
-    override val outtakeCenterEstimate = Pose2d(26.562, -79.304, 90.0.deg)
-    override val outtakeLeftEstimate = Pose2d(-20.305, -79.359, 90.0.deg)
+    override val outtakeRightEstimate = Pose2d(-31.614, -79.335, 90.deg)
+    override val outtakeCenterEstimate = Pose2d(26.562, -79.304, 90.deg)
+    override val outtakeLeftEstimate = Pose2d(-20.305, -79.359, 90.deg)
 
-    override val park = Pose2d(-51.311, -81.531, 90.0.deg)
+    override val park = Pose2d(-51.311, -81.531, 90.deg)
 }

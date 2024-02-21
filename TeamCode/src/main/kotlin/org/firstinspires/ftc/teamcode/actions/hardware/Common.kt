@@ -204,7 +204,7 @@ suspend fun launchOuttakeFixpoint(
             val hvec = backstagePos.headingVec()
 
             Pose2d(
-                backstagePos.vec() + hvec * 17.0 + hvec.rotated(PI / 2) * when (target) {
+                backstagePos.vec() + hvec * 16.8 + hvec.rotated(PI / 2) * when (target) {
                      PreloadDetectionPipeline.RandomizationPosition.LEFT -> -6.0
                      PreloadDetectionPipeline.RandomizationPosition.CENTER -> 0.0
                      PreloadDetectionPipeline.RandomizationPosition.RIGHT -> 6.0
@@ -218,7 +218,7 @@ suspend fun launchOuttakeFixpoint(
         }
     ).merge()
 
-    launchFixpoint(targetPose) to targetPose
+    launchFixpoint(targetPose, 0.5) to targetPose
 }
 
 suspend fun scoreOnBackstage(
@@ -247,9 +247,9 @@ suspend fun scoreOnBackstage(
     openClaws()
     job.cancelAndJoin()
 
-    suspendFor(800)
+    suspendFor(200)
 
-    return launchFixpoint(returnPos)
+    return launchFixpoint(returnPos, multiplier = 0.8)
 }
 
 suspend fun intakeFixpoint(

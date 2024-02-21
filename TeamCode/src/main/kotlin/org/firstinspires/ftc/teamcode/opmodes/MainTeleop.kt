@@ -32,6 +32,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.liftUpTo
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetExtensionLength
+import org.firstinspires.ftc.teamcode.actions.hardware.resetImuAngle
 import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
 import org.firstinspires.ftc.teamcode.actions.hardware.retractLift
 import org.firstinspires.ftc.teamcode.actions.hardware.runFieldCentricDrive
@@ -359,6 +360,9 @@ class MainTeleop : RobotOpMode() {
     }
 
     override suspend fun runSuspendOpMode() = coroutineScope {
+        G.imuStartingHeading?.let { resetImuAngle(it) }
+        G.imuStartingHeading = null
+
         setArmPosition(ArmPosition.NEUTRAL)
         setTwistPosition(TwistPosition.STRAIGHT)
         setTiltPosition(IntakeTiltPosition.HIGH)
