@@ -199,11 +199,11 @@ class MainTeleop : RobotOpMode() {
                 coroutineContext,
                 {
                     suspendUntilRisingEdge { C.outtakeLow }
-                    305
+                    320
                 },
                 {
                     suspendUntilRisingEdge { C.outtakeHigh }
-                    305
+                    1000
                 }
             ).merge()
 
