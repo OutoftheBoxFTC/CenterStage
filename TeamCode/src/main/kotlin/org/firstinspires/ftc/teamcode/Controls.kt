@@ -49,8 +49,8 @@ object Controls {
     val outtakeHigh by operatorInput { dpad_up }
 
     // Outtake State
-    val releaseLeftClaw by driverInput { left_trigger > 0.9 }
-    val releaseRightClaw by driverInput { right_trigger > 0.9 }
+    val releaseLeftClaw by driverInput { left_trigger > 0.9 || right_trigger > 0.9 }
+    val releaseRightClaw by driverInput { right_trigger > 0.9 || left_trigger > 0.9 }
 
     val autoPosition by driverInput { right_bumper }
 
@@ -60,7 +60,7 @@ object Controls {
     val liftUp by operatorInput { y }
     val liftDown by operatorInput { a }
 
-    val liftSlow by operatorInput { left_bumper }
+    val liftSlow by operatorInput { !left_bumper }
 
     val exitOuttake get() = Globals.gp1.b || Globals.gp2.dpad_right
 
