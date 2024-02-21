@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ClawPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryPath
+import org.firstinspires.ftc.teamcode.actions.hardware.nextImuAngle
 import org.firstinspires.ftc.teamcode.actions.hardware.profileArm
 import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
@@ -130,6 +131,8 @@ abstract class PreloadBackstageAuto(isBlue: Boolean) : AutonOpMode(isBlue, false
         }
 
         breakpoint()
+
+        G.imuStartingHeading = nextImuAngle() + PI
 
         suspendFor(5000)
     }

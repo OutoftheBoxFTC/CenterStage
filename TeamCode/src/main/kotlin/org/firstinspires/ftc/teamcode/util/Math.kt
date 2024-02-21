@@ -5,6 +5,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d
 infix fun Vector2d.cross(other: Vector2d) = x * other.y - y * other.x
 
 val Double.deg get() = Math.toRadians(this)
+val Int.deg get() = toDouble().deg
 
 class Interplut(private val map: Map<Double, Double> = emptyMap()) : Map<Double, Double> by map {
     override fun get(key: Double) = map[key] ?: map.keys.sorted().let { keys ->
