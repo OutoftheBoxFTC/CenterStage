@@ -1,13 +1,11 @@
 package org.firstinspires.ftc.teamcode.opmodes.tuning
 
-import arrow.core.merge
 import arrow.core.nel
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
 import com.outoftheboxrobotics.suspendftc.suspendUntil
-import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -16,6 +14,7 @@ import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.controllers.runSmoothStopPid
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveConfig
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
@@ -29,10 +28,10 @@ import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.launchCommand
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import org.firstinspires.ftc.teamcode.util.merge
 import org.firstinspires.ftc.teamcode.util.set
 
 @TeleOp
-@Disabled
 @Config
 class FixpointPidTuner : RobotOpMode() {
     companion object {
@@ -48,7 +47,9 @@ class FixpointPidTuner : RobotOpMode() {
         @JvmField var translational_kI = DriveConfig.translationalPid.kI
         @JvmField var translational_kD = DriveConfig.translationalPid.kD
 
-        @JvmField var kStaticOffset = 0.05
+        @JvmField var smoothStopAccel = DriveConfig.smoothStopAccel
+
+        @JvmField var kStaticOffset = DriveConfig.kStatic
         @JvmField var targetHz = 30
     }
 
@@ -104,6 +105,28 @@ class FixpointPidTuner : RobotOpMode() {
         freeControlState
     }
 
+    private val smoothStopState: FS = FS {
+        G[RobotState.driveLooper].scheduleCoroutine {
+            G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
+                runSmoothStopPid(
+                    smoothStopCoefs = translationalCoefs,
+                    headingCoefs = headingCoefs,
+                    smoothStopAccel = smoothStopAccel,
+                    input = ::currentDrivePose,
+                    target = { Pose2d(target_x, target_y, target_heading) },
+                    output = { setAdjustedDrivePowers(it.x, it.y, it.heading) },
+                    hz = targetHz
+                )
+            }
+        }
+
+        loopYieldWhile({ !gamepad1.b }) {
+            telemetry["Current State"] = "Smooth Stop PID"
+        }
+
+        freeControlState
+    }
+
     private val freeControlState: FS = FS {
         G.cmd.launchCommand(Subsystem.DRIVETRAIN.nel()) {
             mainLoop {
@@ -125,6 +148,10 @@ class FixpointPidTuner : RobotOpMode() {
             {
                 suspendUntil { gamepad1.a }
                 standardFixpointState
+            },
+            {
+                suspendUntil { gamepad1.dpad_right }
+                smoothStopState
             }
         ).merge()
     }
@@ -142,6 +169,8 @@ class FixpointPidTuner : RobotOpMode() {
 
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()
+
+        G.ehub.extension.power = -0.15
 
         coroutineScope {
             launch { runStateMachine(freeControlState) }

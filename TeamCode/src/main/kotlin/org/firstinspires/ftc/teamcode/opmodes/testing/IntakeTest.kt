@@ -28,6 +28,7 @@ class IntakeTest : RobotOpMode(
 ) {
     companion object {
         @JvmField var maxRollerCurrent = 6.0
+        @JvmField var manualIntakePower = 0.0
     }
     // Intake roller state machine
     private val rollerIntakeState: FS = FS {
@@ -54,7 +55,9 @@ class IntakeTest : RobotOpMode(
 
     private val rollerDefaultState: FS = FS {
         loopYieldWhile({ !gamepad1.a }) {
-            G.ehub.intakeRoller.power = gamepad1.left_stick_y.toDouble()
+            G.ehub.intakeRoller.power =
+                if (gamepad1.x) manualIntakePower
+                else gamepad1.left_stick_y.toDouble()
         }
 
         rollerIntakeState
