@@ -22,6 +22,7 @@ import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.controllers.runSmoothStopPid
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
@@ -84,12 +85,20 @@ sealed interface DriveControlState {
 object DriveConfig {
     val translationalPid = PidCoefs(0.22, 0.0, 0.037)
     val headingPid = PidCoefs(2.5, 0.0, 0.2)
-    const val lookaheadDist = 6.0
+    const val oldFollowerLookaheadDist = 6.0
+    const val minFollowerDist = 6.0
+    const val curvatureLookaheadDist = 15.0
     const val kStatic = 0.05
 
     const val intakeOdoMultiplier = 63.837375232725385 / 102867
     const val intakeOdoRadius = 5.7064
     const val intakeOdoExtensionMultiplier = 48.0/953
+
+    const val kN = 1.0 / 6.0
+    const val kC = 0.2
+
+    val smoothStopPid = PidCoefs(0.2, 0.0, 0.008)
+    const val smoothStopAccel = 86.8601797527
 }
 
 /**
@@ -227,6 +236,21 @@ fun launchFixpoint(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driv
     }
 }
 
+fun launchSmoothStop(target: Pose2d, multiplier: Double = 1.0) = G[RobotState.driveLooper].scheduleCoroutine {
+    G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
+        G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(target)
+
+        runSmoothStopPid(
+            smoothStopCoefs = DriveConfig.smoothStopPid,
+            headingCoefs = DriveConfig.headingPid,
+            smoothStopAccel = DriveConfig.smoothStopAccel,
+            input = { currentDrivePose() },
+            target = { target },
+            output = { setAdjustedDrivePowers(multiplier * it.x, multiplier * it.y, it.heading) }
+        )
+    }
+}
+
 private suspend fun runDriveCommand(action: suspend () -> Unit) =
     withLooper(G[RobotState.driveLooper]) {
         G.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel(), action)
@@ -257,7 +281,7 @@ suspend fun followTrajectory(traj: TrajectorySequence) = runDriveCommand {
     }
 }
 
-suspend fun followTrajectoryPath(
+suspend fun followTrajectoryPathOld(
     trajSeq: TrajectorySequence,
     maxPower: () -> Double = { 1.0 },
 ) {
@@ -266,14 +290,14 @@ suspend fun followTrajectoryPath(
         .flatMap { it.trajectory.path.segments }
         .let { Path(it) }
 
-    var dist = path.project(currentDrivePose().vec()) + DriveConfig.lookaheadDist
+    var dist = path.project(currentDrivePose().vec()) + DriveConfig.oldFollowerLookaheadDist
 
     runDriveCommand {
         loopYieldWhile({
             dist = path.fastProject(
                 currentDrivePose().vec(),
-                dist - DriveConfig.lookaheadDist
-            ) + DriveConfig.lookaheadDist
+                dist - DriveConfig.oldFollowerLookaheadDist
+            ) + DriveConfig.oldFollowerLookaheadDist
 
             dist < path.length()
         }) {
@@ -296,6 +320,56 @@ suspend fun followTrajectoryPath(
     }
 
     launchFixpoint(path.end())
+}
+
+suspend fun followTrajectoryPath(
+    trajSeq: TrajectorySequence,
+    maxPower: () -> Double = { 1.0 }
+) {
+    val path = List(trajSeq.size()) { trajSeq[it] }
+        .filterIsInstance<TrajectorySegment>()
+        .flatMap { it.trajectory.path.segments }
+        .let { Path(it) }
+
+    var dist = path.project(currentDrivePose().vec())
+
+    runDriveCommand {
+        loopYieldWhile({
+            dist = path.fastProject(currentDrivePose().vec(), dist)
+
+            dist < path.length() - DriveConfig.minFollowerDist
+        }) {
+            val multiplier = maxPower().coerceIn(0.0..1.0)
+            val projected = path[dist]
+
+            val tangent = path.deriv(dist).vec()
+
+            val currentPose = currentDrivePose()
+
+            val v = G[RobotState.driveState.rrDrive]!!.poseVelocity!!.vec().norm()
+
+            val norm = (currentPose.vec() - projected.vec()) cross tangent
+            val kappa = tangent cross path.secondDeriv(dist + DriveConfig.curvatureLookaheadDist).vec()
+
+            val driveVec = Vector2d.polar(
+                multiplier,
+                tangent.angle()
+                        + atan(DriveConfig.kN * norm + DriveConfig.kC * kappa * v * v)
+                        - currentPose.heading
+            )
+
+            setDrivePowers(
+                Pose2d(
+                    driveVec * multiplier,
+                    DriveConfig.headingPid.kP * Angle.normDelta(
+                        projected.heading - currentPose.heading
+                    )
+                )
+            )
+        }
+    }
+
+    launchSmoothStop(path.end())
 }
 
 /**
@@ -321,7 +395,7 @@ suspend fun followLinePath(
 
         val dist = startToPose cross lineVec / lineVec.norm()
 
-        val driveHeading = lineVec.angle() + atan(dist / DriveConfig.lookaheadDist)
+        val driveHeading = lineVec.angle() + atan(dist / DriveConfig.oldFollowerLookaheadDist)
         val headingError = Angle.normDelta(heading - pose.heading)
 
         // TODO Account for non-zero heading (?)
@@ -351,7 +425,7 @@ suspend fun followTrajectoryFixpoint(
 //        suspendUntil { currentDrivePose().vec() distTo traj.end().vec() <= stopDist }
 
         followTrajectory(traj)
-        launchFixpoint(traj.end())
+        launchSmoothStop(traj.end())
     }
 
 /**
