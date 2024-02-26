@@ -28,7 +28,7 @@ class IntakeTest : RobotOpMode(
 ) {
     companion object {
         @JvmField var maxRollerCurrent = 6.0
-        @JvmField var manualIntakePower = 0.0
+        @JvmField var manualIntakePower = -0.3
     }
     // Intake roller state machine
     private val rollerIntakeState: FS = FS {
