@@ -54,7 +54,7 @@ public class DashboardUtil {
         canvas.strokeLine(x1, y1, x2, y2);
 
         if (extendoPose != null) {
-            Vector2d v_perp = v.rotated(Math.PI / 2).div(2);
+            Vector2d v_perp = extendoPose.headingVec().rotated(Math.PI / 2).times(ROBOT_RADIUS / 2);
 
             Vector2d p2 = extendoPose.vec();
             Vector2d p = p2.minus(v);

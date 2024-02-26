@@ -7,7 +7,9 @@ import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.acmerobotics.roadrunner.path.Path
 import com.acmerobotics.roadrunner.util.Angle
+import com.acmerobotics.roadrunner.util.epsilonEquals
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
+import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
 import com.outoftheboxrobotics.suspendftc.yieldLooper
@@ -36,8 +38,10 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.sign
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * @param newPose New pose that the robot should be set to.
@@ -139,11 +143,12 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
     var nextImuAngle = imuAngleAsync()
     var lastCorrectedPose = G[poseLens]
 
-    val timer = ElapsedTime()
+    // Extendo curvature
+    var k = 0.0
 
-    var extendoAngleOffset = 0.0
+    var lastPose = G[poseLens]
+    var lastOdoPos = G.chub.odoIntake.currentPosition
 
-    timer.reset()
     yieldLooper()
 
     mainLoop {
@@ -163,14 +168,16 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
         rrDrive.update()
         G[poseLens] = rrDrive.poseEstimate
 
-        // Extendometry
-        val poseVel = rrDrive.poseVelocity
-        val dt = timer.seconds()
-        timer.reset()
-
+        // Constant Curvature Extendometry
+        // Good luck.
         val drivePose = G[poseLens]
+        val robotPoseDelta = drivePose - lastPose
+        val odoPosDelta = (G.chub.odoIntake.currentPosition - lastOdoPos) * DriveConfig.intakeOdoMultiplier
 
-        if (G.chub.extensionLimitSwitch || poseVel == null) {
+        lastOdoPos += G.chub.odoIntake.currentPosition
+        lastPose = drivePose
+
+        if (G.chub.extensionLimitSwitch) {
             imuResetEnabled = true
 
             G[RobotState.driveState.extendoPose] = Pose2d(
@@ -178,20 +185,36 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
                 drivePose.heading
             )
 
-            extendoAngleOffset = 0.0
+            k = 0.0
         } else {
             imuResetEnabled = false
 
-            val r = extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius
-            val v = G.chub.odoIntake.correctedVelocity * DriveConfig.intakeOdoMultiplier
+            val h = extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius
+            val mHat = drivePose.headingVec().rotated(h*k + PI / 2)
 
-            val vPerp = poseVel.vec().y // .rotated(-drivePose.heading).y
+            val r = robotPoseDelta.vec() dot mHat
+            val rot =
+                if (k epsilonEquals 0.0)
+                    h * Angle.normDelta(robotPoseDelta.heading)
+                else
+                    cos(h * k / 2) * sqrt(2 * (1 - cos(h*k)) / k.pow(2)) *
+                    Angle.normDelta(robotPoseDelta.heading)
 
-            extendoAngleOffset += dt * (((v - vPerp * cos(extendoAngleOffset)) / r) - poseVel.heading)
+            val dudk = (
+                if (k epsilonEquals 0.0)
+                    Vector2d(0.0, -h*h/2)
+                else
+                    Vector2d(
+                        (h*k*cos(h*k) - sin(h*k)) / k*k,
+                        (h*k*sin(h*k) + cos(h*k) - 1) / k*k
+                    )
+            ).rotated(drivePose.heading)
 
-            G[RobotState.driveState.extendoPose] = Pose2d(
-                drivePose.vec() + Vector2d.polar(r, extendoAngleOffset + drivePose.heading),
-                drivePose.heading + extendoAngleOffset
+            k += (odoPosDelta - (r + rot)) / (dudk dot mHat)
+
+            G[RobotState.driveState.extendoPose] = drivePose + Pose2d(
+                Vector2d(sin(h*k)/k, (1-cos(h*k)/k)).rotated(drivePose.heading),
+                h*k
             )
         }
 
