@@ -174,7 +174,7 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
         val robotPoseDelta = drivePose - lastPose
         val odoPosDelta = (G.chub.odoIntake.currentPosition - lastOdoPos) * DriveConfig.intakeOdoMultiplier
 
-        lastOdoPos += G.chub.odoIntake.currentPosition
+        lastOdoPos = G.chub.odoIntake.currentPosition
         lastPose = drivePose
 
         if (G.chub.extensionLimitSwitch) {
@@ -200,22 +200,28 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
                     cos(h * k / 2) * sqrt(2 * (1 - cos(h*k)) / k.pow(2)) *
                     Angle.normDelta(robotPoseDelta.heading)
 
-            val dudk = (
+            val dqdk = (
                 if (k epsilonEquals 0.0)
-                    Vector2d(0.0, -h*h/2)
+                    Vector2d(0.0, h*h/2)
                 else
                     Vector2d(
-                        (h*k*cos(h*k) - sin(h*k)) / k*k,
-                        (h*k*sin(h*k) + cos(h*k) - 1) / k*k
+                        (h*k*cos(h*k) - sin(h*k)) / (k*k),
+                        (h*k*sin(h*k) + cos(h*k) - 1) / (k*k)
                     )
-            ).rotated(drivePose.heading)
+            ).rotated(drivePose.heading) dot mHat
 
-            k += (odoPosDelta - (r + rot)) / (dudk dot mHat)
+            if (!(dqdk epsilonEquals 0.0))
+                k += (odoPosDelta - (r + rot)) / dqdk
 
-            G[RobotState.driveState.extendoPose] = drivePose + Pose2d(
-                Vector2d(sin(h*k)/k, (1-cos(h*k)/k)).rotated(drivePose.heading),
-                h*k
-            )
+            if (extensionLength() < 400)
+                k = 0.0
+
+            G[RobotState.driveState.extendoPose] = drivePose +
+                if (k epsilonEquals 0.0) Pose2d(Vector2d(h, 0.0).rotated(drivePose.heading), 0.0)
+                else Pose2d(
+                    Vector2d(sin(h*k)/k, (1-cos(h*k))/k).rotated(drivePose.heading),
+                    h*k
+                )
         }
 
         if (G.chub.extensionLimitSwitch) resetExtensionLength()
