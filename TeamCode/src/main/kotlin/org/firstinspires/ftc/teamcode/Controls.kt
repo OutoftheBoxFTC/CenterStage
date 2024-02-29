@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode
 
 import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.teamcode.util.ReadOnlyProperty
+import kotlin.math.abs
 
 /**
  * Delegated properties that map controls to gamepad inputs.
@@ -33,39 +34,49 @@ object Controls {
         else -> 0.0
     } }
 
-    val launchDrone by operatorInput { left_stick_button && right_stick_button }
+    val launchDrone by operatorInput { left_stick_button && right_stick_button && left_trigger > 0.9 && right_trigger > 0.9}
 
-    // Default Main/Intake State
-    val extendExtension by driverInput { left_trigger > 0.9 }
-    val retractExtension by driverInput { right_trigger > 0.9 }
 
-    val tiltUp by operatorInput { y }
-    val tiltDown by operatorInput { a }
+    val enterTransfer by operatorInput { x }
+    val enterTransferAux by operatorInput { a }  // need this bc our operator is a dubass and keeps hitting the transfer button
 
-    val runTransfer by operatorInput { x }
-    val stopTransfer by operatorInput { b }
-
-    val intakeRoller by operatorInput { left_bumper }
-    val expelRoller by operatorInput { right_bumper }
+    val toggleOperatorOverride by operatorInput { right_stick_button && left_trigger < 0.9 && right_trigger < 0.9 }
 
     val outtakeLow by operatorInput { dpad_down }
     val outtakeHigh by operatorInput { dpad_up }
 
+    val autoAlign by driverInput { right_bumper }
+
+    // Main/Intake State
+    val driverExtend by driverInput { left_trigger > 0.9 }
+    val driverRetract by driverInput { right_trigger > 0.9 }
+
+    val startRoller by operatorInput { left_bumper }
+    val reverseRoller by operatorInput { right_bumper }
+
+    // Operator Override State
+    val operatorExtension by operatorInput { -left_stick_y }
+    val operatorPivot by operatorInput { -left_stick_x }
+
+    val tiltToggleUp by operatorInput { y }
+    val tiltToggleDown by operatorInput { a }
+
+    // Transfer State
+    val quitTransfer by operatorInput { b }
+
     // Outtake State
-    val releaseLeftClaw by driverInput { left_trigger > 0.9 || right_trigger > 0.9 }
-    val releaseRightClaw by driverInput { right_trigger > 0.9 || left_trigger > 0.9 }
+    val releaseClaw by driverInput { left_trigger > 0.9 || right_trigger > 0.9 }
 
-    val autoPosition by driverInput { right_bumper }
+    val operatorLiftUp by operatorInput { y }
+    val operatorLiftDown by operatorInput { a }
+    val exitOuttake by operatorInput { dpad_right }
 
-    val twistClawLeft by operatorInput { x }
-    val twistClawRight by operatorInput { b }
+    // Auto Align
+    val driveAutoLift by driverInput { -right_stick_y }
+    val driveHeadingAdjust by driverInput { (-right_stick_x).takeIf { abs(it) > 0.5 } ?: 0f }
 
-    val liftUp by operatorInput { y }
-    val liftDown by operatorInput { a }
-
-    val liftSlow by operatorInput { !left_bumper }
-
-    val exitOuttake get() = Globals.gp1.b || Globals.gp2.dpad_right
+    val driveTwistLeft by driverInput { left_trigger > 0.9 }
+    val driveTwistRight by driverInput { right_trigger > 0.9 }
 
     // Property delegates
     private fun <T> driverInput(block: Gamepad.() -> T) = object : ReadOnlyProperty<T> {
