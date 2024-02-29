@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.util.G
 enum class ArmPosition(val pos: Double) {
     FLOOR(1.0),
     OUTTAKE(0.950),
-    AUTON_INIT(0.174),
+    AUTON_INIT(0.036),
     NEUTRAL(0.036),
     TRANSFER(0.036)
 }
@@ -22,18 +22,18 @@ enum class ArmPosition(val pos: Double) {
 enum class TwistPosition(val pos: Double) {
     HORIZONTAL_0(0.0), // red far
     POS_1(0.211), // red far
-    STRAIGHT(0.344),
+    STRAIGHT(0.332),
     POS_2(0.414), // black far
     HORIZONTAL(0.632), // black far
     POS_3(0.851), // black far
 }
 
 enum class ClawPosition(val pos: Double, val isBlack: Boolean) {
-    BLACK_CLOSE(0.375, true),
-    BLACK_OPEN(0.153, true),
+    BLACK_CLOSE(0.491, true),
+    BLACK_OPEN(0.876, true),
 
-    RED_CLOSE(0.829, false),
-    RED_OPEN(0.990, false)
+    RED_CLOSE(0.491, false),
+    RED_OPEN(0.080, false)
 }
 
 @optics
@@ -96,7 +96,7 @@ suspend fun liftDownTo(pos: Int) {
 }
 
 suspend fun retractLift() {
-    liftDown()
+    G.ehub.outtakeLift.power = -1.0
     val timer = ElapsedTime()
     suspendUntil { liftPos() < 3 || timer.seconds() > 0.9 }
     suspendFor(100)

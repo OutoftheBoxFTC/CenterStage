@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
-import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.followTrajectoryPath
 import org.firstinspires.ftc.teamcode.actions.hardware.rrDrive
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
@@ -18,7 +17,6 @@ import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.roadrunner.drive.SampleMecanumDrive
 import org.firstinspires.ftc.teamcode.util.G
-import org.firstinspires.ftc.teamcode.util.buildTrajectory
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 import kotlin.math.PI
 
