@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.actions.hardware
 
 import arrow.core.merge
+import arrow.core.nel
 import arrow.core.toNonEmptyListOrNull
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.roadrunner.geometry.Pose2d
@@ -21,9 +22,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation
+import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
+import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.cross
@@ -53,39 +58,26 @@ suspend fun intakeTransfer(
     retractLift()
 
     openClaws()
-    setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
     suspendFor(100)
 
     G.ehub.intakeRoller.power = -0.8
 
     profileArm(ArmPosition.TRANSFER)
-    retractExtension()
 
-    val profile = MotionProfileGenerator.generateSimpleMotionProfile(
-        MotionState(G.ehub.intakeTilt.position, 0.0),
-        MotionState(IntakeTiltPosition.PRE_TRANSFER.pos, 0.0),
-        6.0,
-        10.0
-    )
-
-    val timer = ElapsedTime()
-
-    suspendUntil {
-        val t = timer.seconds()
-        setTiltPosition(profile[t].x)
-        t >= profile.duration()
+    coroutineScope {
+        launch { retractExtension() }
+        suspendFor(100)
+        setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
     }
-
-    suspendFor(100)
 
     setTiltPosition(IntakeTiltPosition.TRANSFER)
 
-    suspendFor(600)
+    suspendFor(500)
 
     G.ehub.intakeRoller.power = 0.0
 
     closeClaws()
-    suspendFor(100)
+    suspendFor(350)
 
     setTiltPosition(IntakeTiltPosition.POST_TRANSFER)
     G.ehub.intakeRoller.power = -0.8
@@ -218,7 +210,25 @@ suspend fun launchOuttakeFixpoint(
         }
     ).merge()
 
-    launchFixpoint(targetPose, 0.5) to targetPose
+    val job = G[RobotState.driveLooper].scheduleCoroutine {
+        Globals.cmd.runNewCommand(Subsystem.DRIVETRAIN.nel()) {
+            G[RobotState.driveState.driveControlState] = DriveControlState.Fixpoint(targetPose)
+
+            runPosePidController(
+                translationalCoefs = DriveConfig.translationalPid,
+                headingCoefs = DriveConfig.headingPid,
+                input = { currentDrivePose() },
+                target = { targetPose },
+                output = { setAdjustedDrivePowers(
+                    if (targetPose.headingVec() dot (currentDrivePose() - targetPose).vec() < 0.0) 0.0 else 0.5 * it.x,
+                    it.y,
+                    it.heading
+                ) }
+            )
+        }
+    }
+
+    job to targetPose
 }
 
 suspend fun scoreOnBackstage(
@@ -288,6 +298,7 @@ suspend fun intakeFixpoint(
             input = { 0.0 },
             target = { parError / DriveConfig.intakeOdoExtensionMultiplier },
             output = { setExtensionPower(it) },
+            tolerance = 10.0,
             hz = 30
         )
     }

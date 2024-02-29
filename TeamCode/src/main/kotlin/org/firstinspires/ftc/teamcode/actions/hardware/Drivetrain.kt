@@ -353,7 +353,8 @@ suspend fun followTrajectoryPathOld(
 
 suspend fun followTrajectoryPath(
     trajSeq: TrajectorySequence,
-    maxPower: () -> Double = { 1.0 }
+    maxPower: () -> Double = { 1.0 },
+    headingPower: (()-> Double)? = null
 ) {
     val path = List(trajSeq.size()) { trajSeq[it] }
         .filterIsInstance<TrajectorySegment>()
@@ -390,9 +391,9 @@ suspend fun followTrajectoryPath(
             setDrivePowers(
                 Pose2d(
                     driveVec * multiplier,
-                    DriveConfig.headingPid.kP * Angle.normDelta(
+                    headingPower?.invoke() ?: (DriveConfig.headingPid.kP * Angle.normDelta(
                         projected.heading - currentPose.heading
-                    )
+                    ))
                 )
             )
         }
@@ -462,6 +463,19 @@ suspend fun followTrajectoryFixpoint(
  */
 suspend fun lineTo(target: Pose2d, maxPower: () -> Double = { 1.0 }, stopDist: Double = 18.0) =
     followLinePath(currentDrivePose().vec(), target.vec(), target.heading, maxPower, stopDist)
+
+suspend fun ezBrake() {
+    setDrivePowers(
+        Pose2d(
+            G[RobotState.driveState.rrDrive]!!.poseVelocity!!.vec().let { -it / it.norm() },
+            0.0
+        )
+    )
+
+    suspendFor(50)
+
+    setDrivePowers(0.0, 0.0, 0.0)
+}
 
 private val stopDrivetrainCommand = Command(Subsystem.DRIVETRAIN.nel()) {
     G[RobotState.driveState.driveControlState] = DriveControlState.Idle
