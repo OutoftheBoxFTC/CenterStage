@@ -92,6 +92,7 @@ fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine
             input = { extensionLength().toDouble() },
             target = { target.toDouble() },
             output = ::setExtensionPower,
+            tolerance = 10.0,
             hz = 30
         )
     }

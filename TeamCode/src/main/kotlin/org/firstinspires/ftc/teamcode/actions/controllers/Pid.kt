@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import kotlin.math.abs
 import kotlin.math.min
 
 data class PidCoefs(
@@ -36,6 +37,7 @@ suspend inline fun runPidController(
     target: () -> Double,
     output: (Double) -> Unit,
     integralLimit: Double = Double.MAX_VALUE,
+    tolerance: Double = -1.0,
     hz: Int? = null
 ): Nothing {
     val timer = ElapsedTime()
@@ -58,7 +60,9 @@ suspend inline fun runPidController(
         errorAcc += error*dt
         errorAcc = min(errorAcc, integralLimit)
 
-        output(coefs.computeGain(error, errorAcc, ddt))
+        output(
+            if (abs(error) < tolerance) 0.0 else coefs.computeGain(error, errorAcc, ddt)
+        )
     }
 }
 
