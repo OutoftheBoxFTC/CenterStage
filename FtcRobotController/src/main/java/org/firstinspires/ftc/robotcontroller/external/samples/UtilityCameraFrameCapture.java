@@ -33,13 +33,19 @@
 
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
-import android.util.Size;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvPipeline;
+import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.Locale;
 
@@ -61,38 +67,65 @@ import java.util.Locale;
 @Disabled
 public class UtilityCameraFrameCapture extends LinearOpMode
 {
+    class CapturePipeline extends OpenCvPipeline {
+
+        Mat outputMat = new Mat();
+        Mat save = new Mat();
+        int imgIndex = 0;
+
+        String path = "/storage/self/primary/Pictures/";
+
+        @Override
+        public Mat processFrame(Mat input) {
+            input.copyTo(outputMat);
+            return outputMat;
+        }
+
+        public void saveMatToDisk() {
+            outputMat.copyTo(save);
+            Imgproc.cvtColor(save, save, Imgproc.COLOR_BGR2RGB);
+            Imgcodecs.imwrite(path + "capture" + imgIndex + ".png", save);
+            imgIndex ++;
+        }
+    }
+
     /*
      * EDIT THESE PARAMETERS AS NEEDED
      */
-    final boolean USING_WEBCAM = false;
-    final BuiltinCameraDirection INTERNAL_CAM_DIR = BuiltinCameraDirection.BACK;
-    final int RESOLUTION_WIDTH = 640;
-    final int RESOLUTION_HEIGHT = 480;
+    final String WEBCAM_NAME = "Intake Webcam";
+    final int RESOLUTION_WIDTH = 1280;
+    final int RESOLUTION_HEIGHT = 800;
 
     // Internal state
     boolean lastX;
-    int frameCount;
     long capReqTime;
 
     @Override
     public void runOpMode()
     {
-        VisionPortal portal;
+        CapturePipeline pipeline = new CapturePipeline();
 
-        if (USING_WEBCAM)
-        {
-            portal = new VisionPortal.Builder()
-                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                    .setCameraResolution(new Size(RESOLUTION_WIDTH, RESOLUTION_HEIGHT))
-                    .build();
-        }
-        else
-        {
-            portal = new VisionPortal.Builder()
-                    .setCamera(INTERNAL_CAM_DIR)
-                    .setCameraResolution(new Size(RESOLUTION_WIDTH, RESOLUTION_HEIGHT))
-                    .build();
-        }
+        OpenCvWebcam camera = OpenCvCameraFactory.getInstance().createWebcam(
+            hardwareMap.get(WebcamName.class, WEBCAM_NAME),
+            hardwareMap.appContext.getResources().getIdentifier(
+                "cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName()
+            )
+        );
+
+        camera.setPipeline(pipeline);
+
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            @Override
+            public void onOpened() {
+                camera.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+                FtcDashboard.getInstance().startCameraStream(camera, 0.0);
+            }
+
+            @Override
+            public void onError(int errorCode) {
+
+            }
+        });
 
         while (!isStopRequested())
         {
@@ -100,7 +133,7 @@ public class UtilityCameraFrameCapture extends LinearOpMode
 
             if (x && !lastX)
             {
-                portal.saveNextFrameRaw(String.format(Locale.US, "CameraFrameCapture-%06d", frameCount++));
+                pipeline.saveMatToDisk();
                 capReqTime = System.currentTimeMillis();
             }
 
@@ -109,11 +142,10 @@ public class UtilityCameraFrameCapture extends LinearOpMode
             telemetry.addLine("######## Camera Capture Utility ########");
             telemetry.addLine(String.format(Locale.US, " > Resolution: %dx%d", RESOLUTION_WIDTH, RESOLUTION_HEIGHT));
             telemetry.addLine(" > Press X (or Square) to capture a frame");
-            telemetry.addData(" > Camera Status", portal.getCameraState());
 
             if (capReqTime != 0)
             {
-                telemetry.addLine("\nCaptured Frame!");
+                telemetry.addLine("\nCaptured Frame " + pipeline.imgIndex + "!");
             }
 
             if (capReqTime != 0 && System.currentTimeMillis() - capReqTime > 1000)
