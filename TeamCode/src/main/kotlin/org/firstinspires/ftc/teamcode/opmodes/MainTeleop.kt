@@ -121,12 +121,11 @@ class MainTeleop : RobotOpMode() {
                     suspendUntilRisingEdge { C.quitTransfer }
                 },
                 {
-                    intakeTransfer(finalArmPos = ArmPosition.NEUTRAL.pos, liftEnd = false)
+                    intakeTransfer(finalArmPos = ArmPosition.NEUTRAL.pos)
                 }
             ).onRight {
                 setArmPosition(ArmPosition.NEUTRAL)
                 setTiltPosition(IntakeTiltPosition.LOW)
-                retractLift()
             }
 
             mainIntakeState

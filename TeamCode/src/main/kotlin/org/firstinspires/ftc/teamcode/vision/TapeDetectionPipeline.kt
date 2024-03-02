@@ -22,10 +22,10 @@ import kotlin.math.tan
 @Config
 class TapeDetectionPipeline : OpenCvPipeline() {
     companion object {
-        const val fx = 1094.122
-        const val fy = 1094.122
-        const val cx = 748.200
-        const val cy = 556.246
+        const val fx = 913.244775432
+        const val fy = 913.244775432
+        const val cx = 662.617336927
+        const val cy = 467.953661671
 
         @JvmField var threshold = 160.0
 

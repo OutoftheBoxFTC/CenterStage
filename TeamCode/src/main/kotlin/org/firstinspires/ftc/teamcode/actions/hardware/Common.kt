@@ -52,8 +52,7 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
  */
 suspend fun intakeTransfer(
     finalArmPos: Double = ArmPosition.OUTTAKE.pos,
-    finalLiftPos: Int? = null,
-    liftEnd: Boolean = true
+    finalLiftPos: Int? = null
 ) = coroutineScope {
     retractLift()
 
@@ -72,12 +71,25 @@ suspend fun intakeTransfer(
 
     setTiltPosition(IntakeTiltPosition.TRANSFER)
 
-    suspendFor(500)
+    suspendFor(200)
 
     G.ehub.intakeRoller.power = 0.0
 
+    setClawPos(ClawPosition.BLACK_CLOSE)
+
+    G.ehub.outtakeLift.power = -1.0
+    G.ehub.extension.power = -1.0
+
+    suspendFor(50)
+
     closeClaws()
+
     suspendFor(350)
+
+    G.ehub.outtakeLift.power = 0.0
+    G.ehub.extension.power = -0.5
+
+    setArmPosition(ArmPosition.TRANSFER.pos + 0.01)
 
     setTiltPosition(IntakeTiltPosition.POST_TRANSFER)
     G.ehub.intakeRoller.power = -0.8
@@ -86,6 +98,9 @@ suspend fun intakeTransfer(
 
 
     liftUpTo(LiftConfig.transferHeightMin)
+    retractExtension()
+
+    setTiltPosition(IntakeTiltPosition.HIGH)
 
     val armJob = launch {
         profileArm(finalArmPos)
@@ -93,13 +108,8 @@ suspend fun intakeTransfer(
 
     launch {
         if (finalLiftPos != null) liftUpTo(finalLiftPos)
-        else {
-            armJob.join()
-            if (liftEnd) retractLift()
-        }
+        else armJob.join()
     }
-
-    setTiltPosition(IntakeTiltPosition.HIGH)
 }
 
 suspend fun nextBackboardApriltagPosition(): Pose2d {
