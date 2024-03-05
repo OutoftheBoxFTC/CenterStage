@@ -57,6 +57,8 @@ private fun TreeLog.rootLog(state: RobotState) {
         "x" set pose.x
         "y" set pose.y
         "heading" set pose.heading
+
+        "extendometry" set state.driveState.extendoPose
     }
 
     "drive" {
