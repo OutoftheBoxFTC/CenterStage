@@ -69,6 +69,7 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     }
 
     val outtakeCamera = webcam("Outtake Webcam", true)
+    val intakeCamera = webcam("Intake Webcam", false)
 }
 
 /**
