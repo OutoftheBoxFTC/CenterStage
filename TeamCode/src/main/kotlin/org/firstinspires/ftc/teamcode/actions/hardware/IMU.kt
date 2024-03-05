@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.actions.hardware
 
+import android.util.Log
+import arrow.fx.coroutines.raceN
 import arrow.optics.optics
 import com.acmerobotics.roadrunner.util.Angle
+import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.qualcomm.robotcore.hardware.IMU
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -10,12 +13,15 @@ import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.teamcode.Globals
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.imuState
+import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.mapState
 import org.firstinspires.ftc.teamcode.util.modify
 import org.firstinspires.ftc.teamcode.util.next
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /**
  * @param rawAngle The raw angle of the IMU, in radians
@@ -68,3 +74,16 @@ fun resetImuAngle(newAngle: Double = 0.0) = Globals.robotState.modify {
  * Suspends until the next IMU angle is available.
  */
 suspend fun nextImuAngle() = Globals.robotState.mapState { it.imuState.angle }.next()
+
+suspend fun runImuRecorrection() {
+    raceN(
+        coroutineContext,
+        {
+            G[RobotState.driveState.imuCorrectionRequests].send(Unit)
+        },
+        {
+            suspendFor(200)
+            Log.wtf("AAAAAAAA", "IMU recorrection timeout exceeded")
+        }
+    )
+}

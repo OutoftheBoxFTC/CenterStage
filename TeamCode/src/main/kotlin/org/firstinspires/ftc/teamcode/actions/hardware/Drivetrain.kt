@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.actions.hardware
 
 import arrow.core.nel
+import arrow.fx.coroutines.raceN
 import arrow.fx.coroutines.resourceScope
 import arrow.optics.optics
 import com.acmerobotics.roadrunner.geometry.Pose2d
@@ -9,6 +10,7 @@ import com.acmerobotics.roadrunner.path.Path
 import com.acmerobotics.roadrunner.util.Angle
 import com.acmerobotics.roadrunner.util.epsilonEquals
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
+import com.outoftheboxrobotics.suspendftc.receiveAndYield
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
@@ -16,7 +18,10 @@ import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.firstinspires.ftc.teamcode.Command
 import org.firstinspires.ftc.teamcode.Globals
@@ -55,6 +60,7 @@ data class DriveState(
     val currentPose: Pose2d,
     val extendoPose: Pose2d,
     val driveControlState: DriveControlState,
+    val imuCorrectionRequests: Channel<Unit> = Channel(Channel.RENDEZVOUS),
     val rrDrive: SampleMecanumDrive? = null
 ) { companion object }
 
@@ -117,7 +123,15 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
     // Gets the next IMU angle when the robot is near-stationary.
     fun imuAngleAsync() = async {
         // This is to prevent constantly calling setPoseEstimate()
-        repeat(100) { yieldLooper() }
+        raceN(
+            coroutineContext,
+            {
+                repeat(100) { yieldLooper() }
+            },
+            {
+                G[RobotState.driveState.imuCorrectionRequests].receiveAndYield()
+            }
+        )
 
         var lastPose = G[poseLens]
         val timer = ElapsedTime()
@@ -213,7 +227,7 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
             if (!(dqdk epsilonEquals 0.0))
                 k += (odoPosDelta - (r + rot)) / dqdk
 
-            if (extensionLength() < 400)
+            if (extensionLength() < 1000)
                 k = 0.0
 
             G[RobotState.driveState.extendoPose] = drivePose +
@@ -439,7 +453,7 @@ suspend fun followLinePath(
         (end - pose.vec()) dot lineVec / lineVec.norm() <= stopDist
     }
 
-    setDrivePowers(0.0, 0.0, 0.0)
+    ezBrake()
     G[RobotState.driveState.driveControlState] = DriveControlState.Idle
 }
 
@@ -448,13 +462,20 @@ suspend fun followLinePath(
  */
 suspend fun followTrajectoryFixpoint(
     traj: TrajectorySequence,
-    stopDist: Double = 0.5
+    stopTime: Long = 500
 ) =
     supervisorScope {
 //        launch { followTrajectory(traj) }
 //        suspendUntil { currentDrivePose().vec() distTo traj.end().vec() <= stopDist }
 
-        followTrajectory(traj)
+        val job = launch { followTrajectory(traj) }
+
+        val timer = ElapsedTime()
+        timer.reset()
+
+        suspendUntil { job.isCompleted || timer.milliseconds() + stopTime > traj.duration() * 1000 }
+        job.cancelAndJoin()
+
         launchSmoothStop(traj.end())
     }
 
