@@ -216,6 +216,7 @@ suspend fun launchOuttakeFixpoint(
         },
         {
             suspendFor(500)
+            RobotLog.w("No apriltag detections for outtake, using estimate.")
             estimate
         }
     ).merge()
@@ -273,7 +274,7 @@ suspend fun scoreOnBackstage(
 }
 
 suspend fun intakeFixpoint(
-    intakePid: PidCoefs = PidCoefs(0.5, 0.0, 0.0),
+    intakeMultiplier: Double = 1.0,
     target: () -> Vector2d,
     headingOutput: (Double) -> Unit
 ): Nothing = coroutineScope {
@@ -294,7 +295,7 @@ suspend fun intakeFixpoint(
 
     launch {
         runPidController(
-            coefs = intakePid,
+            coefs = PidCoefs(0.5, 0.0, 0.0),
             input = { 0.0 },
             target = { perpError },
             output = { G.chub.intakeWheel.power = -it },  // Don't worry about it
@@ -307,7 +308,7 @@ suspend fun intakeFixpoint(
             coefs = ExtensionConfig.pidCoefs,
             input = { 0.0 },
             target = { parError / DriveConfig.intakeOdoExtensionMultiplier },
-            output = { setExtensionPower(it) },
+            output = { setExtensionPower(it * intakeMultiplier) },
             tolerance = 10.0,
             hz = 30
         )
@@ -329,17 +330,19 @@ suspend fun intakeFixpoint(
 }
 
 suspend fun dualFixpoint(
-    intakePid: PidCoefs = PidCoefs(0.5, 0.0, 0.0),
+    extensionMultiplier: Double = 1.0,
+    robotMultiplier: Double = 1.0,
     intakeTarget: Vector2d,
     robotTarget: Vector2d
 ): Nothing = coroutineScope {
-    val fixpointJob = launchFixpoint(
-        target = Pose2d(robotTarget, (intakeTarget - robotTarget).angle())
+    val fixpointJob = launchSmoothStop(
+        target = Pose2d(robotTarget, (intakeTarget - robotTarget).angle()),
+        multiplier = robotMultiplier
     )
 
     try {
         intakeFixpoint(
-            intakePid = intakePid,
+            intakeMultiplier = extensionMultiplier,
             target = { intakeTarget },
             headingOutput = {}
         )
