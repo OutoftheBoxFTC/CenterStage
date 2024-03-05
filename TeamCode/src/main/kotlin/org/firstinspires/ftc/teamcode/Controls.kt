@@ -11,7 +11,8 @@ import kotlin.math.abs
  */
 object Controls {
     // Autonomous
-    val openClaw by driverInput { right_bumper }
+    val openTiltAuto by driverInput { right_bumper }
+    val resetAutoPose by driverInput { left_bumper }
     val toggleAutoBreakpointEnable by driverInput { x }
 
     // Common

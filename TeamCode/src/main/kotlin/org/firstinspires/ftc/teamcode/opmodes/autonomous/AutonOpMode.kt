@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.autonomous
 
+import arrow.core.toOption
+import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -8,13 +10,13 @@ import org.firstinspires.ftc.teamcode.actions.hardware.ArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.DriveControlState
 import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.TwistPosition
-import org.firstinspires.ftc.teamcode.actions.hardware.closeClaws
 import org.firstinspires.ftc.teamcode.actions.hardware.closeDrone
 import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.driveControlState
-import org.firstinspires.ftc.teamcode.actions.hardware.launchFixpoint
+import org.firstinspires.ftc.teamcode.actions.hardware.launchSmoothStop
 import org.firstinspires.ftc.teamcode.actions.hardware.openClaws
-import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
+import org.firstinspires.ftc.teamcode.actions.hardware.resetDrivePose
+import org.firstinspires.ftc.teamcode.actions.hardware.resetImuAngle
 import org.firstinspires.ftc.teamcode.actions.hardware.setArmPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivetrainIdle
@@ -27,9 +29,11 @@ import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
+import org.firstinspires.ftc.teamcode.util.use
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
+import kotlin.properties.Delegates
 
 /**
  * Base class for autonomous op modes.
@@ -60,12 +64,16 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
                     }
                 )
             }
+
+            resetImuAngle()
+            resetDrivePose()
         }
 
         setTwistPosition(TwistPosition.STRAIGHT)
         setArmPosition(ArmPosition.AUTON_INIT)
-        setTiltPosition(IntakeTiltPosition.HIGH)
+        setTiltPosition(IntakeTiltPosition.TRANSFER)
         closeDrone()
+        openClaws()
 
         launch {
             while (true) {
@@ -75,8 +83,6 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
         }
 
         mainLoop {
-            if (C.openClaw) openClaws() else closeClaws()
-
             if (enableBreakpoints) {
                 telemetry.addLine("BREAKPOINTS ARE ON")
             }
@@ -87,6 +93,16 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
             } else {
                 telemetry.addLine("Initializing Camera")
             }
+
+            setTiltPosition(
+                if (C.openTiltAuto) IntakeTiltPosition.TRANSFER
+                else IntakeTiltPosition.PRELOAD_HOLD
+            )
+
+            if (C.resetAutoPose) {
+                resetImuAngle()
+                resetDrivePose()
+            }
         }
     }
 
@@ -95,25 +111,43 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
      *
      * Do not call while the drivetrain is in motion or being controlled by a concurrent coroutine.
      */
-    suspend fun breakpoint() {
-        if (!enableBreakpoints) return
+    suspend fun breakpoint() = coroutineScope {
+        if (!enableBreakpoints || !gamepad1.a) return@coroutineScope
 
-        val lastPose = currentDrivePose()
-        val wasFixpoint = G[RobotState.driveState.driveControlState] is DriveControlState.Fixpoint
+        var wasFixpoint by Delegates.notNull<Boolean>()
 
-        coroutineScope {
-            val telemetryJob = launch {
-                mainLoop { telemetry.addLine("BREAKPOINT") }
+        val fixpointTarget =
+            (G[RobotState.driveState.driveControlState] as? DriveControlState.Fixpoint)
+                .toOption()
+                .fold(
+                    ifEmpty = { wasFixpoint = false; currentDrivePose() },
+                    ifSome = { wasFixpoint = true; it.target }
+                )
+
+
+        launch {
+            mainLoop { telemetry.addLine("BREAKPOINT") }
+        }.use {
+            if (wasFixpoint) {
+                suspendUntilRisingEdge { gamepad1.x }
+
+                setDrivetrainIdle()
+                setDrivePowers(0.0, 0.0, 0.0)
+            } else {
+                setDrivetrainIdle()
+                setDrivePowers(0.0, 0.0, 0.0)
             }
 
-            setDrivetrainIdle()
-            setDrivePowers(0.0, 0.0, 0.0)
+            suspendUntilRisingEdge { gamepad1.x }
 
-            suspendUntil { gamepad1.x }
-            launchFixpoint(lastPose)
+            launchSmoothStop(fixpointTarget)
+
             suspendUntil { gamepad1.b }
-            if (!wasFixpoint) setDrivetrainIdle()
-            telemetryJob.cancel()
+
+            if (!wasFixpoint) {
+                setDrivetrainIdle()
+                setDrivePowers(0.0, 0.0, 0.0)
+            }
         }
     }
 }
