@@ -21,8 +21,10 @@ class Bozo : RobotOpMode() {
                 val cp = currentDrivePose()
                 val ep = G[RobotState.driveState.extendoPose]
 
-                telemetry["Drive Pose"] = "Pose2d(${cp.x}, ${cp.y}, ${cp.heading})"
-                telemetry["Intake Pose"] = "Pose2d(${ep.x}, ${ep.y}, ${ep.heading})"
+                telemetry["Drive Pose"] = String.format("Pose2d(%.3f, %.3f, %.3f)", cp.x, cp.y, cp.heading)
+                telemetry["Intake Pose"] = String.format("Pose2d(%.3f, %.3f, %.3f)", ep.x, ep.y, ep.heading)
+
+                G.ehub.extension.power = -gamepad1.left_stick_y.toDouble()
             }
         } finally {
             LoggingConfig.queryString = oldLogState
