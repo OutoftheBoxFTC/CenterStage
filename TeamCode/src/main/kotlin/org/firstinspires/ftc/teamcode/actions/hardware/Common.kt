@@ -6,11 +6,9 @@ import arrow.core.toNonEmptyListOrNull
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
-import com.acmerobotics.roadrunner.profile.MotionProfileGenerator
-import com.acmerobotics.roadrunner.profile.MotionState
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
-import com.qualcomm.robotcore.util.ElapsedTime
+import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -61,18 +59,20 @@ suspend fun intakeTransfer(
 
     G.ehub.intakeRoller.power = -0.8
 
-    profileArm(ArmPosition.TRANSFER)
-
     coroutineScope {
-        launch { retractExtension() }
+        launch {
+            retractExtension()
+            profileArm(ArmPosition.TRANSFER)
+        }
         suspendFor(100)
         setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
     }
 
+    setTiltPosition(IntakeTiltPosition.TRANSFER.pos + 0.15)
+
+    suspendFor(300)
+
     setTiltPosition(IntakeTiltPosition.TRANSFER)
-
-    suspendFor(200)
-
     G.ehub.intakeRoller.power = 0.0
 
     setClawPos(ClawPosition.BLACK_CLOSE)
@@ -80,7 +80,7 @@ suspend fun intakeTransfer(
     G.ehub.outtakeLift.power = -1.0
     G.ehub.extension.power = -1.0
 
-    suspendFor(50)
+    suspendFor(200)
 
     closeClaws()
 
