@@ -365,6 +365,8 @@ class MainTeleop : RobotOpMode() {
     private suspend fun operatorTiltControl(): Nothing {
         var tiltPos = IntakeTiltPosition.LOW
 
+        val lowOrd = IntakeTiltPosition.LOW.ordinal
+
         setTiltPosition(tiltPos)
 
         fun posFromOrd(ord: Int): IntakeTiltPosition {
@@ -372,8 +374,8 @@ class MainTeleop : RobotOpMode() {
             val size = entries.size
 
             return when {
-                ord < 5 -> entries[size - (5 - ord)]
-                ord >= size -> entries[5 + ord - size]
+                ord < lowOrd -> entries[size - (lowOrd - ord)]
+                ord >= size -> entries[lowOrd + ord - size]
                 else -> entries[ord]
             }
         }
