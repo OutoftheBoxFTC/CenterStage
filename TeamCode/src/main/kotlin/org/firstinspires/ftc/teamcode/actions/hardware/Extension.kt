@@ -3,8 +3,10 @@ package org.firstinspires.ftc.teamcode.actions.hardware
 import arrow.core.nel
 import arrow.optics.optics
 import com.outoftheboxrobotics.suspendftc.loopYieldWhile
+import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.util.ElapsedTime
+import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.cancelAndJoin
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
@@ -69,7 +71,29 @@ suspend fun runExtensionTo(
         timer.milliseconds() > timeout || abs(extensionLength() - target) <= tolerance
     }
 
-    if (!keepPid) pidJob.cancelAndJoin()
+    if (!keepPid) {
+        pidJob.cancelAndJoin()
+        ezStopExtension()
+    }
+}
+
+suspend fun ezExtend(
+    target: Int,
+    timeout: Long = 2000,
+    stopDist: Int = 30,
+    power: Double = 1.0
+) {
+    G.ehub.extension.power = power
+
+    val timer = ElapsedTime()
+
+    suspendUntil { target - extensionLength() < stopDist || timer.milliseconds() > timeout }
+
+    if (timer.milliseconds() > timeout) {
+        RobotLog.w("Timeout $timeout ms on ezExtend, target $target, actual ${extensionLength()}")
+    }
+
+    ezStopExtension()
 }
 
 /**
@@ -80,6 +104,12 @@ suspend fun retractExtension() {
     suspendUntil { G.chub.extensionLimitSwitch }
     resetExtensionLength()
     setExtensionPower(-0.15)
+}
+
+suspend fun ezStopExtension() {
+    setExtensionPower(-1.0)
+    suspendFor(20)
+    setExtensionPower(0.0)
 }
 
 /**

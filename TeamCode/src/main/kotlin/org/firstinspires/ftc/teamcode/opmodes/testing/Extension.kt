@@ -9,8 +9,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
+import org.firstinspires.ftc.teamcode.actions.hardware.IntakeTiltPosition
+import org.firstinspires.ftc.teamcode.actions.hardware.ezExtend
 import org.firstinspires.ftc.teamcode.actions.hardware.retractExtension
 import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionPower
+import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
@@ -86,5 +89,23 @@ class ExtensionRamDetectionTest : RobotOpMode() {
 
             telemetry["extension kV"] = if (power != 0.0) G.ehub.extension.velocity / power else 0.0
         }
+    }
+}
+
+@Autonomous
+class PreloadExtensionPlacementTest : RobotOpMode() {
+    override suspend fun runSuspendOpMode() {
+        setTiltPosition(IntakeTiltPosition.PRELOAD_HOLD)
+
+        suspendUntilStart()
+
+        ezExtend(130)
+
+        setTiltPosition(IntakeTiltPosition.HIGH)
+        suspendFor(80)
+
+        retractExtension()
+
+        mainLoop {  }
     }
 }
