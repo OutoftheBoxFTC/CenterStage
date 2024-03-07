@@ -13,7 +13,7 @@ class HangTest : RobotOpMode() {
         suspendUntilStart()
 
         mainLoop {
-            G.ehub.hang0.power = -gamepad1.left_stick_y.toDouble()
+            G.chub.hang0.power = -gamepad1.left_stick_y.toDouble()
             G.ehub.hang1.power = -gamepad1.left_stick_y.toDouble()
         }
     }

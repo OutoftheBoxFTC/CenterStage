@@ -47,7 +47,7 @@ class DriveTest : RobotOpMode() {
                 )
 
                 G.ehub.extension.power = C.driveStrafeX
-                G.chub.intakeWheel.power = C.driveStrafeY
+                G.ehub.intakeWheel.power = C.driveStrafeY
 
                 telemetry["Current State"] = "Intake"
             }

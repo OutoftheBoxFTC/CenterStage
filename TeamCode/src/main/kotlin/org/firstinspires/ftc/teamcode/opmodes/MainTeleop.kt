@@ -99,7 +99,7 @@ class MainTeleop : RobotOpMode() {
             launch {
                 mainLoop {
                     G.ehub.extension.power = C.operatorExtension.toDouble()
-                    G.chub.intakeWheel.power = C.operatorPivot.toDouble()
+                    G.ehub.intakeWheel.power = C.operatorPivot.toDouble()
                 }
             }
         }.mainOperatorControlNextState(mainIntakeState).also {
@@ -255,7 +255,7 @@ class MainTeleop : RobotOpMode() {
 
         mainLoop {
             val heading = currentImuAngle()
-            G.chub.intakeWheel.power =
+            G.ehub.intakeWheel.power =
                 C.driveTurn + C.driveStrafeX * sin(-heading) + C.driveStrafeY * cos(-heading)
         }
     }
@@ -527,7 +527,7 @@ class MainTeleop : RobotOpMode() {
 
         launch {
             mainLoop {
-                G.ehub.hang0.power = C.hang0
+                G.chub.hang0.power = C.hang0
                 G.ehub.hang1.power = C.hang1
 
                 if (C.launchDrone) launchDrone() else closeDrone()

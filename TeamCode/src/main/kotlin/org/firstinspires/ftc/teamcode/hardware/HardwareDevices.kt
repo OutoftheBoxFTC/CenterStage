@@ -41,9 +41,9 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
     val odoAux = motor(DriveHardwareNames.odoAux)
     val odoLeft = motor(DriveHardwareNames.odoLeft)
 
-    val intakeWheel = crServo("s0") {
-        direction = DcMotorSimple.Direction.REVERSE
-    }
+    val intakeTilt = servo("s0")
+
+    val hang0 = crServo("s1")
 
     private val odoIntakeMotor = motor("2")
     val odoIntake = Encoder(odoIntakeMotor)
@@ -93,11 +93,12 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
         zeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT
     }
 
-    val intakeTilt = servo("s6")
+    val intakeWheel = crServo("s6") {
+        direction = DcMotorSimple.Direction.REVERSE
+    }
 
     val outtakeLift = motor("6")
 
-    val hang0 = crServo("s7")
     val hang1 = crServo("s8")
 
     val drone = servo("s10")

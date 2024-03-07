@@ -19,5 +19,5 @@ enum class IntakeTiltPosition(val pos: Double) {
     POS_4(0.790),
 }
 
-fun setTiltPosition(pos: Double) { G.ehub.intakeTilt.position = pos }
+fun setTiltPosition(pos: Double) { G.chub.intakeTilt.position = pos }
 fun setTiltPosition(pos: IntakeTiltPosition) = setTiltPosition(pos.pos)

@@ -42,7 +42,7 @@ class DoubleFixpointTest : RobotOpMode() {
 
                 setExtensionPower(-gamepad1.right_stick_y.toDouble())
 
-                G.chub.intakeWheel.power = C.driveTurn
+                G.ehub.intakeWheel.power = C.driveTurn
             }
         }.use {
             raceN(

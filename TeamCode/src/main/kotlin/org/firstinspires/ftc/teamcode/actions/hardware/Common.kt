@@ -298,7 +298,7 @@ suspend fun intakeFixpoint(
             coefs = PidCoefs(0.5, 0.0, 0.0),
             input = { 0.0 },
             target = { perpError },
-            output = { G.chub.intakeWheel.power = -it },  // Don't worry about it
+            output = { G.ehub.intakeWheel.power = -it },  // Don't worry about it
             hz = 30
         )
     }

@@ -82,7 +82,7 @@ class IntakeTest : RobotOpMode(
                 gamepad1.left_bumper -> servoPos -= increment * dt
             }
 
-            G.ehub.intakeTilt.position = servoPos
+            G.chub.intakeTilt.position = servoPos
             telemetry["servo position"] = servoPos
         }
     }

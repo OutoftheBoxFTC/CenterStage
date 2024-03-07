@@ -70,9 +70,7 @@ class ExtensionWheelPivotTest : RobotOpMode() {
         suspendUntilStart()
 
         mainLoop {
-            G.chub.run {
-                intakeWheel.power = -sign(odoIntake.currentPosition.toDouble())
-            }
+            G.ehub.intakeWheel.power = -sign(G.chub.odoIntake.currentPosition.toDouble())
         }
     }
 }
