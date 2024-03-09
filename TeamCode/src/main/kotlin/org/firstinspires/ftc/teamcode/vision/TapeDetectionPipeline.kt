@@ -3,8 +3,12 @@ package org.firstinspires.ftc.teamcode.vision
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
+import com.acmerobotics.roadrunner.geometry.times
 import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.actions.hardware.extendoPose
+import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.util.G
+import org.firstinspires.ftc.teamcode.util.deg
 import org.firstinspires.ftc.teamcode.visionState
 import org.opencv.core.Mat
 import org.opencv.core.MatOfPoint
@@ -13,7 +17,6 @@ import org.opencv.core.Scalar
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import org.openftc.easyopencv.OpenCvPipeline
-import kotlin.math.PI
 import kotlin.math.atan
 import kotlin.math.hypot
 import kotlin.math.sin
@@ -27,15 +30,20 @@ class TapeDetectionPipeline : OpenCvPipeline() {
         const val cx = 662.617336927
         const val cy = 467.953661671
 
+        val h = 6.75
+        val alpha = 15.0.deg
+
+        val cameraOffset = Vector2d(-0.091, -4.005)
+
         @JvmField var threshold = 160.0
 
-        @JvmField var minRectWidth = 50
-        @JvmField var minRectHeight = 50
+        @JvmField var minRectWidth = 20
+        @JvmField var minRectHeight = 30
     }
 
     private val erodeKernel = Imgproc.getStructuringElement(
         Imgproc.MORPH_RECT,
-        Size(5.0, 5.0)
+        Size(9.0, 9.0)
     )
     private val blurSize = Size(5.0, 5.0)
 
@@ -46,26 +54,48 @@ class TapeDetectionPipeline : OpenCvPipeline() {
 
     private val tapeQuad = Array(4) { Point() }
 
-    private var estimate = Point(800.0, 400.0)
+    var estimate: Vector2d? = null
+
+    private var pointEstimate = Point(600.0, 600.0)
+
+    var cameraPoseEstimate = Pose2d()
 
     override fun processFrame(input: Mat): Mat {
+        var extendoPose: Pose2d
+
         // Threshold and find contours around tape
         Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY)
         Imgproc.threshold(gray, thresh, threshold, 255.0, Imgproc.THRESH_BINARY)
         Imgproc.erode(thresh, thresh, erodeKernel)
         Imgproc.blur(thresh, blurred, blurSize)
 
+        contours.clear()
         Imgproc.findContours(blurred, contours, Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        Imgproc.drawContours(input, contours, -1, Scalar(255.0, 0.0, 0.0), 2)
+
+
+        // Reproject estimate if available
+        estimate?.let {
+            extendoPose = G[RobotState.driveState.extendoPose]
+
+            pointEstimate = reprojectPoint(
+                (it - extendoPose.vec()).rotated(-extendoPose.heading) - cameraOffset
+            )
+        }
 
         // Find rect closest to estimate
         val rect = contours
             .map { Imgproc.boundingRect(it) }
             .filter { it.width >= minRectWidth && it.height >= minRectHeight }
+            .onEach {
+                Imgproc.rectangle(input, it, Scalar(255.0, 255.0, 0.0), 2)
+            }
             .minByOrNull {
-                hypot(estimate.x - it.x + it.width / 2, estimate.y - (it.y + it.width))
+                hypot(pointEstimate.x - (it.x + it.width / 2), pointEstimate.y - (it.y + it.height))
             } ?: return input
 
-        Imgproc.circle(input, estimate, 10, Scalar(255.0, 0.0, 0.0), 4)
+        Imgproc.circle(input, pointEstimate, 10, Scalar(255.0, 0.0, 0.0), 4)
         Imgproc.rectangle(input, rect, Scalar(0.0, 255.0, 0.0), 2)
 
         // Get tape contour in submat
@@ -76,6 +106,7 @@ class TapeDetectionPipeline : OpenCvPipeline() {
             rect.x+rect.width
         )
 
+        contours.clear()
         Imgproc.findContours(submat, contours, Mat(), Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE)
         val bottomContourPoints = contours.first().toList()
 
@@ -84,21 +115,26 @@ class TapeDetectionPipeline : OpenCvPipeline() {
 
         tapeQuad[0] = bottomContourPoints.minBy { it.x + it.y } + shiftPoint
         tapeQuad[1] = bottomContourPoints.maxBy { it.y - it.x } + shiftPoint
-        tapeQuad[2] = bottomContourPoints.maxBy { it.y + it.y } + shiftPoint
+        tapeQuad[2] = bottomContourPoints.maxBy { it.y + it.x } + shiftPoint
         tapeQuad[3] = bottomContourPoints.minBy { it.y - it.x } + shiftPoint
 
         Imgproc.polylines(
             input, listOf(MatOfPoint().apply { fromArray(*tapeQuad) }),
-            false, Scalar(0.0, 0.0, 255.0), 2
+            false, Scalar(0.0, 0.0, 255.0), 3
         )
-
-        estimate.x = (tapeQuad[1].x + tapeQuad[2].x) / 2
-        estimate.y = (tapeQuad[1].y + tapeQuad[2].y) / 2
 
         submat.release()
 
         // Calculate pose using lens intrinsics
-        G[RobotState.visionState.stackTapePose] = poseFromQuad()
+        cameraPoseEstimate = poseFromQuad()
+
+        extendoPose = G[RobotState.driveState.extendoPose]
+
+        G[RobotState.visionState.stackTapePose] = extendoPose +
+                Pose2d(
+                    (cameraOffset + cameraPoseEstimate.vec()).rotated(extendoPose.heading),
+                    cameraPoseEstimate.heading
+                )
 
         return input
     }
@@ -108,12 +144,20 @@ class TapeDetectionPipeline : OpenCvPipeline() {
 
         val theta = atan((v - cy) / fy)
 
-        val h = 5.5
-        val alpha = PI / 6
-
         return Vector2d(
-            h / tan(theta + alpha)
+            h / tan(theta + alpha),
             -h * (u - cx) / (fx * sin(theta + alpha))
+        )
+    }
+
+    private fun reprojectPoint(vec: Vector2d): Point {
+        val (x, y) = vec
+
+        val theta = atan(h / x) - alpha
+
+        return Point(
+            cx - y * (fx * sin(theta + alpha)) / h,
+            tan(theta) * fy + cy
         )
     }
 
@@ -123,12 +167,11 @@ class TapeDetectionPipeline : OpenCvPipeline() {
         val p2 = mapPoint(tapeQuad[2])
         val p3 = mapPoint(tapeQuad[3])
 
-        val v0 = p0 - p1
-        val v2 = p3 - p2
+        val v = 0.5 * (p0 + p3) - 0.5 * (p1 + p2)
 
         return Pose2d(
             (p1 + p2) / 2.0,
-            (v0.angle() + v2.angle()) / 2.0
+            v.angle()
         )
     }
 
