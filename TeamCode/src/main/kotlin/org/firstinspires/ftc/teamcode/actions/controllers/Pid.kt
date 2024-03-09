@@ -1,22 +1,22 @@
 package org.firstinspires.ftc.teamcode.actions.controllers
 
-import android.util.Log
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
-import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.util.mainLoop
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.sign
 
 data class PidCoefs(
     var kP: Double,
     var kI: Double,
-    var kD: Double
+    var kD: Double,
+    val overshootDecay: Double = 1.0
 ) {
     fun computeGain(error: Double, integral: Double, deriv: Double) =
         kP*error + kI*integral + kD*deriv
@@ -37,13 +37,19 @@ suspend inline fun runPidController(
     target: () -> Double,
     output: (Double) -> Unit,
     integralLimit: Double = Double.MAX_VALUE,
-    tolerance: Double = -1.0,
+    maxOutput: Double? = null,
+    tolerance: Double = 0.0,
+    resetIntegral: () -> Boolean = { false },
     hz: Int? = null
 ): Nothing {
     val timer = ElapsedTime()
 
-    var lastError = target() - input()
+    var lastTarget = target()
+
+    var lastError = lastTarget - input()
     var errorAcc = 0.0
+
+    var multiplier = 1.0
 
     output(coefs.kP * lastError)
 
@@ -54,15 +60,31 @@ suspend inline fun runPidController(
         timer.reset()
 
         val error = target() - input()
+
+        if (abs(target() - lastTarget) > tolerance) {
+            multiplier = 1.0
+        } else if (sign(lastError) != sign(error)) {
+            multiplier *= coefs.overshootDecay
+        }
+
         val ddt = (error - lastError) / dt
 
         lastError = error
-        errorAcc += error*dt
+
+        if (resetIntegral()) errorAcc = 0.0
+        else errorAcc += error*dt
+
         errorAcc = min(errorAcc, integralLimit)
 
-        output(
-            if (abs(error) < tolerance) 0.0 else coefs.computeGain(error, errorAcc, ddt)
-        )
+        val out =
+            if (abs(error) < tolerance) 0.0
+            else multiplier * coefs.computeGain(error, errorAcc, ddt)
+
+        if (maxOutput != null && out > maxOutput) {
+            errorAcc -= error*dt
+        }
+
+        output(out)
     }
 }
 
