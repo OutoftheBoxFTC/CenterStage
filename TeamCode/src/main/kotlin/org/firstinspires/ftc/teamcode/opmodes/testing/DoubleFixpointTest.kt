@@ -6,18 +6,25 @@ import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.firstinspires.ftc.teamcode.RobotState
+import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionConfig
+import org.firstinspires.ftc.teamcode.actions.hardware.currentDrivePose
 import org.firstinspires.ftc.teamcode.actions.hardware.dualFixpoint
+import org.firstinspires.ftc.teamcode.actions.hardware.extendoPose
 import org.firstinspires.ftc.teamcode.actions.hardware.intakeFixpoint
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivePowers
 import org.firstinspires.ftc.teamcode.actions.hardware.setDrivetrainIdle
 import org.firstinspires.ftc.teamcode.actions.hardware.setExtensionPower
+import org.firstinspires.ftc.teamcode.driveState
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.runStateMachine
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.FS
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 import org.firstinspires.ftc.teamcode.util.use
 
 @TeleOp
@@ -104,6 +111,21 @@ class DoubleFixpointTest : RobotOpMode() {
     override suspend fun runSuspendOpMode() {
         suspendUntilStart()
 
-        runStateMachine(driveState)
+        coroutineScope {
+            launch {
+                while (true) {
+                    suspendUntilRisingEdge { gamepad1.left_stick_button }
+                    robotX = currentDrivePose().x
+                    robotY = currentDrivePose().y
+
+                    targetX = G[RobotState.driveState.extendoPose].x
+                    targetY = G[RobotState.driveState.extendoPose].y
+                }
+            }
+
+            runStateMachine(driveState)
+        }
+
+
     }
 }

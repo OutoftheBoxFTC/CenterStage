@@ -11,7 +11,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.Gamepad
 import com.qualcomm.robotcore.util.ElapsedTime
+import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
@@ -64,7 +66,7 @@ import kotlin.math.sin
  * Main Teleop program.
  */
 @TeleOp
-class MainTeleop : RobotOpMode() {
+class MainTeleop : RobotOpMode(resetPoseOnStart = false) {
     private var requireTransferAux = false
 
     private val mainIntakeState: FS = FS {
@@ -76,11 +78,14 @@ class MainTeleop : RobotOpMode() {
         setArmPosition(ArmPosition.NEUTRAL)
         setTiltPosition(IntakeTiltPosition.LOW)
 
+        val driveJob = launch { defaultDriveControl() }
+
         launch {
-            launch { defaultDriveControl() }
             launch { driverExtensionControl() }
             launch { defaultRollerControl() }
-        }.mainOperatorControlNextState(operatorControlState)
+        }.mainOperatorControlNextState(operatorControlState).also {
+            driveJob.cancelAndJoin()
+        }
     }
 
     private val operatorControlState: FS = FS {
@@ -92,17 +97,23 @@ class MainTeleop : RobotOpMode() {
         setArmPosition(ArmPosition.NEUTRAL)
         setTiltPosition(IntakeTiltPosition.LOW)
 
+        val driveJob = launch { runFieldCentricDrive() }
+
         launch {
-            launch { runFieldCentricDrive() }
             launch { defaultRollerControl() }
             launch { operatorTiltControl() }
             launch {
                 mainLoop {
-                    G.ehub.extension.power = C.operatorExtension.toDouble()
-                    G.ehub.intakeWheel.power = C.operatorPivot.toDouble()
+                    G.ehub.extension.power = when {
+                        C.hangDroneEnable && G.chub.extensionLimitSwitch -> -0.15
+                        C.hangDroneEnable -> -1.0
+                        else -> C.operatorExtension
+                    }
+                    G.ehub.intakeWheel.power = C.operatorPivot
                 }
             }
         }.mainOperatorControlNextState(mainIntakeState).also {
+            driveJob.cancelAndJoin()
             gamepad2.stopRumble()
         }
     }
@@ -118,7 +129,7 @@ class MainTeleop : RobotOpMode() {
             raceN(
                 coroutineContext,
                 {
-                    suspendUntilRisingEdge { C.quitTransfer }
+                    suspendUntilRisingEdge { C.quitTransfer || C.reverseRoller }
                 },
                 {
                     intakeTransfer(finalArmPos = ArmPosition.NEUTRAL.pos)
@@ -225,12 +236,13 @@ class MainTeleop : RobotOpMode() {
 
             launch {
                 mainLoop {
+                    val heading = currentImuAngle()
+
                     G.ehub.outtakeLift.power =
-                        LiftConfig.liftHold + (0.4 * C.driveAutoLift).let {
+                        LiftConfig.liftHold + (0.4 * C.driveAutoLift * -sign(heading)).let {
                             if (it > 0.0) it * 1.8 else it
                         }
 
-                    val heading = currentImuAngle()
                     val driveX = 0.5 * C.driveStrafeX
                     val driveY = 0.3 * C.driveStrafeY
 
@@ -281,6 +293,7 @@ class MainTeleop : RobotOpMode() {
             // Extended
             loopYieldWhile({ extensionLength() > 100 || !C.driverRetract }) {
                 G.ehub.extension.power = when {
+                    C.hangDroneEnable -> -1.0
                     C.driverExtend -> 1.0
                     // Failsafe if encoder loses track
                     G.chub.extensionLimitSwitch -> {
@@ -299,19 +312,24 @@ class MainTeleop : RobotOpMode() {
         object : StateMachine {
             // Stopped
             override val defaultState: FS = FS {
-                G.ehub.intakeRoller.power = 0.0
-
-                raceN(
-                    coroutineContext,
-                    {
-                        suspendUntil { C.reverseRoller && !C.startRoller }
-                        outtakeState
-                    },
-                    {
-                        suspendUntil { !C.reverseRoller && C.startRoller }
-                        intakeState
+                launch {
+                    mainLoop {
+                        G.ehub.intakeRoller.power =
+                            if (G.ehub.extension.velocity < 0.0) -0.7 else 0.0
                     }
-                ).merge()
+                }.use {
+                    raceN(
+                        coroutineContext,
+                        {
+                            suspendUntil { C.reverseRoller && !C.startRoller }
+                            outtakeState
+                        },
+                        {
+                            suspendUntil { !C.reverseRoller && C.startRoller }
+                            intakeState
+                        }
+                    ).merge()
+                }
             }
 
             private val intakeState: FS = FS {
@@ -502,7 +520,12 @@ class MainTeleop : RobotOpMode() {
     }
 
     override suspend fun runSuspendOpMode() = coroutineScope {
-        G.imuStartingHeading?.let { resetImuAngle(it) }
+        RobotLog.i("Robot start heading: ${G.imuStartingHeading}")
+
+        G.imuStartingHeading?.let {
+            resetImuAngle(it)
+        }
+
         G.imuStartingHeading = null
 
         setArmPosition(ArmPosition.NEUTRAL)

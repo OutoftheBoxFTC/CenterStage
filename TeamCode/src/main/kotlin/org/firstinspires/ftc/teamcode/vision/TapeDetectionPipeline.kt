@@ -15,6 +15,7 @@ import org.opencv.core.MatOfPoint
 import org.opencv.core.Point
 import org.opencv.core.Scalar
 import org.opencv.core.Size
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.openftc.easyopencv.OpenCvPipeline
 import kotlin.math.atan
@@ -54,7 +55,14 @@ class TapeDetectionPipeline : OpenCvPipeline() {
 
     private val tapeQuad = Array(4) { Point() }
 
+    private val frameSave = Mat()
+
+    var saveFrameState: Boolean? = false
+
     var estimate: Vector2d? = null
+
+    var inFrame = false
+        private set
 
     private var pointEstimate = Point(600.0, 600.0)
 
@@ -82,12 +90,24 @@ class TapeDetectionPipeline : OpenCvPipeline() {
             pointEstimate = reprojectPoint(
                 (it - extendoPose.vec()).rotated(-extendoPose.heading) - cameraOffset
             )
+
+            inFrame = pointEstimate.y in 400.0..800.0 && pointEstimate.x in 100.0..1180.0
         }
 
         // Find rect closest to estimate
         val rect = contours
             .map { Imgproc.boundingRect(it) }
             .filter { it.width >= minRectWidth && it.height >= minRectHeight }
+            .let { rects ->
+                // Reject rects where another rect completely smaller in width is below us
+                rects.filter { rect ->
+                    rects.none {
+                        it.y > rect.y + rect.height &&
+                        it.x in rect.x..(rect.x + rect.width) &&
+                        (it.x + it.width) in rect.x..(rect.x + rect.width)
+                    }
+                }
+            }
             .onEach {
                 Imgproc.rectangle(input, it, Scalar(255.0, 255.0, 0.0), 2)
             }
@@ -128,6 +148,15 @@ class TapeDetectionPipeline : OpenCvPipeline() {
         // Calculate pose using lens intrinsics
         cameraPoseEstimate = poseFromQuad()
 
+        Imgproc.putText(
+            input,
+            "(%.2f, %.2f)".format(cameraPoseEstimate.x, cameraPoseEstimate.y),
+            Point(100.0, 100.0),
+            Imgproc.FONT_HERSHEY_PLAIN,
+            4.0, Scalar(0.0, 0.0, 255.0),
+            5
+        )
+
         extendoPose = G[RobotState.driveState.extendoPose]
 
         G[RobotState.visionState.stackTapePose] = extendoPose +
@@ -135,6 +164,16 @@ class TapeDetectionPipeline : OpenCvPipeline() {
                     (cameraOffset + cameraPoseEstimate.vec()).rotated(extendoPose.heading),
                     cameraPoseEstimate.heading
                 )
+
+        if (saveFrameState == null) {
+            frameSave.copyTo(input)
+        }
+
+        if (saveFrameState == true) {
+            saveFrameState = null
+
+            input.copyTo(frameSave)
+        }
 
         return input
     }
@@ -173,6 +212,14 @@ class TapeDetectionPipeline : OpenCvPipeline() {
             (p1 + p2) / 2.0,
             v.angle()
         )
+    }
+
+    private val save = Mat()
+
+    fun saveToDisk() {
+        frameSave.copyTo(save)
+        Imgproc.cvtColor(save, save, Imgproc.COLOR_BGR2RGB)
+        Imgcodecs.imwrite("/storage/self/primary/Pictures/tape_detection_${System.currentTimeMillis()}.png", save)
     }
 
     private operator fun Point.plus(other: Point) = Point(x + other.x, y + other.y)

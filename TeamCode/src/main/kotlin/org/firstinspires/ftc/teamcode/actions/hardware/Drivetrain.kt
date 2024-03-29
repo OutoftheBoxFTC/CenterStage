@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.actions.hardware
 
+import android.util.Log
 import arrow.core.nel
 import arrow.fx.coroutines.raceN
 import arrow.fx.coroutines.resourceScope
+import arrow.fx.coroutines.timeInMillis
 import arrow.optics.optics
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
@@ -16,11 +18,14 @@ import com.outoftheboxrobotics.suspendftc.suspendUntil
 import com.outoftheboxrobotics.suspendftc.withLooper
 import com.outoftheboxrobotics.suspendftc.yieldLooper
 import com.qualcomm.robotcore.util.ElapsedTime
+import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.firstinspires.ftc.teamcode.Command
@@ -38,7 +43,12 @@ import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.sequencesegm
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.cross
+import org.firstinspires.ftc.teamcode.util.ilerp
+import org.firstinspires.ftc.teamcode.util.lerp
 import org.firstinspires.ftc.teamcode.util.mainLoop
+import org.firstinspires.ftc.teamcode.util.mapState
+import org.firstinspires.ftc.teamcode.util.modify
+import org.firstinspires.ftc.teamcode.util.next
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan
@@ -118,50 +128,96 @@ object DriveConfig {
 suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coroutineScope {
     val poseLens = RobotState.driveState.currentPose
 
-    var imuResetEnabled = true
+    // Current, Corrected
+    val imuCorrectionState = MutableStateFlow(G[poseLens] to G[poseLens])
 
-    // Gets the next IMU angle when the robot is near-stationary.
-    fun imuAngleAsync() = async {
-        // This is to prevent constantly calling setPoseEstimate()
-        raceN(
-            coroutineContext,
-            {
-                repeat(100) { yieldLooper() }
-            },
-            {
-                G[RobotState.driveState.imuCorrectionRequests].receiveAndYield()
+    launch {
+        val drivePoseUpdates = MutableStateFlow(G[poseLens] to System.nanoTime())
+
+        launch {
+            G.robotState.mapState { it.driveState.currentPose }.collect {
+                drivePoseUpdates.value = it to System.nanoTime()
             }
-        )
-
-        var lastPose = G[poseLens]
-        val timer = ElapsedTime()
-
-        yieldLooper()
-
-        // Wait until the robot is near-stationary and imu reset is enabled
-        suspendUntil {
-            val dt = timer.seconds()
-            timer.reset()
-
-            val poseVel = (-lastPose + G[poseLens].also { lastPose = it }) / dt
-
-            imuResetEnabled && poseVel.vec().norm() <= 5.0 && abs(poseVel.heading) <= PI / 2
         }
 
-        // Poll for next IMU angle
-        nextImuAngle()
+        launch {
+            while (true) {
+                raceN(
+                    coroutineContext,
+                    {
+                        G[RobotState.driveState.imuCorrectionRequests].receiveAndYield()
+                    },
+                    {
+                        repeat(10) { yieldLooper() }
+                    }
+                )
+
+                val (current, newPose) = imuCorrectionState.next()
+
+                val extendoPoseDelta =
+                    Angle.normDelta(newPose.heading - current.heading) *
+                    (DriveConfig.intakeOdoRadius + extensionLength() * DriveConfig.intakeOdoExtensionMultiplier)
+
+                if (!G.chub.extensionLimitSwitch && abs(extendoPoseDelta) > 3.0) {
+                    RobotLog.i("Skipping IMU Odo Correction (extendo delta=$extendoPoseDelta")
+
+                    continue
+                }
+
+                if (G[RobotState.driveState.nullableNewPose] != null) continue
+
+                RobotLog.i("IMU Odo Correction (delta=${Angle.normDelta(newPose.heading - current.heading) * 180 / PI} deg")
+
+                G[RobotState.driveState.nullableNewPose] = newPose
+            }
+        }
+
+        while (true) {
+            // Run the IMU angle correction
+            // Essentially, the vector delta from the last corrected pose is rotated to be
+            // consistent with the IMU reading
+
+            val lastState = imuCorrectionState.value
+
+            val imuAngle = nextImuAngle()
+            val imuTime = System.nanoTime()
+
+            val (d0, t0) = drivePoseUpdates.value
+            val (d1, t1) = drivePoseUpdates.next()
+
+            // RobotLog.i("IMU read, t0=$t0, imu=$imuTime, t1=$t1")
+
+            val (lastPose, lastCorrection) = imuCorrectionState.value
+
+            val expectedPose = Pose2d(
+                lastPose.vec() + (d1.vec() - lastPose.vec()).rotated(lastCorrection.heading - lastPose.heading),
+                d1.heading + (lastCorrection.heading - lastPose.heading)
+            )
+
+            val angDelta = imuAngle - lerp(
+                d0.heading, d1.heading, ilerp(t0.toDouble(), t1.toDouble(), imuTime.toDouble())
+            ) - (lastCorrection.heading - lastPose.heading)
+
+            val vecDelta = expectedPose.vec() - lastCorrection.vec()
+
+            if (lastState != imuCorrectionState.value) continue
+
+            imuCorrectionState.value = d1 to Pose2d(
+                lastCorrection.vec() + vecDelta.rotated(angDelta),
+                imuAngle
+            )
+        }
     }
 
     G[RobotState.driveState.rrDrive] = rrDrive
-
-    var nextImuAngle = imuAngleAsync()
-    var lastCorrectedPose = G[poseLens]
 
     // Extendo curvature
     var k = 0.0
 
     var lastPose = G[poseLens]
     var lastOdoPos = G.chub.odoIntake.currentPosition
+
+    var lastRelPoseDelta = Pose2d()
 
     yieldLooper()
 
@@ -170,16 +226,23 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
 
         // Check if another coroutine changed the pose, and if so call setPoseEstimate()
         if (currentState.newPose != null) {
-            val newPose = currentState.newPose
+            val newPose = currentState.newPose + Pose2d(
+                lastRelPoseDelta.vec().rotated(currentState.newPose.heading),
+                lastRelPoseDelta.heading
+            )
 
             rrDrive.poseEstimate = newPose
-            lastCorrectedPose = newPose
-            nextImuAngle = imuAngleAsync()
+            imuCorrectionState.value = newPose to newPose
 
             G[RobotState.driveState.nullableNewPose] = null
         }
 
         rrDrive.update()
+
+        lastRelPoseDelta = (rrDrive.poseEstimate - G[poseLens]).let {
+            Pose2d(it.vec().rotated(-G[poseLens].heading), it.heading)
+        }
+
         G[poseLens] = rrDrive.poseEstimate
 
         // Constant Curvature Extendometry
@@ -192,8 +255,6 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
         lastPose = drivePose
 
         if (G.chub.extensionLimitSwitch) {
-            imuResetEnabled = true
-
             G[RobotState.driveState.extendoPose] = Pose2d(
                 drivePose.vec() + Vector2d.polar(DriveConfig.intakeOdoRadius, drivePose.heading),
                 drivePose.heading
@@ -201,8 +262,6 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
 
             k = 0.0
         } else {
-            imuResetEnabled = false
-
             val h = extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius
             val mHat = drivePose.headingVec().rotated(h*k + PI / 2)
 
@@ -239,24 +298,6 @@ suspend fun runRoadrunnerDrivetrain(rrDrive: SampleMecanumDrive): Nothing = coro
         }
 
         if (G.chub.extensionLimitSwitch) resetExtensionLength()
-
-        if (nextImuAngle.isCompleted) {
-            // Run the IMU angle correction
-            // Essentially, the vector delta from the last corrected pose is rotated to be
-            // consistent with the IMU reading
-
-            val imuAngle = nextImuAngle.getCompleted()
-            val currentPose = G[poseLens]
-
-            val angDelta = Angle.normDelta(imuAngle - currentPose.heading)
-            val vecDelta = currentPose.vec() - lastCorrectedPose.vec()
-
-            // Pose estimate will be set in the beginning of the next loop
-            G[RobotState.driveState.newPose] = Pose2d(
-                lastCorrectedPose.vec() + vecDelta.rotated(angDelta),
-                imuAngle
-            )
-        }
     }
 }
 

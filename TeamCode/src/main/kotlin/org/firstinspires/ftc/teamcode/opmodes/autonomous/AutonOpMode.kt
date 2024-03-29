@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode.opmodes.autonomous
 
 import arrow.core.toOption
 import com.acmerobotics.roadrunner.geometry.Pose2d
+import com.outoftheboxrobotics.suspendftc.joinAndYield
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.RobotState
@@ -23,6 +25,8 @@ import org.firstinspires.ftc.teamcode.actions.hardware.setDrivetrainIdle
 import org.firstinspires.ftc.teamcode.actions.hardware.setTiltPosition
 import org.firstinspires.ftc.teamcode.actions.hardware.setTwistPosition
 import org.firstinspires.ftc.teamcode.driveState
+import org.firstinspires.ftc.teamcode.hardware.devices.KWebcam
+import org.firstinspires.ftc.teamcode.mainLooper
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.util.C
 import org.firstinspires.ftc.teamcode.util.G
@@ -30,9 +34,12 @@ import org.firstinspires.ftc.teamcode.util.mainLoop
 import org.firstinspires.ftc.teamcode.util.set
 import org.firstinspires.ftc.teamcode.util.suspendUntilRisingEdge
 import org.firstinspires.ftc.teamcode.util.use
+import org.firstinspires.ftc.teamcode.vision.AprilTagDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
+import org.firstinspires.ftc.teamcode.vision.TapeDetectionPipeline
 import org.firstinspires.ftc.teamcode.vision.preloadPosition
 import org.firstinspires.ftc.teamcode.visionState
+import org.openftc.easyopencv.OpenCvSwitchableWebcam
 import kotlin.properties.Delegates
 
 /**
@@ -43,6 +50,21 @@ import kotlin.properties.Delegates
 abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boolean) : RobotOpMode() {
     private var enableBreakpoints = false
 
+    private var activeCamera: KWebcam? = null
+    private var cameraOpenJob: Job? = null
+
+    val preloadDetectionPipeline = PreloadDetectionPipeline().also {
+        when {
+            isBlue && isAud -> it.setBlueAud()
+            isBlue && !isAud -> it.setBlueBack()
+            !isBlue && isAud -> it.setRedAud()
+            else -> it.setRedBack()
+        }
+    }
+
+    val outtakeAprilTagPipeline = AprilTagDetectionPipeline.outtakePipeline()
+    val tapeDetectionPipeline = TapeDetectionPipeline()
+
     /**
      * Runs the autonomous init routine. Should be cancelled manually on start.
      */
@@ -50,20 +72,8 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
         enableBreakpoints = false
 
         val cameraJob = launch {
-            G.chub.outtakeCamera.let { webcam ->
-                webcam.startCamera(640, 480)
-                streamCamera(webcam)
-                webcam.setPipeline(
-                    PreloadDetectionPipeline().also {
-                        when {
-                            isBlue && isAud -> it.setBlueAud()
-                            isBlue && !isAud -> it.setBlueBack()
-                            !isBlue && isAud -> it.setRedAud()
-                            else -> it.setRedBack()
-                        }
-                    }
-                )
-            }
+            startPreloadDetection()
+            awaitCameraOpen()
 
             resetImuAngle()
             resetDrivePose()
@@ -102,6 +112,53 @@ abstract class AutonOpMode(protected val isBlue: Boolean, private val isAud: Boo
             if (C.resetAutoPose) {
                 resetImuAngle()
                 resetDrivePose()
+            }
+        }
+    }
+
+    suspend fun awaitCameraOpen() = cameraOpenJob?.joinAndYield() ?: error("No Camera currently being opened")
+
+    fun startPreloadDetection() {
+        cameraOpenJob = G[RobotState.mainLooper].scheduleCoroutine {
+            G.chub.outtakeCamera.let {
+                if (activeCamera != it) {
+                    activeCamera?.stopStreaming()
+                    activeCamera = it
+                    it.startCamera(640, 480)
+                    streamCamera(it)
+                }
+
+                it.setPipeline(preloadDetectionPipeline)
+            }
+        }
+    }
+
+    fun startApriltagDetection() {
+        cameraOpenJob = G[RobotState.mainLooper].scheduleCoroutine {
+            G.chub.outtakeCamera.let {
+                if (activeCamera != it) {
+                    activeCamera?.stopStreaming()
+                    activeCamera = it
+                    it.startCamera(640, 480)
+                    streamCamera(it)
+                }
+
+                it.setPipeline(outtakeAprilTagPipeline)
+            }
+        }
+    }
+
+    fun startTapeDetection() {
+        cameraOpenJob = G[RobotState.mainLooper].scheduleCoroutine {
+            G.chub.intakeCamera.let {
+                if (activeCamera != it) {
+                    activeCamera?.stopStreaming()
+                    activeCamera = it
+                    it.startCamera(1280, 800)
+                    streamCamera(it)
+                }
+
+                it.setPipeline(tapeDetectionPipeline)
             }
         }
     }

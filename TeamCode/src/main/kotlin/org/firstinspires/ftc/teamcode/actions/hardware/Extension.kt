@@ -10,10 +10,13 @@ import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.cancelAndJoin
 import org.firstinspires.ftc.teamcode.RobotState
 import org.firstinspires.ftc.teamcode.Subsystem
+import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
+import org.firstinspires.ftc.teamcode.actions.controllers.runVeloPid
 import org.firstinspires.ftc.teamcode.extensionState
 import org.firstinspires.ftc.teamcode.mainLooper
+import org.firstinspires.ftc.teamcode.opmodes.tuning.ExtensionVeloPidTuner
 import org.firstinspires.ftc.teamcode.util.G
 import kotlin.math.abs
 
@@ -26,10 +29,10 @@ data class ExtensionState(
 ) { companion object }
 
 object ExtensionConfig {
-    const val pidRange = 200
-
-    val pidCoefs: PidCoefs = PidCoefs(0.04, 0.0, 0.0001)
     const val extensionHoldPower = -0.15
+
+    val extensionVeloPid = PidCoefs(0.0001, 0.0015, 0.000005)
+    val extensionFeedforward = FeedforwardCoefs(0.0, 0.003, 0.001, 0.00005)
 }
 
 fun extensionLength() = G.ehub.extension.currentPosition - G[RobotState.extensionState.encoderBias]
@@ -56,15 +59,11 @@ suspend fun runExtensionTo(
     target: Int,
     timeout: Long = 2000,
     tolerance: Int = 30,
-    keepPid: Boolean = false
+    keepPid: Boolean = false,
+    maxVel: Double =  1500.0,
+    maxAccel: Double = 3000.0
 ) {
-    G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
-        loopYieldWhile({ abs(extensionLength() - target) < ExtensionConfig.pidRange }) {
-            setExtensionPower(if (extensionLength() < target) 1.0 else -1.0)
-        }
-    }
-
-    val pidJob = launchExtensionPid(target)
+    val pidJob = launchExtensionPid(target, maxVel, maxAccel)
     val timer = ElapsedTime()
 
     suspendUntil {
@@ -113,16 +112,21 @@ suspend fun ezStopExtension() {
 }
 
 /**
- * Launches a PID controller to the given target encoder position.
+ * Launches a Velocity PID controller to the given target encoder position.
  */
-fun launchExtensionPid(target: Int) = G[RobotState.mainLooper].scheduleCoroutine {
+fun launchExtensionPid(
+    target: Int,
+    maxVel: Double = 1500.0, maxAccel: Double = 3000.0
+) = G[RobotState.mainLooper].scheduleCoroutine {
     G.cmd.runNewCommand(Subsystem.EXTENSION.nel()) {
-        runPidController(
-            coefs = ExtensionConfig.pidCoefs,
+        runVeloPid(
+            feedforward = ExtensionConfig.extensionFeedforward,
+            pid = ExtensionConfig.extensionVeloPid,
             input = { extensionLength().toDouble() },
             target = { target.toDouble() },
-            output = ::setExtensionPower,
-            tolerance = 10.0,
+            output = { G.ehub.extension.power = it },
+            maxVel = maxVel,
+            maxAccel = maxAccel,
             hz = 30
         )
     }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import org.firstinspires.ftc.teamcode.actions.controllers.FeedforwardCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runVeloPid
+import org.firstinspires.ftc.teamcode.actions.hardware.ExtensionConfig
 import org.firstinspires.ftc.teamcode.actions.hardware.extensionLength
 import org.firstinspires.ftc.teamcode.opmodes.RobotOpMode
 import org.firstinspires.ftc.teamcode.runStateMachine
@@ -24,12 +25,13 @@ import org.firstinspires.ftc.teamcode.util.use
 @Config
 class ExtensionVeloPidTuner : RobotOpMode() {
     companion object {
-        @JvmField var kP = 0.0001
-        @JvmField var kI = 0.002
-        @JvmField var kD = 0.000005
+        @JvmField var kP = ExtensionConfig.extensionVeloPid.kP
+        @JvmField var kI = ExtensionConfig.extensionVeloPid.kI
+        @JvmField var kD = ExtensionConfig.extensionVeloPid.kD
 
-        @JvmField var kV = 0.001
-        @JvmField var kA = 0.00005
+        @JvmField var kV = ExtensionConfig.extensionFeedforward.kV
+        @JvmField var kA = ExtensionConfig.extensionFeedforward.kA
+        @JvmField var kS = ExtensionConfig.extensionFeedforward.kS
 
         @JvmField var minPos = 100
         @JvmField var maxPos = 1200
@@ -50,6 +52,7 @@ class ExtensionVeloPidTuner : RobotOpMode() {
         feedforwardCoefs.run {
             kV = Companion.kV
             kA = Companion.kA
+            kS = Companion.kS
         }
     }
 

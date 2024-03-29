@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.util.G
 
 enum class ArmPosition(val pos: Double) {
     FLOOR(1.0),
-    OUTTAKE(0.950),
+    OUTTAKE(0.998),
     AUTON_INIT(0.1),
     NEUTRAL(0.1),
     TRANSFER(0.012)
@@ -26,6 +26,7 @@ enum class TwistPosition(val pos: Double) {
     POS_2(0.414), // black far
     HORIZONTAL(0.632), // black far
     POS_3(0.851), // black far
+    POS_4(1.0) // red far
 }
 
 enum class ClawPosition(val pos: Double, val isBlack: Boolean) {

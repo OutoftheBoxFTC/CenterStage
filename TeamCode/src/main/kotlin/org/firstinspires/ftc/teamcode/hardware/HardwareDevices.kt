@@ -68,8 +68,8 @@ class ControlHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Control Hub
         !extensionLimitSwitchDevice.state
     }
 
-    val outtakeCamera = webcam("Outtake Webcam", true)
-    val intakeCamera = webcam("Intake Webcam", false)
+    val outtakeCamera = webcam("Outtake Webcam", false)
+    val intakeCamera = webcam("Intake Webcam", true)
 }
 
 /**
@@ -99,7 +99,7 @@ class ExHubHardware(hwMap: HardwareMap) : HardwareLayer(hwMap, "Expansion Hub 2"
 
     val outtakeLift = motor("6")
 
-    val hang1 = crServo("s8")
+    val hang1 = crServo("s10")
 
-    val drone = servo("s10")
+    val drone = servo("s8")
 }

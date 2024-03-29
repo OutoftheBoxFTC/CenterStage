@@ -23,25 +23,25 @@ object Controls {
     val slowDrive by driverInput { left_bumper }
     val imuResetAngle by driverInput { x }
 
-    val hang0 by driverInput { when {
-        dpad_up -> -1.0
-        dpad_down -> 1.0
-        else -> 0.0
-    } }
+    val hangDroneEnable by operatorInput { left_trigger > 0.9 && right_trigger > 0.9 }
 
-    val hang1 by driverInput { when {
-        y -> -1.0
-        a -> 1.0
-        else -> 0.0
-    } }
+    val hang0 by operatorInput {
+        if (hangDroneEnable) -right_stick_y.toDouble()
+        else 0.0
+    }
 
-    val launchDrone by operatorInput { left_stick_button && right_stick_button && left_trigger > 0.9 && right_trigger > 0.9}
+    val hang1 by operatorInput {
+        if (hangDroneEnable) -left_stick_y.toDouble()
+        else 0.0
+    }
+
+    val launchDrone by operatorInput { hangDroneEnable && left_stick_button && right_stick_button}
 
 
     val enterTransfer by operatorInput { x }
     val enterTransferAux by operatorInput { a }  // need this bc our operator is a dubass and keeps hitting the transfer button
 
-    val toggleOperatorOverride by operatorInput { right_stick_button && left_trigger < 0.9 && right_trigger < 0.9 }
+    val toggleOperatorOverride by operatorInput { right_stick_button && !hangDroneEnable }
 
     val outtakeLow by operatorInput { dpad_down }
     val outtakeHigh by operatorInput { dpad_up }
@@ -56,8 +56,8 @@ object Controls {
     val reverseRoller by operatorInput { right_bumper }
 
     // Operator Override State
-    val operatorExtension by operatorInput { -left_stick_y }
-    val operatorPivot by operatorInput { -left_stick_x }
+    val operatorExtension by operatorInput { if (hangDroneEnable) -0.15 else -left_stick_y.toDouble() }
+    val operatorPivot by operatorInput { if (hangDroneEnable) 0.0 else -left_stick_x.toDouble() }
 
     val tiltToggleUp by operatorInput { y }
     val tiltToggleDown by operatorInput { a }
@@ -73,8 +73,8 @@ object Controls {
     val exitOuttake by operatorInput { dpad_right }
 
     // Auto Align
-    val driveAutoLift by driverInput { -right_stick_y }
-    val driveHeadingAdjust by driverInput { (-right_stick_x).takeIf { abs(it) > 0.5 } ?: 0f }
+    val driveAutoLift by driverInput { (-right_stick_x) }
+    val driveHeadingAdjust by driverInput { (-right_stick_y).takeIf { abs(it) > 0.5 } ?: 0f }
 
     val driveTwistLeft by driverInput { left_trigger > 0.9 }
     val driveTwistRight by driverInput { right_trigger > 0.9 }

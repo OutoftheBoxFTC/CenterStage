@@ -6,8 +6,11 @@ import arrow.core.toNonEmptyListOrNull
 import arrow.fx.coroutines.raceN
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
+import com.acmerobotics.roadrunner.util.Angle
 import com.outoftheboxrobotics.suspendftc.suspendFor
 import com.outoftheboxrobotics.suspendftc.suspendUntil
+import com.outoftheboxrobotics.suspendftc.yieldLooper
+import com.qualcomm.robotcore.util.ElapsedTime
 import com.qualcomm.robotcore.util.RobotLog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -26,8 +29,10 @@ import org.firstinspires.ftc.teamcode.Subsystem
 import org.firstinspires.ftc.teamcode.actions.controllers.PidCoefs
 import org.firstinspires.ftc.teamcode.actions.controllers.runPidController
 import org.firstinspires.ftc.teamcode.actions.controllers.runPosePidController
+import org.firstinspires.ftc.teamcode.actions.controllers.runVeloPid
 import org.firstinspires.ftc.teamcode.driveLooper
 import org.firstinspires.ftc.teamcode.driveState
+import org.firstinspires.ftc.teamcode.opmodes.tuning.ExtensionVeloPidTuner
 import org.firstinspires.ftc.teamcode.util.G
 import org.firstinspires.ftc.teamcode.util.cross
 import org.firstinspires.ftc.teamcode.util.mainLoop
@@ -36,6 +41,8 @@ import org.firstinspires.ftc.teamcode.vision.PreloadDetectionPipeline
 import kotlin.coroutines.coroutineContext
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.sign
 
 /**
  * Resets the robot's pose to the given pose, or the origin if no pose is given.
@@ -51,7 +58,7 @@ fun resetDrivePose(newPose: Pose2d = Pose2d()) {
 suspend fun intakeTransfer(
     finalArmPos: Double = ArmPosition.OUTTAKE.pos,
     finalLiftPos: Int? = null
-) = coroutineScope {
+): Unit = coroutineScope {
     retractLift()
 
     openClaws()
@@ -70,7 +77,7 @@ suspend fun intakeTransfer(
 
     setTiltPosition(IntakeTiltPosition.TRANSFER.pos + 0.15)
 
-    suspendFor(300)
+    suspendFor(500)
 
     setTiltPosition(IntakeTiltPosition.TRANSFER)
     G.ehub.intakeRoller.power = 0.0
@@ -80,11 +87,11 @@ suspend fun intakeTransfer(
     G.ehub.outtakeLift.power = -1.0
     G.ehub.extension.power = -1.0
 
-    suspendFor(200)
+    suspendFor(300)
 
     closeClaws()
 
-    suspendFor(350)
+    suspendFor(450)
 
     G.ehub.outtakeLift.power = 0.0
     G.ehub.extension.power = -0.5
@@ -96,6 +103,7 @@ suspend fun intakeTransfer(
     suspendFor(50)
     G.ehub.intakeRoller.power = 0.0
 
+    suspendFor(100)
 
     liftUpTo(LiftConfig.transferHeightMin)
     retractExtension()
@@ -197,19 +205,38 @@ suspend fun nextBackboardApriltagPosition(): Pose2d {
 
 suspend fun launchOuttakeFixpoint(
     estimate: Pose2d,
-    target: PreloadDetectionPipeline.RandomizationPosition
+    target: PreloadDetectionPipeline.RandomizationPosition?,
+    expectedBackstagePos: Pose2d? = null,
+    updateBackstagePos: (Pose2d) -> Unit = {},
 ): Pair<Job, Pose2d> = coroutineScope {
     val targetPose = raceN(
         coroutineContext,
         {
-            val backstagePos = nextBackboardApriltagPosition()
+            val detectedBackstagePos = nextBackboardApriltagPosition()
+
+            if (expectedBackstagePos != null) {
+                val vecDelta = expectedBackstagePos.vec() - detectedBackstagePos.vec()
+
+                RobotLog.i("Apriltag relocalization (delta=$vecDelta)")
+
+                G[RobotState.driveState.nullableNewPose] = Pose2d(
+                    currentDrivePose().vec() + vecDelta,
+                    currentDrivePose().heading
+                )
+            } else {
+                updateBackstagePos(detectedBackstagePos)
+            }
+
+            val backstagePos = expectedBackstagePos ?: detectedBackstagePos
+
             val hvec = backstagePos.headingVec()
 
             Pose2d(
                 backstagePos.vec() + hvec * 16.8 + hvec.rotated(PI / 2) * when (target) {
-                     PreloadDetectionPipeline.RandomizationPosition.LEFT -> -6.0
-                     PreloadDetectionPipeline.RandomizationPosition.CENTER -> 0.0
-                     PreloadDetectionPipeline.RandomizationPosition.RIGHT -> 6.0
+                    PreloadDetectionPipeline.RandomizationPosition.LEFT -> -6.0
+                    PreloadDetectionPipeline.RandomizationPosition.CENTER -> 0.0
+                    PreloadDetectionPipeline.RandomizationPosition.RIGHT -> 6.0
+                    null -> 0.0
                 },
                 backstagePos.heading
             )
@@ -232,7 +259,7 @@ suspend fun launchOuttakeFixpoint(
                 target = { targetPose },
                 output = { setAdjustedDrivePowers(
                     if (targetPose.headingVec() dot (currentDrivePose() - targetPose).vec() < 0.0) 0.0 else 0.5 * it.x,
-                    it.y,
+                    if (target != null) it.y else 0.0,
                     it.heading
                 ) }
             )
@@ -244,52 +271,68 @@ suspend fun launchOuttakeFixpoint(
 
 suspend fun scoreOnBackstage(
     estimate: Pose2d,
-    target: PreloadDetectionPipeline.RandomizationPosition,
-    preOuttake: Pose2d = currentDrivePose()
+    target: PreloadDetectionPipeline.RandomizationPosition?,
+    preOuttake: Pose2d = currentDrivePose(),
+    expectedBackstagePos: Pose2d? = null,
+    updateBackstagePos: (Pose2d) -> Unit = {},
+    precisePlace: Boolean = false
 ): Job {
-    val (job, target) = launchOuttakeFixpoint(estimate, target)
+    val (job, robotTarget) = launchOuttakeFixpoint(estimate, target, expectedBackstagePos, updateBackstagePos)
 
     val returnPos = Pose2d(
-        target.vec() + target.headingVec() * preOuttake.vec().distTo(target.vec()),
+        robotTarget.vec() + robotTarget.headingVec() * preOuttake.vec().distTo(robotTarget.vec()),
         preOuttake.heading
     )
 
     raceN(
         coroutineContext,
         {
-            suspendFor(2000)
+            suspendFor(2500)
         },
         {
-            suspendUntil { currentDrivePose().vec().distTo(target.vec()) < 1.0 }
+
+            if (target != null)
+                suspendUntil { currentDrivePose().vec().distTo(robotTarget.vec()) < 1.0 }
+            else
+                suspendUntil { abs((robotTarget.vec() - currentDrivePose().vec()) dot currentDrivePose().headingVec()) < 1.0 }
             suspendFor(200)
         }
     )
 
+    if (precisePlace) {
+        liftDown()
+        suspendFor(50)
+        liftHold()
+    }
+
     openClaws()
     job.cancelAndJoin()
 
-    suspendFor(200)
+    suspendFor(300)
 
     return launchFixpoint(returnPos, multiplier = 0.8)
 }
 
-suspend fun intakeFixpoint(
-    intakeMultiplier: Double = 1.0,
-    target: () -> Vector2d,
-    headingOutput: (Double) -> Unit
+suspend inline fun intakeFixpoint(
+    crossinline intakeMultiplier: () -> Double = { 1.0 },
+    crossinline target: () -> Vector2d,
+    crossinline headingOutput: (Double) -> Unit
 ): Nothing = coroutineScope {
-    var parError = 0.0
     var perpError = 0.0
-
     var turnPower = 0.0
+    var extensionTarget = 0.0
 
     launch {
         mainLoop {
-            val extendoPose = G[RobotState.driveState.extendoPose]
-            val drivePose = currentDrivePose()
+            val extendoVec = G[RobotState.driveState.extendoPose].vec()
+            val driveVec = currentDrivePose().vec()
 
-            parError = (target() - extendoPose.vec()) dot (target() - drivePose.vec()).let { it / it.norm() }
-            perpError = (target() - extendoPose.vec()) cross (target() - drivePose.vec()).let { it / it.norm() }
+            val dir = (target() - driveVec).let {
+                extensionTarget = (it.norm() - DriveConfig.intakeOdoRadius) / DriveConfig.intakeOdoExtensionMultiplier
+                it / it.norm()
+            }
+
+            perpError = (target() - extendoVec) cross dir
         }
     }
 
@@ -304,12 +347,14 @@ suspend fun intakeFixpoint(
     }
 
     launch {
-        runPidController(
-            coefs = ExtensionConfig.pidCoefs,
-            input = { 0.0 },
-            target = { parError / DriveConfig.intakeOdoExtensionMultiplier },
-            output = { setExtensionPower(it * intakeMultiplier) },
-            tolerance = 10.0,
+        runVeloPid(
+            feedforward = ExtensionConfig.extensionFeedforward,
+            pid = ExtensionConfig.extensionVeloPid,
+            input = { extensionLength().toDouble() },
+            target = { extensionTarget },
+            output = { G.ehub.extension.power = it * intakeMultiplier.invoke() },
+            maxVel = ExtensionVeloPidTuner.maxVel,
+            maxAccel = ExtensionVeloPidTuner.maxAccel,
             hz = 30
         )
     }
@@ -318,7 +363,10 @@ suspend fun intakeFixpoint(
         runPidController(
             coefs = DriveConfig.headingPid,
             input = { 0.0 },
-            target = { -perpError / (extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius) },
+            target = {
+                -perpError / (extensionLength() * DriveConfig.intakeOdoExtensionMultiplier + DriveConfig.intakeOdoRadius) +
+                0.08 * G.ehub.extension.power.coerceAtLeast(0.0) * extensionLength() * DriveConfig.intakeOdoExtensionMultiplier
+            },
             output = { turnPower = it },
             hz = 30
         )
@@ -333,16 +381,22 @@ suspend fun dualFixpoint(
     extensionMultiplier: Double = 1.0,
     robotMultiplier: Double = 1.0,
     intakeTarget: Vector2d,
-    robotTarget: Vector2d
+    robotTarget: Vector2d,
+    intakeHeadingConstraintMultiplier: Double = 0.0
 ): Nothing = coroutineScope {
+    val targetHeading = (intakeTarget - robotTarget).angle()
+
     val fixpointJob = launchSmoothStop(
-        target = Pose2d(robotTarget, (intakeTarget - robotTarget).angle()),
+        target = Pose2d(robotTarget, targetHeading),
         multiplier = robotMultiplier
     )
 
     try {
         intakeFixpoint(
-            intakeMultiplier = extensionMultiplier,
+            intakeMultiplier = {
+                val headingError = Angle.normDelta(currentDrivePose().heading - targetHeading)
+                extensionMultiplier * exp(-intakeHeadingConstraintMultiplier * abs(headingError))
+            },
             target = { intakeTarget },
             headingOutput = {}
         )

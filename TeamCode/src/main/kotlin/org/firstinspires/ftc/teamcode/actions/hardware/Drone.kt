@@ -4,7 +4,7 @@ import org.firstinspires.ftc.teamcode.util.G
 
 enum class DronePosition(val pos: Double) {
     RELEASE(0.202),
-    CLOSED(0.904)
+    CLOSED(0.757)
 }
 
 fun setDronePos(pos: Double) {

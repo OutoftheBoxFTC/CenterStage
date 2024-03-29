@@ -77,17 +77,21 @@ class TransferTest : RobotOpMode() {
                 pause()
 
                 coroutineScope {
-                    launch { retractExtension() }
+                    launch {
+                        retractExtension()
+                        profileArm(ArmPosition.TRANSFER)
+                    }
                     suspendFor(100)
                     setTiltPosition(IntakeTiltPosition.TRANSFER_FLAT)
                 }
 
                 pause()
 
+                setTiltPosition(IntakeTiltPosition.TRANSFER.pos + 0.15)
+
+                suspendFor(500)
+
                 setTiltPosition(IntakeTiltPosition.TRANSFER)
-
-                suspendFor(200)
-
                 G.ehub.intakeRoller.power = 0.0
 
                 pause()
@@ -97,11 +101,11 @@ class TransferTest : RobotOpMode() {
                 G.ehub.outtakeLift.power = -1.0
                 G.ehub.extension.power = -1.0
 
-                suspendFor(50)
+                suspendFor(300)
 
                 closeClaws()
 
-                suspendFor(350)
+                suspendFor(450)
 
                 G.ehub.outtakeLift.power = 0.0
                 G.ehub.extension.power = -0.5
@@ -109,13 +113,13 @@ class TransferTest : RobotOpMode() {
                 pause()
 
                 setArmPosition(ArmPosition.TRANSFER.pos + 0.01)
-
-                pause()
-
                 setTiltPosition(IntakeTiltPosition.POST_TRANSFER)
+
                 G.ehub.intakeRoller.power = -0.8
                 suspendFor(50)
                 G.ehub.intakeRoller.power = 0.0
+
+                suspendFor(100)
 
                 pause()
 
@@ -124,7 +128,7 @@ class TransferTest : RobotOpMode() {
 
                 pause()
 
-                setTiltPosition(IntakeTiltPosition.HIGH)
+                setTiltPosition(IntakeTiltPosition.LOW)
             }
 
             suspendUntil { gamepad1.y }

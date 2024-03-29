@@ -149,8 +149,8 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
     }
 
     fun setRedAud() {
-        cx0 = 400.0
-        cx1 = 430.0
+        cx0 = 460.0
+        cx1 = 490.0
         cy0 = 295.0
         cy1 = 265.0
 
@@ -164,15 +164,15 @@ class PreloadDetectionPipeline : OpenCvPipeline() {
     }
 
     fun setBlueAud() {
-        cx0 = 275.0
-        cx1 = 295.0
-        cy0 = 360.0
-        cy1 = 340.0
+        cx0 = 305.0
+        cx1 = 325.0
+        cy0 = 240.0
+        cy1 = 260.0
 
-        sx0 = 610.0
+        sx0 = 625.0
         sx1 = 638.0
-        sy0 = 350.0
-        sy1 = 375.0
+        sy0 = 250.0
+        sy1 = 270.0
 
         isBlue = true
         sideRectRight = true
